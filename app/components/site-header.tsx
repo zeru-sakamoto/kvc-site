@@ -34,22 +34,28 @@ export default function SiteHeader() {
         </a>
 
         <nav className="flex items-center gap-1 sm:gap-2">
-          {nav.anchors.map((a) => (
-            <a
-              key={a.href}
-              href={a.href}
-              className="rounded-md px-3 py-2 text-sm text-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
-            >
-              {a.label}
-            </a>
-          ))}
+          {/* Scroll shortcuts, not core functionality — content is still one
+              scroll away, so hiding these below sm avoids header overflow on
+              narrow phones instead of squeezing them into unusable widths. */}
+          <div className="hidden items-center gap-1 sm:flex sm:gap-2">
+            {nav.anchors.map((a) => (
+              <a
+                key={a.href}
+                href={a.href}
+                className="flex h-11 items-center rounded-md px-3 text-sm text-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+              >
+                {a.label}
+              </a>
+            ))}
+          </div>
           <a
             href={nav.repo.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-1 rounded-md border border-white/15 px-3 py-2 text-sm font-medium text-primary transition-colors hover:border-brand-blue hover:text-brand-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue sm:ml-2"
+            className="ml-1 inline-flex h-11 items-center rounded-md border border-white/15 px-4 text-sm font-medium text-primary transition-colors hover:border-brand-blue hover:text-brand-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue sm:ml-2"
           >
             {nav.repo.label}
+            <span className="sr-only"> (opens in a new tab)</span>
           </a>
         </nav>
       </div>

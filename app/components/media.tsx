@@ -241,7 +241,7 @@ export function OwnershipMedia() {
             key={r.tech}
             className="grid grid-cols-[1fr_auto_1fr] items-center gap-4"
           >
-            <span className="truncate font-mono text-xs text-muted/70">
+            <span className="truncate font-mono text-xs text-muted">
               {r.tech}
             </span>
             <span aria-hidden className="text-muted">

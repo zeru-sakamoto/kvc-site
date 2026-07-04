@@ -1,5 +1,6 @@
 import { hero } from '@/lib/content';
 import { LayersMedia } from './media';
+import { emphasize } from './highlight';
 
 export default function Hero() {
   return (
@@ -27,7 +28,7 @@ export default function Hero() {
             {hero.headline}
           </h1>
           <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted">
-            {hero.sub}
+            {emphasize(hero.sub, 'No cloud, no accounts', 'cool')}
           </p>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -38,6 +39,7 @@ export default function Hero() {
               className="inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full bg-brand-blue px-6 text-sm font-semibold text-canvas-deep transition-colors hover:bg-accent-cool focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {hero.primaryCta.label}
+              <span className="sr-only"> (opens in a new tab)</span>
             </a>
             <a
               href={hero.secondaryCta.href}
@@ -46,6 +48,7 @@ export default function Hero() {
               className="inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border border-white/15 px-6 text-sm font-medium text-primary transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
             >
               {hero.secondaryCta.label}
+              <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </div>
         </div>

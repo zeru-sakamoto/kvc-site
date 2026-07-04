@@ -32,7 +32,9 @@ export default function BrushStroke() {
 
     gsap.registerPlugin(ScrollTrigger);
 
-    const debug = new URLSearchParams(window.location.search).has('debugBrush');
+    const debug =
+      process.env.NODE_ENV !== 'production' &&
+      new URLSearchParams(window.location.search).has('debugBrush');
     let marker: HTMLDivElement | null = null;
     if (debug) {
       marker = document.createElement('div');

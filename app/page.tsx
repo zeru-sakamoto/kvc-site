@@ -3,12 +3,46 @@ import Section from './components/section';
 import BrushStroke from './components/brush-stroke';
 import Faq from './components/faq';
 import { DiffMedia, BranchMedia, OwnershipMedia } from './components/media';
+import { emphasize } from './components/highlight';
 import { why, features, whatsNext } from '@/lib/content';
 
 const featureMedia = {
   compare: <DiffMedia />,
   history: <BranchMedia />,
   yours: <OwnershipMedia />,
+} as const;
+
+// The one most intriguing detail per paragraph, pulled out in accent color.
+// Aligned by index to `why.points`; kept here (not in lib/content.ts) since
+// it's a presentation choice, not copy.
+const whyEmphasis = [
+  { phrase: 'No account, no sync, no server', tone: 'cool' },
+  { phrase: 'only stores what actually changed', tone: 'blue' },
+  { phrase: 'side by side or on a swipe slider', tone: 'blue' },
+  { phrase: 'keep painting on your original at the same time', tone: 'warm' },
+  { phrase: 'stay fast on large, layer-heavy files', tone: 'blue' },
+] as const;
+
+// Same idea, aligned by [featureId][paragraphIndex].
+const featureEmphasis = {
+  compare: [
+    { phrase: 'a soft glow around the pixels that moved', tone: 'blue' },
+    { phrase: 'as easy to review as a repaint', tone: 'warm' },
+  ],
+  history: [
+    {
+      phrase: 'Overlapping edits are flagged, never quietly overwritten',
+      tone: 'cool',
+    },
+    {
+      phrase: 'old versions stay recoverable until you decide otherwise',
+      tone: 'cool',
+    },
+  ],
+  yours: [
+    { phrase: 'turns off the technical talk entirely', tone: 'warm' },
+    { phrase: 'Nothing syncs, nothing uploads', tone: 'cool' },
+  ],
 } as const;
 
 export default function Home() {
@@ -33,13 +67,17 @@ export default function Home() {
             </div>
 
             <ul className="mt-14 grid gap-x-12 gap-y-10 sm:grid-cols-2">
-              {why.points.map((p) => (
+              {why.points.map((p, i) => (
                 <li key={p.title} className="min-w-0">
                   <p className="font-display text-lg font-semibold text-primary">
                     {p.title}
                   </p>
                   <p className="mt-2 text-base leading-relaxed text-muted">
-                    {p.body}
+                    {emphasize(
+                      p.body,
+                      whyEmphasis[i].phrase,
+                      whyEmphasis[i].tone,
+                    )}
                   </p>
                 </li>
               ))}
@@ -56,9 +94,11 @@ export default function Home() {
             reverse={f.reverse}
             media={featureMedia[f.id as keyof typeof featureMedia]}
           >
-            {f.body.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
+            {f.body.map((p, i) => {
+              const em =
+                featureEmphasis[f.id as keyof typeof featureEmphasis][i];
+              return <p key={i}>{em ? emphasize(p, em.phrase, em.tone) : p}</p>;
+            })}
           </Section>
         ))}
 
@@ -95,6 +135,7 @@ export default function Home() {
               className="mt-10 inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-white/15 px-5 text-sm font-medium text-primary transition-colors hover:border-brand-blue hover:text-brand-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
             >
               {whatsNext.cta.label}
+              <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </div>
         </section>
