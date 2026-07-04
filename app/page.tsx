@@ -1,65 +1,106 @@
-import Image from "next/image";
+import Hero from './components/hero';
+import Section from './components/section';
+import BrushStroke from './components/brush-stroke';
+import Faq from './components/faq';
+import { DiffMedia, BranchMedia, OwnershipMedia } from './components/media';
+import { why, features, whatsNext } from '@/lib/content';
+
+const featureMedia = {
+  compare: <DiffMedia />,
+  history: <BranchMedia />,
+  yours: <OwnershipMedia />,
+} as const;
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="relative">
+      <BrushStroke />
+
+      <div className="relative z-10">
+        <Hero />
+
+        {/* Why — full-width value props, no media column. Breaks the two-column
+            rhythm before the alternating feature blocks begin. */}
+        <section id={why.id} className="relative scroll-mt-24 py-24 sm:py-32">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="max-w-2xl">
+              <h2 className="font-display text-3xl font-bold leading-tight tracking-tight text-balance text-primary sm:text-4xl lg:text-[2.75rem]">
+                {why.title}
+              </h2>
+              <p className="mt-5 text-lg leading-relaxed text-muted">
+                {why.intro}
+              </p>
+            </div>
+
+            <ul className="mt-14 grid gap-x-12 gap-y-10 sm:grid-cols-2">
+              {why.points.map((p) => (
+                <li key={p.title} className="min-w-0">
+                  <p className="font-display text-lg font-semibold text-primary">
+                    {p.title}
+                  </p>
+                  <p className="mt-2 text-base leading-relaxed text-muted">
+                    {p.body}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* Three alternating feature blocks, connected by the brush stroke. */}
+        {features.map((f) => (
+          <Section
+            key={f.id}
+            id={f.id}
+            title={f.title}
+            reverse={f.reverse}
+            media={featureMedia[f.id as keyof typeof featureMedia]}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            {f.body.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          </Section>
+        ))}
+
+        {/* What's next — narrow roadmap, no media. */}
+        <section
+          id={whatsNext.id}
+          className="relative scroll-mt-24 py-24 sm:py-32"
+        >
+          <div className="mx-auto max-w-3xl px-6">
+            <h2 className="font-display text-3xl font-bold tracking-tight text-balance text-primary sm:text-4xl">
+              {whatsNext.title}
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-muted">
+              {whatsNext.intro}
+            </p>
+
+            <div className="mt-10 grid gap-8 sm:grid-cols-2">
+              {whatsNext.items.map((item) => (
+                <div key={item.title} className="min-w-0">
+                  <p className="font-display text-lg font-semibold text-primary">
+                    {item.title}
+                  </p>
+                  <p className="mt-2 text-base leading-relaxed text-muted">
+                    {item.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <a
+              href={whatsNext.cta.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-10 inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-white/15 px-5 text-sm font-medium text-primary transition-colors hover:border-brand-blue hover:text-brand-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+            >
+              {whatsNext.cta.label}
+            </a>
+          </div>
+        </section>
+
+        <Faq />
+      </div>
     </div>
   );
 }
