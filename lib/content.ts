@@ -131,8 +131,8 @@ export const whatsNext = {
 // FAQ — rendered as a native <details>/<summary> accordion (no JS).
 export const faq = [
   {
-    q: 'Does this replace Krita?',
-    a: 'No. Krita VCS runs alongside Krita as a separate app. You still paint in Krita; Krita VCS just watches your project folder and looks after its history.',
+    q: 'What does it do?',
+    a: 'It keeps every version of your painting as you save, like a save file for each stage of your art. You can look back at any earlier version, compare two side by side, or go back to one if you change your mind, all without leaving a mess of duplicate files on your computer.',
   },
   {
     q: 'Is my art uploaded anywhere?',
