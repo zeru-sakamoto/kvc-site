@@ -84,7 +84,7 @@ export const features = [
     id: 'compare',
     title: 'See exactly what changed, layer by layer.',
     body: [
-      "Compare any two versions of a painting one layer at a time. Toggle side-by-side or drag a swipe slider across the canvas, with a soft glow around the pixels that moved. The flattened image loads first, so you're never staring at a blank panel; individual layers stream in right behind it.",
+      "Compare any two versions of a painting one layer at a time. Toggle side-by-side or drag a swipe slider across the canvas; zoom and pan to inspect the details, perfectly in sync between both views. What changed shows as a dashed outline tracing the silhouette of the edited pixels, and focusing a single layer narrows that outline to just that layer's changes. The flattened image loads first, so you're never staring at a blank panel; individual layers stream in right behind it.",
       'Working with .gpl color palettes too? Krita VCS lays them out swatch by swatch, hex values and all, so a palette tweak is as easy to review as a repaint.',
     ],
     reverse: true,
@@ -121,8 +121,8 @@ export const whatsNext = {
       body: 'Text and config files in a project get a basic line view today. A proper visual diff for them is on the way.',
     },
     {
-      title: 'Pixel-accurate zoom',
-      body: 'Comparison thumbnails downscale for speed right now. A higher-fidelity zoom mode for pixel-level review is coming.',
+      title: 'Deeper zoom for very large paintings',
+      body: 'Comparisons render at a capped resolution to keep cached previews small. A way to push past that cap for pixel-level review on huge canvases is on the roadmap.',
     },
   ],
   cta: { label: 'Request a feature on GitHub', href: links.issues },

@@ -68,8 +68,9 @@ rhythm so the page doesn't read as one repeated template.
 2. **Why artists use it — full-width points grid.** No media column. Intro + five value props
    in a two-column grid. Breaks the two-column rhythm before the feature blocks.
 3. **Compare (feature block, media right).** "See exactly what changed, layer by layer." Visual
-   layer diffs + palette diffs. Media: `DiffMedia` (two versions split by a swipe handle with a
-   glow seam, plus a before→after palette swatch row).
+   layer diffs + palette diffs. Media: `DiffMedia` (two versions split by a swipe handle, a
+   dashed-outline silhouette tracing the changed pixels, synced zoom/pan on both panels, a
+   per-layer focus chip row, plus a before→after palette swatch row).
 4. **History (feature block, media left).** "Every save is a place you can go back to." Real
    branches + undo/rollback. Media: `BranchMedia` (color-coded branch graph that diverges and
    merges back).
@@ -89,6 +90,11 @@ rhythm so the page doesn't read as one repeated template.
   skipped.
 - **Cursor brush** (`app/components/cursor-brush.tsx`): faint Krita-blue smudge trailing the
   pointer, fine-pointer + non-reduced-motion only. Secondary flourish, not the signature.
+- **Media reveals** (`app/components/media.tsx`): each motif animates its own elements in as it
+  scrolls into view — `gsap.from` inside a `gsap.context`, driven by a `ScrollTrigger` with
+  `once: true` (plays once, never replays). The SVG's natural DOM state is the finished state, so
+  under `prefers-reduced-motion: reduce` the reveal is skipped and the motif shows fully drawn.
+  Shared `useReveal` hook holds the gate + boilerplate so it isn't copied per motif.
 - Reduced-motion gate pattern:
 
 ```typescript

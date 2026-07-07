@@ -26,7 +26,7 @@ const whyEmphasis = [
 // Same idea, aligned by [featureId][paragraphIndex].
 const featureEmphasis = {
   compare: [
-    { phrase: 'a soft glow around the pixels that moved', tone: 'blue' },
+    { phrase: 'a dashed outline tracing the silhouette', tone: 'blue' },
     { phrase: 'as easy to review as a repaint', tone: 'warm' },
   ],
   history: [
