@@ -2,7 +2,9 @@
 
 // Painterly inline-SVG media for each section. Honest, abstract motifs — never
 // fake app chrome or mock screenshots (Hallmark gate 47). All colour references
-// go through DESIGN.md tokens via CSS vars (gate 48), no inline hex.
+// go through DESIGN.md tokens via CSS vars (gate 48), no inline hex — except
+// SignatureMedia's theme swatches, which render the real per-theme colors from
+// lib/content.ts's `themes` table (content data, not decorative site chrome).
 //
 // Each motif reveals its own elements as it scrolls into view: `gsap.from`
 // inside a `gsap.context`, driven by a `ScrollTrigger` with `once: true`. The
@@ -13,6 +15,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { themes } from '@/lib/content';
 
 const BLUE = 'var(--color-brand-blue)';
 const COOL = 'var(--color-accent-cool)';
@@ -417,6 +420,131 @@ export function OwnershipMedia() {
             </span>
           </div>
         ))}
+      </div>
+    </Panel>
+  );
+}
+
+// Settings: controls shaped like what they actually do — a slider for the
+// continuous preview-thumbnail budget, a toggle for the on/off
+// compact-storage switch, and a row of swatches for picking a color theme.
+// Abstract controls, not a screenshot of the Settings panel itself.
+export function SignatureMedia() {
+  const ref = useReveal((el) => {
+    revealTimeline(el)
+      .from('[data-track]', { opacity: 0, duration: 0.4 })
+      .from(
+        '[data-fill]',
+        { scaleX: 0, transformOrigin: '0% 50%', duration: 0.5 },
+        '-=0.15',
+      )
+      .from(
+        '[data-thumb], [data-knob], [data-swatch]',
+        { scale: 0, transformOrigin: '50% 50%', stagger: 0.1, duration: 0.4 },
+        '<',
+      )
+      .from(
+        '[data-control-label]',
+        { opacity: 0, yPercent: 20, stagger: 0.15, duration: 0.35 },
+        '-=0.4',
+      );
+  });
+
+  return (
+    <Panel panelRef={ref}>
+      <div className="flex flex-col gap-10">
+        <div>
+          <p data-control-label className="mb-4 text-xs text-muted">
+            Preview budget
+          </p>
+          {/* a continuous amount, so a filled slider track spanning the full
+              width. Fill amount and thumb position are illustrative, not a
+              real reading. */}
+          <div className="relative h-1.5 w-full">
+            <div
+              data-track
+              className="absolute inset-0 rounded-full"
+              style={{ background: 'var(--color-muted)', opacity: 0.25 }}
+            />
+            <div
+              data-fill
+              className="absolute inset-y-0 left-0 w-[70%] origin-left rounded-full"
+              style={{ background: COOL }}
+            />
+            <div
+              data-thumb
+              className="absolute top-1/2 left-[70%] h-4.5 w-4.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
+              style={{
+                background: 'var(--color-canvas-deep)',
+                borderColor: COOL,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-start gap-10">
+          <div>
+            <p data-control-label className="mb-4 text-xs text-muted">
+              Compact storage
+            </p>
+            {/* a binary setting, so an on/off toggle. Knob color +
+                right-side position read as "on"; no literal text. Stays a
+                fixed, compact size — a toggle shouldn't stretch to fill the
+                row. */}
+            <div className="relative h-8 w-14">
+              <div
+                data-track
+                className="absolute inset-0 rounded-full"
+                style={{
+                  border: '2px solid var(--color-muted)',
+                  opacity: 0.25,
+                }}
+              />
+              <div
+                data-knob
+                className="absolute top-1/2 right-1.25 h-5 w-5 -translate-y-1/2 rounded-full"
+                style={{ background: WARM }}
+              />
+            </div>
+          </div>
+
+          <div className="min-w-0">
+            <p data-control-label className="mb-4 text-xs text-muted">
+              Themes
+            </p>
+            {/* every theme in the picker — each swatch is bi-color (the
+                theme's background + its accent), real colors from
+                lib/content.ts's `themes` table, not decorative tokens. The
+                default, Charcoal, reads as selected via the ring around it. */}
+            <div className="flex flex-wrap items-center gap-2">
+              {themes.map((t, i) => (
+                <span
+                  key={t.name}
+                  data-swatch
+                  title={t.name}
+                  className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                  style={
+                    i === 0
+                      ? { border: `2px solid ${BLUE}` }
+                      : { border: '1px solid rgba(255,255,255,0.1)' }
+                  }
+                >
+                  <span
+                    className="h-4 w-4 rounded-full"
+                    style={{ background: t.background }}
+                  />
+                  <span
+                    className="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full"
+                    style={{
+                      background: t.accent,
+                      boxShadow: '0 0 0 1.5px var(--color-canvas-deep)',
+                    }}
+                  />
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </Panel>
   );

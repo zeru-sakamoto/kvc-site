@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { footer, site } from '@/lib/content';
 
 export default function SiteFooter() {
@@ -26,19 +27,30 @@ export default function SiteFooter() {
                   {col.title}
                 </h3>
                 <ul className="mt-4 space-y-3">
-                  {col.links.map((l) => (
-                    <li key={l.href}>
-                      <a
-                        href={l.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="whitespace-nowrap text-sm text-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
-                      >
-                        {l.label}
-                        <span className="sr-only"> (opens in a new tab)</span>
-                      </a>
-                    </li>
-                  ))}
+                  {col.links.map((l) =>
+                    l.href.startsWith('/') ? (
+                      <li key={l.href}>
+                        <Link
+                          href={l.href}
+                          className="whitespace-nowrap text-sm text-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+                        >
+                          {l.label}
+                        </Link>
+                      </li>
+                    ) : (
+                      <li key={l.href}>
+                        <a
+                          href={l.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="whitespace-nowrap text-sm text-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+                        >
+                          {l.label}
+                          <span className="sr-only"> (opens in a new tab)</span>
+                        </a>
+                      </li>
+                    ),
+                  )}
                 </ul>
               </div>
             ))}

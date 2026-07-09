@@ -2,7 +2,12 @@ import Hero from './components/hero';
 import Section from './components/section';
 import BrushStroke from './components/brush-stroke';
 import Faq from './components/faq';
-import { DiffMedia, BranchMedia, OwnershipMedia } from './components/media';
+import {
+  DiffMedia,
+  BranchMedia,
+  OwnershipMedia,
+  SignatureMedia,
+} from './components/media';
 import { emphasize } from './components/highlight';
 import { why, features, whatsNext } from '@/lib/content';
 
@@ -10,6 +15,7 @@ const featureMedia = {
   compare: <DiffMedia />,
   history: <BranchMedia />,
   yours: <OwnershipMedia />,
+  settings: <SignatureMedia />,
 } as const;
 
 // The one most intriguing detail per paragraph, pulled out in accent color.
@@ -19,7 +25,7 @@ const whyEmphasis = [
   { phrase: 'No account, no sync, no server', tone: 'cool' },
   { phrase: 'only stores what actually changed', tone: 'blue' },
   { phrase: 'side by side or on a swipe slider', tone: 'blue' },
-  { phrase: 'keep painting on your original at the same time', tone: 'warm' },
+  { phrase: 'switch back to your original whenever you like', tone: 'warm' },
   { phrase: 'stay fast on large, layer-heavy files', tone: 'blue' },
 ] as const;
 
@@ -42,6 +48,11 @@ const featureEmphasis = {
   yours: [
     { phrase: 'turns off the technical talk entirely', tone: 'warm' },
     { phrase: 'Nothing syncs, nothing uploads', tone: 'cool' },
+  ],
+  settings: [
+    { phrase: "it's obvious who did what", tone: 'warm' },
+    { phrase: 'Krita VCS shrinks it down', tone: 'cool' },
+    { phrase: 'applies right away, no restart', tone: 'blue' },
   ],
 } as const;
 
@@ -85,7 +96,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Three alternating feature blocks, connected by the brush stroke. */}
+        {/* Four alternating feature blocks, connected by the brush stroke. */}
         {features.map((f) => (
           <Section
             key={f.id}

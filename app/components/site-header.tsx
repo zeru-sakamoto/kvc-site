@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { site, nav } from '@/lib/content';
 
 export default function SiteHeader() {
@@ -22,8 +23,8 @@ export default function SiteHeader() {
       }`}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <a
-          href="#top"
+        <Link
+          href="/"
           className="group flex items-center gap-2.5 font-display text-base font-bold tracking-tight text-primary"
         >
           <span
@@ -31,7 +32,7 @@ export default function SiteHeader() {
             className="inline-block h-3.5 w-3.5 rounded-full bg-brand-blue transition-colors duration-300 group-hover:bg-accent-warm"
           />
           {site.wordmark}
-        </a>
+        </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2">
           {/* Scroll shortcuts, not core functionality — content is still one
@@ -39,14 +40,20 @@ export default function SiteHeader() {
               narrow phones instead of squeezing them into unusable widths. */}
           <div className="hidden items-center gap-1 sm:flex sm:gap-2">
             {nav.anchors.map((a) => (
-              <a
+              <Link
                 key={a.href}
                 href={a.href}
                 className="flex h-11 items-center rounded-md px-3 text-sm text-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
               >
                 {a.label}
-              </a>
+              </Link>
             ))}
+            <Link
+              href={nav.docs.href}
+              className="flex h-11 items-center rounded-md px-3 text-sm text-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+            >
+              {nav.docs.label}
+            </Link>
           </div>
           <a
             href={nav.repo.href}

@@ -2,7 +2,9 @@
 
 Product landing page for **Krita VCS**: a free, local-only version-control app for Krita
 painters. Theme: painter-first clarity in a Krita-style digital-painting workspace. Organic
-alternating left/right feature sections connected by a single animated SVG brush stroke.
+alternating left/right feature sections connected by a single animated SVG brush stroke. A
+second route, `/docs`, holds the getting-started guide — kept off the single-page landing flow
+since it's read once, not scrolled past.
 
 Copy source: `SITE_CONTENT.md`. All copy is centralised in `lib/content.ts`. This file is the
 design **spec-of-record**; keep it in sync when the design changes.
@@ -59,7 +61,7 @@ see `app/layout.tsx`:
 ## Layout Flow (sections vary rhythm on purpose)
 
 The brush stroke spans the full page height and follows scroll, connecting the sections. The
-three feature blocks alternate left/right; the surrounding sections deliberately break that
+four feature blocks alternate left/right; the surrounding sections deliberately break that
 rhythm so the page doesn't read as one repeated template.
 
 1. **Hero — left-aligned + visual.** Bold headline ("Version control for your art, not your
@@ -68,19 +70,41 @@ rhythm so the page doesn't read as one repeated template.
 2. **Why artists use it — full-width points grid.** No media column. Intro + five value props
    in a two-column grid. Breaks the two-column rhythm before the feature blocks.
 3. **Compare (feature block, media right).** "See exactly what changed, layer by layer." Visual
-   layer diffs + palette diffs. Media: `DiffMedia` (two versions split by a swipe handle, a
-   dashed-outline silhouette tracing the changed pixels, synced zoom/pan on both panels, a
-   per-layer focus chip row, plus a before→after palette swatch row).
+   layer diffs (including per-layer/canvas metadata on click) + palette diffs. Media: `DiffMedia`
+   (two versions split by a swipe handle, a dashed-outline silhouette tracing the changed pixels,
+   synced zoom/pan on both panels, a per-layer focus chip row, plus a before→after palette swatch
+   row).
 4. **History (feature block, media left).** "Every save is a place you can go back to." Real
    branches + undo/rollback. Media: `BranchMedia` (color-coded branch graph that diverges and
    merges back).
 5. **Ownership (feature block, media right).** "Yours, in plain language, on your machine."
    Artist Mode + storage cleanup + local-only ethos. Media: `OwnershipMedia` (a conceptual
    technical→plain label map — not a screenshot).
-6. **What's next — narrow roadmap.** No media. Two roadmap items + "Request a feature" CTA.
-7. **FAQ — centered accordion.** Native `<details>/<summary>`, no JS, keyboard-accessible.
-8. **Footer.** Wordmark, maker signature, license note (TBD), Product + Maker link columns. No
+6. **Settings (feature block, media left).** "Sign your work, tune it to your machine." Author
+   name on saves + preview-image disk budget + compact-storage toggle + color theme picker.
+   Media: `SignatureMedia` (a labeled slider, a labeled toggle, and a labeled row of theme
+   swatches, each shaped to match what the setting does — not a screenshot of the Settings
+   panel).
+7. **What's next — narrow roadmap.** No media. Two roadmap items + "Request a feature" CTA.
+8. **FAQ — centered accordion.** Native `<details>/<summary>`, no JS, keyboard-accessible.
+9. **Footer.** Wordmark, maker signature, license note (TBD), Product + Maker link columns. No
    metric tiles.
+
+### `/docs` route
+
+A second page, separate from the single-page landing flow, for the getting-started guide:
+
+1. **Intro.** Title + one-line framing + "Read the docs on GitHub" CTA (full docs live in the
+   repo, not duplicated here).
+2. **Getting started.** Four numbered steps (`app/components/steps.tsx` — a plain numbered list,
+   no stepper widget, no screenshots), covering install → point at a folder → save a version →
+   compare two versions.
+3. **Installing the Krita plugin (optional).** Intro paragraph, a short bullet list of caveats,
+   a closing paragraph, and a "Plugin guide on GitHub" CTA.
+
+Same tokens, same voice, same no-fake-UI rule as the landing page. `SiteHeader`/`SiteFooter` wrap
+it automatically via the root layout; no separate chrome. Not alternating, not media-columned —
+intentionally a different rhythm than the landing page, same as Why/What's-next/FAQ already are.
 
 ## GSAP Animation
 
@@ -115,19 +139,26 @@ if (!preferReduced) {
 4. Dynamic Vector Directives — GSAP scroll brush stroke
 ```
 
-- **Header (`site-header.tsx`):** wordmark + anchor links (Why / Features / FAQ) + GitHub
-  button. Transparent → frosted `canvas-deep` on scroll.
+- **Header (`site-header.tsx`):** wordmark + anchor links (Why / Features / FAQ) + Docs route
+  link + GitHub button. Transparent → frosted `canvas-deep` on scroll. Anchor hrefs are
+  path-qualified (`/#why`, not `#why`) so they resolve correctly from `/docs` too; wordmark and
+  Docs use `next/link` for client-side route navigation.
 - **Body blocks (`section.tsx`):** one reusable template, toggles `flex-row` /
   `flex-row-reverse` for alternation — no duplicated markup. `eyebrow` is optional and used
   sparingly (the page leans on strong headings, not a mono-caps kicker over every section).
-- **Media (`media.tsx`):** `LayersMedia`, `DiffMedia`, `BranchMedia`, `OwnershipMedia` —
-  abstract painterly vector, all colors via tokens.
+- **Media (`media.tsx`):** `LayersMedia`, `DiffMedia`, `BranchMedia`, `OwnershipMedia`,
+  `SignatureMedia` — abstract painterly vector, all colors via tokens.
+- **Steps (`steps.tsx`):** plain numbered list for the `/docs` Getting Started guide. No
+  animation, no stepper widget — a static ordered list styled with site tokens.
 - **FAQ (`faq.tsx`):** native `<details>` accordion.
-- **Footer (`site-footer.tsx`):** maker signature, license, outbound link columns.
+- **Footer (`site-footer.tsx`):** maker signature, license, outbound link columns (internal
+  links like `/docs` use `next/link` and skip `target="_blank"`; external repo links keep it).
 
 ## External Links
 
 - **Download:** hero primary CTA → GitHub releases (no standalone download host yet).
 - **Source:** hero secondary CTA + nav + footer → the repo.
 - **Issues:** "Request a feature" (What's next) + footer.
+- **Docs / Plugin guide:** `/docs` page CTAs → GitHub repo (no dedicated docs site yet, same
+  placeholder-link convention as Download).
 - **GitHub profile / Personal portfolio:** footer, tied to the maker signature.
