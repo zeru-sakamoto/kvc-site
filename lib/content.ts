@@ -3,7 +3,7 @@
 // preaches. We say "version / save / go back", not "commit / hash / rollback".
 
 // The open-source repo the site links to (source, issues, releases/downloads).
-export const repo = { owner: 'zeru-sakamoto', name: 'krita-vcs' } as const;
+export const repo = { owner: 'zeru-sakamoto', name: 'krita-vc' } as const;
 
 const repoUrl = `https://github.com/${repo.owner}/${repo.name}`;
 
