@@ -1,6 +1,6 @@
 // Single source of truth for all site copy + links.
 // Voice: painter-first, plain-language, calm — the site practises what "Artist Mode"
-// preaches. We say "version / save / go back", not "commit / hash / rollback".
+// preaches. I say "version / save / go back", not "commit / hash / rollback".
 
 // The open-source repo the site links to (source, issues, releases/downloads).
 export const repo = { owner: 'zeru-sakamoto', name: 'krita-vc' } as const;
@@ -45,7 +45,7 @@ export const hero = {
   badge: 'Free, open source, local-only',
   headline: 'Version control for your art, not your code.',
   sub: 'A free, local-only version-control app for Krita painters. No cloud, no accounts, and none of the git jargon.',
-  primaryCta: { label: 'Download for free', href: links.download },
+  primaryCta: { label: 'Download for free' },
   secondaryCta: { label: 'View source on GitHub', href: links.repo },
 } as const;
 
@@ -141,17 +141,24 @@ export const themes = [
 // "What's next" — short roadmap, its own light section (no media column).
 export const whatsNext = {
   id: 'next',
-  title: "What we're building next.",
-  intro:
-    "Krita VCS is actively developed. A couple of things we're still sharpening:",
+  title: "What I'm building next.",
+  intro: "Krita VCS is actively developed. A few things I'm still improving:",
   items: [
     {
-      title: 'Smarter diffs for everything else',
-      body: 'Text and config files in a project get a basic line view today. A proper visual diff for them is on the way.',
+      title: 'Tracking more color palette formats',
+      body: '.gpl swatch diffs work today; support for .kpl, .aco, and .ase palettes is planned so the same color-by-color comparison works no matter where your palette comes from.',
     },
     {
-      title: 'Deeper zoom for very large paintings',
-      body: 'Comparisons render at a capped resolution to keep cached previews small. A way to push past that cap for pixel-level review on huge canvases is on the roadmap.',
+      title: 'Diff stashing',
+      body: 'Set aside an in-progress comparison and come back to it later without losing your place, so you can hop between reviews without re-picking the same two versions.',
+    },
+    {
+      title: 'A guided first-launch tour',
+      body: "A dynamic walkthrough of the app on first open, pointing out the repository switcher, Changes, History, and Settings so new users aren't left guessing.",
+    },
+    {
+      title: 'The Krita plugin',
+      body: 'An optional in-Krita "Version Control" panel — commit, quick-checkpoint, branch switching, no window-switching — built on the same history as the main app. Available today as a manual build; see the plugin guide in the docs.',
     },
   ],
   cta: { label: 'Request a feature on GitHub', href: links.issues },
@@ -209,52 +216,169 @@ export const footer = {
   license: 'Free and open source · license being finalised',
 } as const;
 
-// The /docs page — a step-by-step start guide, kept off the single-page
-// landing flow since it's read once, not scrolled past. No screenshots: same
-// honest-media rule as the rest of the site, just a plain numbered walkthrough.
-export const docsPage = {
-  metaTitle: 'Documentation — Krita VCS',
-  metaDescription:
-    'Install Krita VCS, save your first version, and set up the optional Krita plugin.',
+// The /docs page — a chapter-tabbed documentation guide, kept off the
+// single-page landing flow since it's read once, not scrolled past. No
+// screenshots: same honest-media rule as the rest of the site.
+export const docs = {
   title: 'Documentation',
   intro:
-    "New to Krita VCS? Start here. This walks through installing the app and saving your first version. Want to save without leaving Krita? There's an optional plugin for that too.",
+    'New to Krita VCS? Start here. Every chapter below covers a different part of the app: installing and saving your first version, a reference for each feature, the guardrails that keep your work safe, and the optional Krita plugin.',
   cta: { label: 'Read the docs on GitHub', href: links.docs },
-  gettingStarted: {
-    title: 'Getting started',
-    steps: [
-      {
-        title: 'Install and open Krita VCS.',
-        body: 'Download it for free and launch it. No account, no sign-in.',
-      },
-      {
-        title: 'Point it at a folder.',
-        body: 'Use the repository switcher at the top and choose Create or Browse to pick the folder your .kra files live in. Krita VCS keeps a small hidden history store inside that folder; your files themselves are never moved or renamed.',
-      },
-      {
-        title: 'Save a version.',
-        body: "Open the Changes view, write a short note about what you did, and hit Commit. That's a version you can always come back to.",
-      },
-      {
-        title: 'Compare two versions.',
-        body: 'Pick any two versions in the History view to see a visual, layer-by-layer diff. No line numbers, no code.',
-      },
-    ],
-  },
-  plugin: {
-    title: 'Installing the Krita plugin (optional)',
-    intro:
-      'Prefer to save versions without switching windows? The Krita plugin adds a small Version Control panel right inside Krita, with a changelist, a commit button, a one-tap Checkpoint for quick milestones, and branch switching, all working against the same history as the main app.',
-    notes: [
-      "Commit and Checkpoint only turn on once you've saved in Krita. The plugin never saves your file for you.",
-      'Everything it does is local, same as the main app. No new accounts, no new servers.',
-      'Setting up a repository, and browsing or restoring older versions, still happens in the main Krita VCS app. The plugin is just a faster way to commit.',
-    ],
-    closing:
-      "Today, installing it means building one small command-line helper alongside the app and copying a folder into Krita's plugin directory: a five-minute, one-time setup. Full step-by-step instructions live in the plugin's own guide.",
-    cta: {
-      label: 'Plugin guide on GitHub',
-      href: links.pluginGuide,
+} as const;
+
+export const docsGettingStarted = {
+  slug: 'getting-started',
+  label: 'Getting started',
+  title: 'Getting started',
+  metaTitle: 'Getting started — Documentation — Krita VCS',
+  metaDescription:
+    'Install Krita VCS, point it at a project folder, and save your first version.',
+  steps: [
+    {
+      title: 'Install and open.',
+      body: 'Download it for free and launch it. No account, no sign-in.',
     },
+    {
+      title: 'Pick a project folder.',
+      body: "Use the repository switcher at the top and choose Create repository (name it, choose a folder) or Browse existing repository (a folder you're already tracking). Picking a folder you've already set up just opens it — nothing gets reset.",
+    },
+    {
+      title: 'Save your first version.',
+      body: "Open Changes, write a short note about what you did, and hit Commit version. Everything in the folder is saved, so there's nothing to pick and choose.",
+    },
+    {
+      title: 'Compare two versions.',
+      body: 'Open History, click any version to see a visual, side-by-side comparison of your layers, no code involved. Or swipe between the two with the slider, and click a layer for its details.',
+    },
+    {
+      title: 'Try branching, merging, or restoring.',
+      body: "Optional, once you're comfortable: branch off to try something risky, merge it back when you're happy, or restore an older version. All covered in Using each feature.",
+    },
+  ],
+} as const;
+
+export const docsUsingFeatures = {
+  slug: 'using-features',
+  label: 'Using each feature',
+  title: 'Using each feature',
+  metaTitle: 'Using each feature — Documentation — Krita VCS',
+  metaDescription:
+    'A quick reference for every panel in Krita VCS: Changes, History, Branches, comparing versions, and more.',
+  items: [
+    {
+      lead: 'Changes',
+      body: 'Where you save. Write a note, hit Commit. Locks briefly while saving so nothing gets interrupted.',
+    },
+    {
+      lead: 'History',
+      body: "Every version you've saved. Click one to see what changed.",
+    },
+    {
+      lead: 'Branches',
+      body: "Separate lines of work. Click one to switch to it. Hover for Merge into current (bring it into what you're on now) or Delete. New branch starts a fresh line, optionally starting from another one.",
+    },
+    {
+      lead: 'Comparing versions',
+      body: 'Side-by-side or a swipe slider, with zoom and pan that stay in sync between both sides. The eye icon highlights exactly what changed — a precise outline of the changed pixels, or a simpler box around the changed area. Click a layer to see its details.',
+    },
+    {
+      lead: 'Undo',
+      body: 'The ⋯ menu next to Changes or History. Removes only your most recent save; those changes come back as unsaved work, ready to save again.',
+    },
+    {
+      lead: 'Restore',
+      body: 'Pick any older version and bring its files back, saved as a brand-new version. Nothing older is ever deleted.',
+    },
+    {
+      lead: 'Settings',
+      body: '(gear icon) Artist view, title bar style, your name, and 8 color themes. Per project: how much space preview images may use, a compact storage option that shrinks history for files with lots of small edits, a low-memory option that uses less memory (a little slower in exchange), and Clean up storage.',
+    },
+    {
+      lead: 'Clean up storage',
+      body: 'Shows you exactly how much space would be freed before you confirm anything. Only ever clears old, unreachable leftovers — never your current work or anything still visible in your history.',
+    },
+  ],
+} as const;
+
+export const docsSafety = {
+  slug: 'safety',
+  label: 'Keeping your work safe',
+  title: 'How Krita VCS keeps your work safe',
+  metaTitle: 'Keeping your work safe — Documentation — Krita VCS',
+  metaDescription:
+    'The guardrails Krita VCS builds in so you never lose work by accident.',
+  items: [
+    {
+      lead: "Won't switch or merge if you have unsaved changes.",
+      body: "You'll get a prompt with a shortcut straight to Changes, so nothing you've done gets lost or mixed into the wrong line of work.",
+    },
+    {
+      lead: 'Never silently overwrites a conflict.',
+      body: 'If the same artwork changed in two places at once, Krita VCS keeps the incoming version and marks the file for you to review — it never guesses.',
+    },
+    {
+      lead: "Can't delete your main line of work, or the one you're currently on.",
+      body: "Switch to another branch first if you want to remove the one you're using.",
+    },
+    {
+      lead: "Won't undo a save that something else depends on.",
+      body: 'If a later save or another branch still needs it, undo is blocked so nothing gets orphaned.',
+    },
+    {
+      lead: "Nothing happens if there's nothing to do.",
+      body: "Saving with no changes, or restoring the version you're already on, simply does nothing.",
+    },
+    {
+      lead: 'Only one save happens at a time.',
+      body: 'If you\'re also using the Krita plugin, the two can never save at once — you\'ll see a brief "please wait" instead of any risk of a mixed-up save.',
+    },
+    {
+      lead: 'Removing a project defaults to the safe choice.',
+      body: '"Remove from list" just forgets it here — your files and history stay untouched. Deleting the folder for good asks you to type its name first, so it\'s never one accidental click away.',
+    },
+    {
+      lead: 'Cleaning up always shows you first.',
+      body: "You'll see exactly what would be freed before anything is actually deleted.",
+    },
+  ],
+} as const;
+
+export const docsPlugin = {
+  slug: 'plugin',
+  label: 'Installing the plugin',
+  title: 'Installing the Krita plugin (optional)',
+  metaTitle: 'Installing the plugin — Documentation — Krita VCS',
+  metaDescription:
+    'Set up the optional Krita plugin for saving versions without leaving Krita.',
+  intro:
+    'Prefer to save versions without switching windows? The Krita plugin adds a small Version Control panel right inside Krita, with a changelist, a commit button, a one-tap Checkpoint for quick milestones, and branch switching, all working against the same history as the main app.',
+  notes: [
+    "Commit and Checkpoint only turn on once you've saved in Krita. The plugin never saves your file for you.",
+    'Everything it does is local, same as the main app. No new accounts, no new servers.',
+    'Setting up a repository, and browsing or restoring older versions, still happens in the main Krita VCS app. The plugin is just a faster way to commit.',
+  ],
+  closing:
+    "Today, installing it means building one small command-line helper alongside the app and copying a folder into Krita's plugin directory: a five-minute, one-time setup. Full step-by-step instructions live in the plugin's own guide.",
+  cta: {
+    label: 'Plugin guide on GitHub',
+    href: links.pluginGuide,
   },
+} as const;
+
+// Sidebar/tab order for the /docs chapter nav.
+// docsPlugin is hidden from the nav for now (page + content still exist at
+// /docs/plugin, just not linked) — add it back here to re-show the tab.
+export const docsChapters = [
+  docsGettingStarted,
+  docsUsingFeatures,
+  docsSafety,
+] as const;
+
+// The local installer served from `public/download/` + where the download
+// button redirects to (the Getting Started chapter, flagged to show the
+// download banner).
+export const download = {
+  fileHref: '/download/Krita-VC_0.1.0_x64-setup.exe',
+  fileName: 'Krita-VC_0.1.0_x64-setup.exe',
+  redirectHref: '/docs/getting-started?ref=download',
 } as const;

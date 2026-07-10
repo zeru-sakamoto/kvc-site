@@ -92,19 +92,47 @@ rhythm so the page doesn't read as one repeated template.
 
 ### `/docs` route
 
-A second page, separate from the single-page landing flow, for the getting-started guide:
+A second area, separate from the single-page landing flow, holding the full documentation as a
+chapter-tabbed guide (`app/docs/layout.tsx` + one route per chapter):
 
-1. **Intro.** Title + one-line framing + "Read the docs on GitHub" CTA (full docs live in the
-   repo, not duplicated here).
-2. **Getting started.** Four numbered steps (`app/components/steps.tsx` — a plain numbered list,
-   no stepper widget, no screenshots), covering install → point at a folder → save a version →
-   compare two versions.
-3. **Installing the Krita plugin (optional).** Intro paragraph, a short bullet list of caveats,
-   a closing paragraph, and a "Plugin guide on GitHub" CTA.
+1. **Shared header (`app/docs/layout.tsx`).** Title + one-line framing + "Read the docs on
+   GitHub" CTA (full docs live in the repo, not duplicated here), rendered once above the
+   chapters, not repeated per tab.
+2. **Chapter nav (`app/components/docs-nav.tsx`).** Four chapters, each a real route so they're
+   shareable/bookmarkable: Getting started, Using each feature, Keeping your work safe, Installing
+   the plugin. A vertical list on the left on `lg:` and up (client component, `usePathname` for
+   the active tab); collapses to a horizontal scrollable pill row above the content on mobile —
+   same overflow-safe pattern as the rest of the site, no separate mobile component.
+3. **Getting started** (`app/docs/getting-started/page.tsx`). Five numbered steps
+   (`app/components/steps.tsx` — a plain numbered list, no stepper widget, no screenshots),
+   covering install → pick a folder → save a version → compare versions → branch/merge/restore.
+   This is also the page the hero's download button redirects to: when reached with
+   `?ref=download` in the URL, a small callout renders above the steps ("Your download will start
+   automatically", with a plain fallback link) — no fake progress bar or fake precision.
+4. **Using each feature** (`app/docs/using-features/page.tsx`). A dot-bullet reference list
+   (`app/components/bullet-list.tsx`, bold lead term + body) covering Changes, History, Branches,
+   comparing versions, Undo, Restore, Settings, and Clean up storage.
+5. **Keeping your work safe** (`app/docs/safety/page.tsx`). Same `BulletList` component, one
+   entry per guardrail (won't switch with unsaved changes, never silently overwrites a conflict,
+   etc.).
+6. **Installing the Krita plugin (optional)** (`app/docs/plugin/page.tsx`). Intro paragraph,
+   `BulletList` of caveats, a closing paragraph, and a "Plugin guide on GitHub" CTA.
+
+`app/docs/page.tsx` (the bare `/docs` route) is a one-line `redirect('/docs/getting-started')` —
+there's exactly one canonical place each chapter's content lives, no duplication.
 
 Same tokens, same voice, same no-fake-UI rule as the landing page. `SiteHeader`/`SiteFooter` wrap
 it automatically via the root layout; no separate chrome. Not alternating, not media-columned —
 intentionally a different rhythm than the landing page, same as Why/What's-next/FAQ already are.
+
+### Download flow
+
+The hero's primary CTA is `app/components/download-button.tsx`, not a plain link: a real
+`<a href="/download/Krita-VC_0.1.0_x64-setup.exe" download>` (works with JS disabled) whose
+`onClick` also client-navigates to `/docs/getting-started?ref=download`. Both actions fire from
+the same click — the `download` attribute forces the browser to save the file instead of
+navigating, so there's no conflict with the SPA redirect. The installer lives in
+`public/download/`, served at `/download/...` directly (no external host).
 
 ## GSAP Animation
 
@@ -148,17 +176,25 @@ if (!preferReduced) {
   sparingly (the page leans on strong headings, not a mono-caps kicker over every section).
 - **Media (`media.tsx`):** `LayersMedia`, `DiffMedia`, `BranchMedia`, `OwnershipMedia`,
   `SignatureMedia` — abstract painterly vector, all colors via tokens.
-- **Steps (`steps.tsx`):** plain numbered list for the `/docs` Getting Started guide. No
+- **Steps (`steps.tsx`):** plain numbered list for the `/docs` Getting Started chapter. No
   animation, no stepper widget — a static ordered list styled with site tokens.
+- **Bullet list (`bullet-list.tsx`):** dot-bullet list shared by the Using each feature, Keeping
+  your work safe, and plugin chapters — optional bold lead term + body, no new markup per chapter.
+- **Docs nav (`docs-nav.tsx`):** chapter tabs for `/docs` — vertical list on `lg:` and up,
+  horizontal scrollable pill row on mobile. Client component, active tab via `usePathname`.
+- **Download button (`download-button.tsx`):** the hero's primary CTA — see Download flow above.
 - **FAQ (`faq.tsx`):** native `<details>` accordion.
 - **Footer (`site-footer.tsx`):** maker signature, license, outbound link columns (internal
   links like `/docs` use `next/link` and skip `target="_blank"`; external repo links keep it).
 
 ## External Links
 
-- **Download:** hero primary CTA → GitHub releases (no standalone download host yet).
+- **Download (hero):** served locally from `public/download/`, see Download flow above — not an
+  external link.
+- **Download (footer):** still points to GitHub releases; only the hero CTA triggers the local
+  file + redirect flow.
 - **Source:** hero secondary CTA + nav + footer → the repo.
 - **Issues:** "Request a feature" (What's next) + footer.
-- **Docs / Plugin guide:** `/docs` page CTAs → GitHub repo (no dedicated docs site yet, same
-  placeholder-link convention as Download).
+- **Docs / Plugin guide:** `/docs` chapter CTAs → GitHub repo (no dedicated docs site yet, same
+  placeholder-link convention as the footer's Download link).
 - **GitHub profile / Personal portfolio:** footer, tied to the maker signature.

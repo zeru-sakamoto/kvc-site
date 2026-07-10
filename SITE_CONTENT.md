@@ -66,7 +66,9 @@ when you say so.
 ### Palette diffs
 
 Working with `.gpl` color palettes? Krita VCS shows a color-by-color swatch comparison, with hex
-values, so palette tweaks are as easy to review as a painting.
+values, so palette tweaks are as easy to review as a painting. Support for `.kpl`, `.aco`, and
+`.ase` palettes is on the way, so the same comparison works no matter where your palette comes
+from.
 
 ### Artist Mode
 
@@ -107,13 +109,18 @@ applied instantly, no restart needed.
 
 ## What's next
 
-Krita VCS is actively developed. A few things we're still improving:
+Krita VCS is actively developed. A few things I'm still improving:
 
-- **Smarter diffs for non-painting files** — text/config files in a project currently get a basic
-  line view; a full visual diff for these is planned.
-- **Deeper zoom for very large paintings** — comparisons render at a capped resolution to keep
-  cached previews small; a way to go past that cap for pixel-level review on huge canvases is
-  on the roadmap.
+- **Tracking more color palette formats** — `.gpl` swatch diffs work today; support for `.kpl`,
+  `.aco`, and `.ase` palettes is planned so the same color-by-color comparison works no matter
+  where your palette comes from.
+- **Diff stashing** — set aside an in-progress comparison and come back to it later without
+  losing your place, so you can hop between reviews without re-picking the same two versions.
+- **A guided first-launch tour** — a dynamic walkthrough of the app on first open, pointing out
+  the repository switcher, Changes, History, and Settings so new users aren't left guessing.
+- **The Krita plugin** — an optional in-Krita "Version Control" panel (commit, quick-checkpoint,
+  branch switching, no window-switching) built on the same history as the main app. Available
+  today as a manual build; see the [Krita plugin install guide on GitHub →].
 
 Have a feature request? [Open an issue on GitHub →]
 
@@ -121,75 +128,43 @@ Have a feature request? [Open an issue on GitHub →]
 
 ## Documentation
 
-New to Krita VCS? Start here. This page walks through installing the app, saving your first
-version, and — if you want it — adding the optional Krita plugin so you can commit without ever
-leaving Krita.
+New to Krita VCS? A full walkthrough — installing, saving your first version, using every
+feature, and the guardrails that keep your work safe — lives on its own page.
+
+[Getting Started with Krita VCS →](SITE_CONTENT_GETTING_STARTED.md)
 
 [Read the full docs on GitHub →]
-
-### Getting started
-
-1. **Install and open Krita VCS.** [Download for free →] and launch it — no account, no sign-in.
-2. **Point it at a folder.** Use the repository switcher at the top and choose **Create** or
-   **Browse** to pick the folder your `.kra` files live in. Krita VCS creates a small hidden
-   history store inside that folder; your files themselves are never moved or renamed.
-3. **Save a version.** Open the **Changes** view, write a short note about what you did, and hit
-   **Commit**. That's a version you can always come back to.
-4. **Compare two versions.** Pick any two commits in the **History** view to see a visual,
-   layer-by-layer diff — no line numbers, no code.
-
-![Screenshot placeholder — first-run repository picker + first commit](placeholder)
-
-### Installing the Krita plugin (optional)
-
-Prefer to save versions without switching windows? The Krita plugin adds a small **Version
-Control** panel directly inside Krita, with a changelist, a commit button, a one-tap "Checkpoint"
-for quick milestones, and branch switching — all working against the exact same history as the
-main app.
-
-- Commit and Checkpoint only become active once you've saved in Krita (the plugin never saves
-  your file for you).
-- Everything it does is local, same as the main app — no new accounts, no new servers.
-- Setting up a repository, and browsing or restoring older versions, still happens in the main
-  Krita VCS app — the plugin is just a faster way to commit.
-
-Today, installing it means building one small command-line helper alongside the app and copying
-a folder into Krita's plugin directory — a five-minute, one-time setup. Full step-by-step
-instructions (with copy-pasteable commands) live in the plugin's own guide:
-
-[Krita plugin install guide on GitHub →]
-
-![Screenshot placeholder — Version Control docker inside Krita](placeholder)
 
 ---
 
 ## FAQ
 
-**Does this replace Krita?**
-No — Krita VCS runs alongside Krita as a separate app. You still paint in Krita; Krita VCS just
-watches your project folder and manages its history.
+**What does it do?**
+It keeps every version of your painting as you save, like a save file for each stage of your art.
+You can look back at any earlier version, compare two side by side, or go back to one if you
+change your mind, all without leaving a mess of duplicate files on your computer.
 
 **Is my art uploaded anywhere?**
-No. Krita VCS is local-only by design — there's no remote server, no account, and no sync. All
-version history is stored in a folder on your own machine.
+No. Krita VCS is local-only by design: there's no server, no account, and no sync. Every version
+lives in a folder on your own machine.
 
 **Is it free?**
-Yes, Krita VCS is free and open source. _(License: TBD — check the repository for current
-licensing terms.)_
+Yes, Krita VCS is free and open source. The license is still being finalised, so check the
+repository for current terms.
 
 **What platforms does it support?**
-Krita VCS is a desktop app built with Tauri, currently targeting Windows, with macOS/Linux support
-following the same cross-platform base.
+It's a desktop app built with Tauri, currently targeting Windows, with macOS and Linux following
+on the same cross-platform base.
 
 **Does it work with any file, or just `.kra`?**
-Krita VCS tracks your whole project folder, but its deep visual diffing — layer-by-layer
-comparison — is built specifically for Krita's `.kra` format and `.gpl` palettes. Other files in
-the folder are still tracked and versioned, with a simpler diff view.
+It tracks your whole project folder, but its deep visual diffing, layer by layer, is built for
+Krita's `.kra` format and `.gpl` palettes. Other files are still tracked and versioned, with a
+simpler diff view.
 
 **Will my history get huge over time?**
-Krita VCS only stores what changed between saves, not a full copy each time, so history stays
-compact. If you ever want to reclaim space from old, unreachable versions, the built-in
-"Clean up storage" tool does it with your confirmation.
+It only stores what changed between saves, not a full copy each time, so history stays compact.
+And if you ever want the space back from old, unreachable versions, the built-in "Clean up
+storage" tool does it, with your confirmation.
 
 ---
 
