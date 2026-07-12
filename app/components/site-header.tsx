@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { site, nav } from '@/lib/content';
 
@@ -27,9 +28,14 @@ export default function SiteHeader() {
           href="/"
           className="group flex items-center gap-2.5 font-display text-base font-bold tracking-tight text-primary"
         >
-          <span
+          <Image
+            src="/logo.svg"
+            alt=""
             aria-hidden
-            className="inline-block h-3.5 w-3.5 rounded-full bg-brand-blue transition-colors duration-300 group-hover:bg-accent-warm"
+            priority
+            width={28}
+            height={30}
+            className="h-7 w-auto"
           />
           {site.wordmark}
         </Link>
