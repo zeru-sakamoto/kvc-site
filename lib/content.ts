@@ -90,7 +90,7 @@ export const features = [
     title: 'See exactly what changed, layer by layer.',
     body: [
       "Compare any two versions of a painting one layer at a time. Toggle side-by-side or drag a swipe slider across the canvas; zoom and pan to inspect the details, perfectly in sync between both views. What changed shows as a dashed outline tracing the silhouette of the edited pixels, and focusing a single layer narrows that outline to just that layer's changes. The flattened image loads first, so you're never staring at a blank panel; individual layers stream in right behind it. Click any layer for its details: type, visibility, opacity, blend mode, and the area it actually paints on. Click the canvas itself for the painting's size, resolution, and color space.",
-      'Working with .gpl color palettes too? Krita VCS lays them out swatch by swatch, hex values and all, so a palette tweak is as easy to review as a repaint.',
+      'Working with color palettes too? Krita VCS lays them out swatch by swatch, hex values and all, across every common format: .gpl, .kpl, and Adobe’s .aco and .ase, so a palette tweak is as easy to review as a repaint.',
     ],
     reverse: true,
   },
@@ -98,8 +98,8 @@ export const features = [
     id: 'history',
     title: 'Every save is a place you can go back to.',
     body: [
-      "Each save is a full version you can return to at any time. Branch off to try something risky, switch back in an instant, and merge the two when you're happy. Overlapping edits are flagged, never quietly overwritten. A color-coded graph shows exactly how your branches connect.",
-      'Made a save you regret? Undo it. Want to jump back three versions? Do that instead. Krita VCS never deletes your history behind your back; old versions stay recoverable until you decide otherwise.',
+      "Each save is a full version you can return to at any time. Choose exactly which files a version includes, or save everything at once. Branch off to try something risky, switch back in an instant, and merge the two when you're happy. Overlapping edits are flagged, never quietly overwritten: if one branch edited a file and the other deleted it, the edit wins. A color-coded graph shows exactly how your branches connect.",
+      "Made a save you regret? Undo it. Want to jump back three versions? Do that instead. Krita VCS never deletes your history behind your back; old versions stay recoverable until you decide otherwise. Mid-edit and want a fresh start on just one file? Discard its unsaved changes on the spot, or discard everything you haven't staged yet in one go, always with a confirmation first.",
     ],
     reverse: false,
   },
@@ -117,7 +117,7 @@ export const features = [
     title: 'Sign your work, tune it to your machine.',
     body: [
       "Put your name on every version you save, so on a shared project it's obvious who did what. That's set once in the Settings panel, right alongside how much disk space preview thumbnails are allowed to use.",
-      'Working on a painting with a long, heavy revision history? Turn on compact storage and Krita VCS shrinks it down. Everything here is optional, and you can change any of it whenever you like.',
+      'Working on a painting with a long, heavy revision history? Turn on compact storage and Krita VCS shrinks it down. Everything here is optional, and you can change any of it whenever you like. Prefer your own window frame over ours? Toggle the custom title bar off any time, no restart needed.',
       'Prefer a different look for the app itself? Krita VCS ships with eight color themes, six dark and two light, from the moody default Charcoal to Krita Blue, Tokyo Night, and True Black. Pick one in Settings and it applies right away, no restart, saved right there on your machine.',
     ],
     reverse: false,
@@ -145,10 +145,6 @@ export const whatsNext = {
   intro: "Krita VCS is actively developed. A few things I'm still improving:",
   items: [
     {
-      title: 'Tracking more color palette formats',
-      body: '.gpl swatch diffs work today; support for .kpl, .aco, and .ase palettes is planned so the same color-by-color comparison works no matter where your palette comes from.',
-    },
-    {
       title: 'Diff stashing',
       body: 'Set aside an in-progress comparison and come back to it later without losing your place, so you can hop between reviews without re-picking the same two versions.',
     },
@@ -158,7 +154,7 @@ export const whatsNext = {
     },
     {
       title: 'The Krita plugin',
-      body: 'An optional in-Krita "Version Control" panel — commit, quick-checkpoint, branch switching, no window-switching — built on the same history as the main app. Available today as a manual build; see the plugin guide in the docs.',
+      body: 'An optional in-Krita "Version Control" panel (commit, quick-checkpoint, branch switching, no window-switching), built on the same history as the main app. Available today as a manual build; see the plugin guide in the docs.',
     },
   ],
   cta: { label: 'Request a feature on GitHub', href: links.issues },
@@ -184,7 +180,7 @@ export const faq = [
   },
   {
     q: 'Does it work with any file, or just .kra?',
-    a: "It tracks your whole project folder, but its deep visual diffing, layer by layer, is built for Krita's .kra format and .gpl palettes. Other files are still tracked and versioned, with a simpler diff view.",
+    a: "It tracks the file types it understands and leaves the rest of your folder alone: Krita paintings (.kra), with the deep layer-by-layer visual diff, and color palettes (.gpl, .kpl, .aco, .ase), with a color-by-color swatch diff. Other files sitting in the project folder aren't touched; they're never copied into its history.",
   },
   {
     q: 'Will my history get huge over time?',
@@ -230,7 +226,7 @@ export const docsGettingStarted = {
   slug: 'getting-started',
   label: 'Getting started',
   title: 'Getting started',
-  metaTitle: 'Getting started — Documentation — Krita VCS',
+  metaTitle: 'Getting started · Documentation · Krita VCS',
   metaDescription:
     'Install Krita VCS, point it at a project folder, and save your first version.',
   steps: [
@@ -240,7 +236,7 @@ export const docsGettingStarted = {
     },
     {
       title: 'Pick a project folder.',
-      body: "Use the repository switcher at the top and choose Create repository (name it, choose a folder) or Browse existing repository (a folder you're already tracking). Picking a folder you've already set up just opens it — nothing gets reset.",
+      body: "Use the repository switcher at the top and choose Create repository (name it, choose a folder) or Browse existing repository (a folder you're already tracking). Picking a folder you've already set up just opens it. Nothing gets reset.",
     },
     {
       title: 'Save your first version.',
@@ -261,7 +257,7 @@ export const docsUsingFeatures = {
   slug: 'using-features',
   label: 'Using each feature',
   title: 'Using each feature',
-  metaTitle: 'Using each feature — Documentation — Krita VCS',
+  metaTitle: 'Using each feature · Documentation · Krita VCS',
   metaDescription:
     'A quick reference for every panel in Krita VCS: Changes, History, Branches, comparing versions, and more.',
   items: [
@@ -279,7 +275,7 @@ export const docsUsingFeatures = {
     },
     {
       lead: 'Comparing versions',
-      body: 'Side-by-side or a swipe slider, with zoom and pan that stay in sync between both sides. The eye icon highlights exactly what changed — a precise outline of the changed pixels, or a simpler box around the changed area. Click a layer to see its details.',
+      body: 'Side-by-side or a swipe slider, with zoom and pan that stay in sync between both sides. The eye icon highlights exactly what changed, a precise outline of the changed pixels, or a simpler box around the changed area. Click a layer to see its details.',
     },
     {
       lead: 'Undo',
@@ -295,7 +291,7 @@ export const docsUsingFeatures = {
     },
     {
       lead: 'Clean up storage',
-      body: 'Shows you exactly how much space would be freed before you confirm anything. Only ever clears old, unreachable leftovers — never your current work or anything still visible in your history.',
+      body: 'Shows you exactly how much space would be freed before you confirm anything. Only ever clears old, unreachable leftovers, never your current work or anything still visible in your history.',
     },
   ],
 } as const;
@@ -304,7 +300,7 @@ export const docsSafety = {
   slug: 'safety',
   label: 'Keeping your work safe',
   title: 'How Krita VCS keeps your work safe',
-  metaTitle: 'Keeping your work safe — Documentation — Krita VCS',
+  metaTitle: 'Keeping your work safe · Documentation · Krita VCS',
   metaDescription:
     'The guardrails Krita VCS builds in so you never lose work by accident.',
   items: [
@@ -314,7 +310,7 @@ export const docsSafety = {
     },
     {
       lead: 'Never silently overwrites a conflict.',
-      body: 'If the same artwork changed in two places at once, Krita VCS keeps the incoming version and marks the file for you to review — it never guesses.',
+      body: 'If the same artwork changed in two places at once, Krita VCS keeps the incoming version and marks the file for you to review. It never guesses.',
     },
     {
       lead: "Can't delete your main line of work, or the one you're currently on.",
@@ -330,11 +326,11 @@ export const docsSafety = {
     },
     {
       lead: 'Only one save happens at a time.',
-      body: 'If you\'re also using the Krita plugin, the two can never save at once — you\'ll see a brief "please wait" instead of any risk of a mixed-up save.',
+      body: 'If you\'re also using the Krita plugin, the two can never save at once. You\'ll see a brief "please wait" instead of any risk of a mixed-up save.',
     },
     {
       lead: 'Removing a project defaults to the safe choice.',
-      body: '"Remove from list" just forgets it here — your files and history stay untouched. Deleting the folder for good asks you to type its name first, so it\'s never one accidental click away.',
+      body: '"Remove from list" just forgets it here; your files and history stay untouched. Deleting the folder for good asks you to type its name first, so it\'s never one accidental click away.',
     },
     {
       lead: 'Cleaning up always shows you first.',
@@ -347,7 +343,7 @@ export const docsPlugin = {
   slug: 'plugin',
   label: 'Installing the plugin',
   title: 'Installing the Krita plugin (optional)',
-  metaTitle: 'Installing the plugin — Documentation — Krita VCS',
+  metaTitle: 'Installing the plugin · Documentation · Krita VCS',
   metaDescription:
     'Set up the optional Krita plugin for saving versions without leaving Krita.',
   intro:
@@ -378,7 +374,7 @@ export const docsChapters = [
 // button redirects to (the Getting Started chapter, flagged to show the
 // download banner).
 export const download = {
-  fileHref: '/download/Krita-VC_0.1.0_x64-setup.exe',
-  fileName: 'Krita-VC_0.1.0_x64-setup.exe',
+  fileHref: '/download/Krita-VC_0.2.0_x64-setup.exe',
+  fileName: 'Krita-VC_0.2.0_x64-setup.exe',
   redirectHref: '/docs/getting-started?ref=download',
 } as const;
