@@ -193,7 +193,7 @@ export const faq = [
   },
   {
     q: 'Is it free?',
-    a: 'Yes, Krita VCS is free and open source. The license is still being finalised, so check the repository for current terms.',
+    a: 'Yes, Krita VCS is free and open source under the MIT license.',
   },
   {
     q: 'What platforms does it support?',
@@ -229,8 +229,7 @@ export const footer = {
     },
   ],
   signature: 'Made for painters by Zeru Sakamoto.',
-  // SITE_CONTENT.md: license is still TBD — don't assert a specific one.
-  license: 'Free and open source · license being finalised',
+  license: 'Free and open source · MIT license',
 } as const;
 
 // The /docs page — a chapter-tabbed documentation guide, kept off the
