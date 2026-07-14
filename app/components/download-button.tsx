@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { download } from '@/lib/content';
+import { WindowsGlyph } from './platform-icons';
 
 // A real file-download link (works with JS disabled) that also client-navigates
 // to the Getting Started chapter on click. The `download` attribute forces the
@@ -23,7 +24,9 @@ export default function DownloadButton({
       className={className}
       onClick={() => router.push(download.redirectHref)}
     >
-      {label}
+      {/* Windows glyph — the installer is Windows-only for now (see PlatformIcons). */}
+      <WindowsGlyph />
+      <span className="ml-2">{label}</span>
     </a>
   );
 }

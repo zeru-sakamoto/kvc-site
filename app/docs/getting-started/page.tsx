@@ -5,6 +5,9 @@ import { docsGettingStarted, download } from '@/lib/content';
 export const metadata: Metadata = {
   title: docsGettingStarted.metaTitle,
   description: docsGettingStarted.metaDescription,
+  // The download button lands here with ?ref=download; canonicalize so the
+  // query variant doesn't split ranking signals from the clean URL.
+  alternates: { canonical: '/docs/getting-started' },
 };
 
 export default async function GettingStartedPage({

@@ -190,12 +190,20 @@ if (!preferReduced) {
 - **Docs nav (`docs-nav.tsx`):** chapter tabs for `/docs` — vertical list on `lg:` and up,
   horizontal scrollable pill row on mobile. Client component, active tab via `usePathname`.
 - **Download button (`download-button.tsx`):** the hero's primary CTA — see Download flow above.
+  Leads with the shared `WindowsGlyph` (the installer is Windows-only today); the accompanying
+  `PlatformIcons` row shows macOS/Linux as "Soon." Reused on the discovery pages.
 - **Platform icons (`platform-icons.tsx`):** small OS-availability row under the hero CTAs —
   Windows (available) vs. macOS/Linux (coming soon), generic inline-SVG glyphs, wording sourced
   from `lib/content.ts`'s `platforms` (kept in sync with the FAQ's platform answer).
 - **FAQ (`faq.tsx`):** native `<details>` accordion.
-- **Footer (`site-footer.tsx`):** maker signature, license, outbound link columns (internal
-  links like `/docs` use `next/link` and skip `target="_blank"`; external repo links keep it).
+- **Footer (`site-footer.tsx`):** maker signature, license, link columns — Product, **Guides**
+  (the two discovery pages), Maker. Row wraps (`flex-wrap`) so three columns stay mobile-safe.
+  Internal links use `next/link`; external repo links keep `target="_blank"`.
+- **JSON-LD (`json-ld.tsx`):** renders one `application/ld+json` block from a passed object,
+  escaping `<` to close the `</script>` breakout. Reused by layout, home, docs, discovery pages.
+- **Discovery page (`discovery-page.tsx`):** shared template for the SEO landing routes — intro
+  (h1 + CTAs), alternating `Section` blocks reusing existing media motifs, closing CTA,
+  `BreadcrumbList` JSON-LD. Copy lives in `lib/content.ts`.
 
 ## External Links
 
@@ -208,3 +216,32 @@ if (!preferReduced) {
 - **Docs / Plugin guide:** `/docs` chapter CTAs → GitHub repo (no dedicated docs site yet, same
   placeholder-link convention as the footer's Download link).
 - **GitHub profile / Personal portfolio:** footer, tied to the maker signature.
+
+## SEO & Discoverability
+
+Nobody searches "Krita version control," so discovery targets the _problems_ painters search for
+and clean structured data for AI answer engines. The painter-first voice is preserved: keywords
+live in metadata, FAQ answers, and JSON-LD, with only light retuning of visible headings.
+
+- **Canonical origin:** `https://krita-vc.zeru-sakamoto.codes`, via `siteUrl` in `lib/content.ts`
+  (env-overridable with `NEXT_PUBLIC_SITE_URL`). Feeds `metadataBase`, canonicals, sitemap, OG.
+- **Metadata (`app/layout.tsx`):** `metadataBase`, title template `%s · Krita VCS`, keywords,
+  author/creator, Open Graph (`website`, siteName, locale), Twitter `summary_large_image`, robots
+  with `max-image-preview: large`, and a Search Console hook (`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`).
+  Canonical + `og:url` are **not** set on the root layout (metadata inherits root→page, which would
+  point every page at `/`); the homepage sets its own canonical in `app/page.tsx`, other routes set
+  theirs. Docs use a nested template `%s · Documentation · Krita VCS`.
+- **Structured data (JSON-LD):** `WebSite` + `Person` site-wide (layout); `SoftwareApplication`
+  (free/MIT/Windows, `downloadUrl`, version) + `FAQPage` (mapped from the `faq` array) on the home
+  page; `BreadcrumbList` on docs + discovery pages. FAQ/HowTo rich results are Google-restricted
+  now, but the schema still aids AI answer engines — HowTo markup is deliberately skipped.
+- **Share image (`app/opengraph-image.tsx`):** dynamic 1200×630 card via `next/og` — brush logo,
+  `Krita VCS` in Syne, tagline, `Free · local-only · MIT` on the brand canvas gradient. Honest
+  media, literal DESIGN.md hex (Satori can't read CSS vars). Fonts fetched from Google with a
+  graceful fallback so an offline build still renders on the built-in font. Covers `twitter:image`
+  too (X falls back to `og:image`), so there is no separate `twitter-image`.
+- **`robots.ts` / `sitemap.ts`:** allow-all robots pointing at the sitemap; sitemap built from the
+  `docsChapters`/`docsPlugin`/`discoveryPages` exports so it never drifts from the routes.
+- **Discovery routes:** `/recover-a-krita-version` (go back to an earlier version) and
+  `/vs-saving-copies` (an alternative to `_final_final.kra` copies) — distinct search intent from
+  the homepage, cross-linked from the footer "Guides" column.

@@ -182,4 +182,56 @@ storage" tool does it, with your confirmation.
 
 ---
 
+## Discovery pages
+
+Standalone landing pages that target what painters actually search for (the product name isn't a
+search term). Same painter-first voice, honest media, cross-linked from the footer "Guides" column.
+
+### Go back to any earlier version of your painting. — `/recover-a-krita-version`
+
+Painted over an hour of good work, or a `.kra` file got away from you? If you have been saving with
+Krita VCS, every one of those saves is still there. Getting back to the one you want takes a few
+clicks, with nothing overwritten and nothing deleted.
+
+**Every save is already a restore point.**
+Each time you save a version, Krita VCS records the full state of your painting, layer by layer.
+Nothing is flattened, nothing is thrown away. Weeks of work sit in one history you scroll back
+through, not a folder full of look-alike files. Because it only stores what changed between saves,
+that history stays small even after hundreds of versions.
+
+**Find the version you want, visually.**
+Open History and pick any two versions to see them side by side, or drag a swipe slider across the
+canvas. Changed pixels are outlined layer by layer, so you can spot the exact save where things
+still looked right, no guessing by filename or date.
+
+**Go back without losing anything.**
+Restore an older version and its files come back as a brand-new save on top of your history. The
+versions in between are never deleted, so you can always change your mind again. Undo works the same
+way: it lifts your most recent save back into unsaved changes, ready to redo. Overlapping edits are
+flagged for you to review, never quietly overwritten.
+
+### Stop saving copies of your `.kra` files. — `/vs-saving-copies`
+
+The usual way to keep a painting safe is Save As: painting_final, painting_final_2,
+painting_FINAL_use_this. It works, until you have twenty near-identical files, no idea which is
+newest, and a drive filling up fast. Krita VCS replaces the whole pile with one tracked folder.
+
+**The trouble with saving copies by hand.**
+Every manual copy is a full duplicate of a heavy, layer-packed file, so disk use climbs fast. Names
+drift out of order, cloud folders sync half-finished saves, and none of it tells you what actually
+changed from one copy to the next.
+
+**One folder, every version, only what changed.**
+Krita VCS keeps all of your history in a hidden folder inside your own project, and stores only the
+pixels that changed between saves, already around 50% smaller than a full copy by your second save.
+No _final_2, no duplicate `.kra` files cluttering your drive. It all stays on your machine. No
+account, no sync, no server.
+
+**And you can actually see the difference.**
+Instead of opening two files to guess what moved, compare any two versions side by side or on a
+swipe slider, with changed layers outlined for you. Branch off to try a bold new direction, then
+merge it back or drop it, without a single extra file on disk.
+
+---
+
 _Screenshots throughout this page are placeholders. Final captures to be added._

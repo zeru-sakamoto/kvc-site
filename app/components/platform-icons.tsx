@@ -5,9 +5,15 @@
 // actually downloadable today, consistent with the FAQ's platform answer.
 import { platforms } from '@/lib/content';
 
-function WindowsGlyph({ opacity }: { opacity: number }) {
+export function WindowsGlyph({
+  opacity = 1,
+  className = 'h-4 w-4 flex-none',
+}: {
+  opacity?: number;
+  className?: string;
+}) {
   return (
-    <svg aria-hidden viewBox="0 0 16 16" className="h-4 w-4 flex-none">
+    <svg aria-hidden viewBox="0 0 16 16" className={className}>
       {[
         [1.5, 1.5],
         [8.5, 1.5],

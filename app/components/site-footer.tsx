@@ -25,7 +25,7 @@ export default function SiteFooter() {
             <p className="mt-3 text-xs text-muted">{footer.license}</p>
           </div>
 
-          <div className="flex gap-16">
+          <div className="flex flex-wrap gap-x-16 gap-y-10">
             {footer.columns.map((col) => (
               <div key={col.title}>
                 <h3 className="font-mono text-xs uppercase tracking-[0.2em] text-accent-cool">

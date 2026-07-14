@@ -7,6 +7,11 @@ export const repo = { owner: 'zeru-sakamoto', name: 'krita-vc' } as const;
 
 const repoUrl = `https://github.com/${repo.owner}/${repo.name}`;
 
+// Canonical production origin. Env-overridable so a domain change is one var,
+// not a code edit. No trailing slash — everything below joins onto it.
+export const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://krita-vc.zeru-sakamoto.codes';
+
 export const links = {
   repo: repoUrl,
   issues: `${repoUrl}/issues`,
@@ -23,9 +28,23 @@ export const links = {
 export const site = {
   name: 'Krita VCS',
   wordmark: 'Krita VCS',
-  metaTitle: 'Krita VCS: version control for your art, not your code',
+  metaTitle: 'Krita VCS: version control for your paintings, not your code',
   metaDescription:
-    'A free, local-only version-control app for Krita painters. Every save becomes a version you can revisit, compare, branch from, or roll back to. No accounts, no uploads.',
+    'Free, local-only version control for Krita painters. Every save is a version of your .kra file you can compare, branch from, or go back to. No accounts, no uploads.',
+  // Low ranking weight, but harmless and read by some engines. These are the
+  // problem-phrases people actually search — nobody searches the product name.
+  keywords: [
+    'Krita version control',
+    'version control for artists',
+    'version control for digital art',
+    'digital painting version control',
+    'Krita file versions',
+    'compare Krita files',
+    'go back to an earlier version in Krita',
+    'recover a Krita painting',
+    'backup Krita art',
+    '.kra version history',
+  ],
 } as const;
 
 export const nav = {
@@ -44,7 +63,7 @@ export const hero = {
   // the page's eyebrow count.
   badge: 'Free, open source, local-only',
   headline: 'Version control for your art, not your code.',
-  sub: 'A free, local-only version-control app for Krita painters. No cloud, no accounts, and none of the git jargon.',
+  sub: 'A free, local-only version control app for Krita painters and digital art. No cloud, no accounts, and none of the git jargon.',
   primaryCta: { label: 'Download for free' },
   secondaryCta: { label: 'View source on GitHub', href: links.repo },
 } as const;
@@ -221,6 +240,15 @@ export const footer = {
       ],
     },
     {
+      // Internal links to the discovery pages (kept as literals: `footer` is
+      // evaluated before the discoveryPages consts below it in this module).
+      title: 'Guides',
+      links: [
+        { label: 'Go back to a version', href: '/recover-a-krita-version' },
+        { label: 'Stop saving copies', href: '/vs-saving-copies' },
+      ],
+    },
+    {
       title: 'Maker',
       links: [
         { label: 'GitHub', href: links.profile },
@@ -246,9 +274,9 @@ export const docsGettingStarted = {
   slug: 'getting-started',
   label: 'Getting started',
   title: 'Getting started',
-  metaTitle: 'Getting started · Documentation · Krita VCS',
+  metaTitle: 'Getting started',
   metaDescription:
-    'Install Krita VCS, point it at a project folder, and save your first version.',
+    'Install Krita VCS, point it at a project folder, and save your first version of a .kra painting.',
   steps: [
     {
       title: 'Install and open.',
@@ -277,9 +305,9 @@ export const docsUsingFeatures = {
   slug: 'using-features',
   label: 'Using each feature',
   title: 'Using each feature',
-  metaTitle: 'Using each feature · Documentation · Krita VCS',
+  metaTitle: 'Using each feature',
   metaDescription:
-    'A quick reference for every panel in Krita VCS: Changes, History, Branches, comparing versions, and more.',
+    'A quick reference for every panel in Krita VCS: Changes, History, Branches, comparing versions of your painting, and more.',
   items: [
     {
       lead: 'Changes',
@@ -320,7 +348,7 @@ export const docsSafety = {
   slug: 'safety',
   label: 'Keeping your work safe',
   title: 'How Krita VCS keeps your work safe',
-  metaTitle: 'Keeping your work safe · Documentation · Krita VCS',
+  metaTitle: 'Keeping your work safe',
   metaDescription:
     'The guardrails Krita VCS builds in so you never lose work by accident.',
   items: [
@@ -363,7 +391,7 @@ export const docsPlugin = {
   slug: 'plugin',
   label: 'Installing the plugin',
   title: 'Installing the Krita plugin (optional)',
-  metaTitle: 'Installing the plugin · Documentation · Krita VCS',
+  metaTitle: 'Installing the plugin',
   metaDescription:
     'Set up the optional Krita plugin for saving versions without leaving Krita.',
   intro:
@@ -398,3 +426,73 @@ export const download = {
   fileName: 'Krita-VC_0.2.1_x64-setup.exe',
   redirectHref: '/docs/getting-started?ref=download',
 } as const;
+
+// Discovery / landing pages. Nobody searches the product name, so these target
+// the *problems* painters actually search for. Each renders at /<slug> via the
+// shared DiscoveryPage template, reusing the Section layout + honest media.
+// Voice stays painter-first, same as the rest of the site.
+export const recoverPage = {
+  slug: 'recover-a-krita-version',
+  metaTitle: 'Go back to an earlier version of a Krita painting',
+  metaDescription:
+    'Painted over good work, or a .kra file got away from you? Krita VCS keeps every save as a version you can compare and go back to. Free, local-only, no cloud.',
+  headline: 'Go back to any earlier version of your painting.',
+  intro:
+    'Painted over an hour of good work, or a .kra file got away from you? If you have been saving with Krita VCS, every one of those saves is still there. Getting back to the one you want takes a few clicks, with nothing overwritten and nothing deleted.',
+  sections: [
+    {
+      title: 'Every save is already a restore point.',
+      body: [
+        'Each time you save a version, Krita VCS records the full state of your painting, layer by layer. Nothing is flattened, nothing is thrown away. Weeks of work sit in one history you scroll back through, not a folder full of look-alike files.',
+        'Because it only stores what changed between saves, that history stays small even after hundreds of versions.',
+      ],
+    },
+    {
+      title: 'Find the version you want, visually.',
+      body: [
+        'Open History and pick any two versions to see them side by side, or drag a swipe slider across the canvas. Changed pixels are outlined layer by layer, so you can spot the exact save where things still looked right, no guessing by filename or date.',
+      ],
+    },
+    {
+      title: 'Go back without losing anything.',
+      body: [
+        'Restore an older version and its files come back as a brand-new save on top of your history. The versions in between are never deleted, so you can always change your mind again. Undo works the same way: it lifts your most recent save back into unsaved changes, ready to redo.',
+        'Overlapping edits are flagged for you to review, never quietly overwritten.',
+      ],
+    },
+  ],
+} as const;
+
+export const vsCopiesPage = {
+  slug: 'vs-saving-copies',
+  metaTitle: 'Manage Krita versions without saving copies',
+  metaDescription:
+    'Tired of painting_final_v3.kra piling up? Krita VCS tracks every version inside one project folder and only stores what changed. No duplicate .kra files, no cloud.',
+  headline: 'Stop saving copies of your .kra files.',
+  intro:
+    'The usual way to keep a painting safe is Save As: painting_final, painting_final_2, painting_FINAL_use_this. It works, until you have twenty near-identical files, no idea which is newest, and a drive filling up fast. Krita VCS replaces the whole pile with one tracked folder.',
+  sections: [
+    {
+      title: 'The trouble with saving copies by hand.',
+      body: [
+        'Every manual copy is a full duplicate of a heavy, layer-packed file, so disk use climbs fast. Names drift out of order, cloud folders sync half-finished saves, and none of it tells you what actually changed from one copy to the next.',
+      ],
+    },
+    {
+      title: 'One folder, every version, only what changed.',
+      body: [
+        'Krita VCS keeps all of your history in a hidden folder inside your own project, and stores only the pixels that changed between saves, already around 50% smaller than a full copy by your second save. No _final_2, no duplicate .kra files cluttering your drive.',
+        'It all stays on your machine. No account, no sync, no server.',
+      ],
+    },
+    {
+      title: 'And you can actually see the difference.',
+      body: [
+        'Instead of opening two files to guess what moved, compare any two versions side by side or on a swipe slider, with changed layers outlined for you. Branch off to try a bold new direction, then merge it back or drop it, without a single extra file on disk.',
+      ],
+    },
+  ],
+} as const;
+
+// Shared list for the sitemap + footer internal links.
+export const discoveryPages = [recoverPage, vsCopiesPage] as const;

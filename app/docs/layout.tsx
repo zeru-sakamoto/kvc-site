@@ -1,10 +1,31 @@
 import type { Metadata } from 'next';
 import DocsNav from '../components/docs-nav';
-import { docs } from '@/lib/content';
+import JsonLd from '../components/json-ld';
+import { docs, siteUrl } from '@/lib/content';
 
 export const metadata: Metadata = {
-  title: docs.title,
+  title: {
+    default: docs.title,
+    template: '%s · Documentation · Krita VCS',
+  },
   description: docs.intro,
+};
+
+// Home -> Documentation trail, shared by every docs page.
+// ponytail: 2-level, defined once here. Add a per-chapter 3rd level in each
+// chapter page if breadcrumb rich results for individual chapters matter.
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Documentation',
+      item: `${siteUrl}/docs`,
+    },
+  ],
 };
 
 export default function DocsLayout({
@@ -12,6 +33,8 @@ export default function DocsLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="relative">
+      <JsonLd data={breadcrumbLd} />
+
       {/* Intro — breaks from the landing page's two-column rhythm on purpose;
           this page is read once, not scrolled past. */}
       <section className="relative px-6 pb-12 pt-28 sm:pt-32">

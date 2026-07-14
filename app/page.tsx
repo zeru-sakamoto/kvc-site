@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Hero from './components/hero';
 import Section from './components/section';
 import BrushStroke from './components/brush-stroke';
@@ -10,7 +11,55 @@ import {
   PerformanceMedia,
 } from './components/media';
 import { emphasize } from './components/highlight';
-import { why, features, whatsNext } from '@/lib/content';
+import JsonLd from './components/json-ld';
+import {
+  why,
+  features,
+  whatsNext,
+  faq,
+  site,
+  download,
+  siteUrl,
+} from '@/lib/content';
+
+// Installer version, kept in sync with the download filename (undefined keys are
+// dropped by JSON.stringify, so a filename format change just omits the field).
+const softwareVersion = download.fileName.match(/(\d+\.\d+\.\d+)/)?.[1];
+
+// The product itself: free, MIT, downloadable. Still earns rich results, and
+// feeds AI answer engines a clean description of what Krita VCS is.
+const softwareLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: site.name,
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Windows',
+  description: site.metaDescription,
+  url: siteUrl,
+  downloadUrl: `${siteUrl}${download.fileHref}`,
+  softwareVersion,
+  license: 'https://opensource.org/licenses/MIT',
+  isAccessibleForFree: true,
+  offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },
+  author: { '@id': `${siteUrl}/#person` },
+};
+
+// Homepage's own canonical — set on the page segment, not the root layout, so
+// it isn't inherited by every other route (see app/layout.tsx).
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
+
+// FAQ schema, mapped straight from the on-page accordion so the two never drift.
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
 
 const featureMedia = {
   compare: <DiffMedia />,
@@ -67,6 +116,8 @@ const featureEmphasis = {
 export default function Home() {
   return (
     <div className="relative">
+      <JsonLd data={softwareLd} />
+      <JsonLd data={faqLd} />
       <BrushStroke />
 
       <div className="relative z-10">
