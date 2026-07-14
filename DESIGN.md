@@ -65,8 +65,9 @@ four feature blocks alternate left/right; the surrounding sections deliberately 
 rhythm so the page doesn't read as one repeated template.
 
 1. **Hero — left-aligned + visual.** Bold headline ("Version control for your art, not your
-   code."), factual badge, Download + View-source CTAs on the left; painterly `LayersMedia`
-   (translucent painting layers + a version-history trail) on the right.
+   code."), factual badge, Download + View-source CTAs on the left, with a small
+   Windows-available / macOS-Linux-coming-soon icon row beneath (`platform-icons.tsx`);
+   painterly `LayersMedia` (translucent painting layers + a version-history trail) on the right.
 2. **Why artists use it — full-width points grid.** No media column. Intro + five value props
    in a two-column grid. Breaks the two-column rhythm before the feature blocks.
 3. **Compare (feature block, media right).** "See exactly what changed, layer by layer." Visual
@@ -85,10 +86,16 @@ rhythm so the page doesn't read as one repeated template.
    Media: `SignatureMedia` (a labeled slider, a labeled toggle, and a labeled row of theme
    swatches, each shaped to match what the setting does — not a screenshot of the Settings
    panel).
-7. **What's next — narrow roadmap.** No media. Two roadmap items + "Request a feature" CTA.
-8. **FAQ — centered accordion.** Native `<details>/<summary>`, no JS, keyboard-accessible.
-9. **Footer.** Wordmark, maker signature, license note (TBD), Product + Maker link columns. No
-   metric tiles.
+7. **Performance (feature block, media right).** "See exactly what version control is saving
+   you." Storage-saved comparison: what each version added vs. what a full copy would have cost,
+   from a small +7% overhead on the first save to +50% saved by the second and climbing. Media:
+   `PerformanceMedia` (shrinking storage bars per version, a warm badge for the first-save
+   overhead, a cool badge for the second-save saving — no invented precision beyond those two
+   figures already in the copy).
+8. **What's next — narrow roadmap.** No media. Two roadmap items + "Request a feature" CTA.
+9. **FAQ — centered accordion.** Native `<details>/<summary>`, no JS, keyboard-accessible.
+10. **Footer.** Wordmark, maker signature, license note (TBD), Product + Maker link columns. No
+    metric tiles.
 
 ### `/docs` route
 
@@ -128,7 +135,7 @@ intentionally a different rhythm than the landing page, same as Why/What's-next/
 ### Download flow
 
 The hero's primary CTA is `app/components/download-button.tsx`, not a plain link: a real
-`<a href="/download/Krita-VC_0.1.0_x64-setup.exe" download>` (works with JS disabled) whose
+`<a href="/download/Krita-VC_0.2.1_x64-setup.exe" download>` (works with JS disabled) whose
 `onClick` also client-navigates to `/docs/getting-started?ref=download`. Both actions fire from
 the same click — the `download` attribute forces the browser to save the file instead of
 navigating, so there's no conflict with the SPA redirect. The installer lives in
@@ -175,7 +182,7 @@ if (!preferReduced) {
   `flex-row-reverse` for alternation — no duplicated markup. `eyebrow` is optional and used
   sparingly (the page leans on strong headings, not a mono-caps kicker over every section).
 - **Media (`media.tsx`):** `LayersMedia`, `DiffMedia`, `BranchMedia`, `OwnershipMedia`,
-  `SignatureMedia` — abstract painterly vector, all colors via tokens.
+  `SignatureMedia`, `PerformanceMedia` — abstract painterly vector, all colors via tokens.
 - **Steps (`steps.tsx`):** plain numbered list for the `/docs` Getting Started chapter. No
   animation, no stepper widget — a static ordered list styled with site tokens.
 - **Bullet list (`bullet-list.tsx`):** dot-bullet list shared by the Using each feature, Keeping
@@ -183,6 +190,9 @@ if (!preferReduced) {
 - **Docs nav (`docs-nav.tsx`):** chapter tabs for `/docs` — vertical list on `lg:` and up,
   horizontal scrollable pill row on mobile. Client component, active tab via `usePathname`.
 - **Download button (`download-button.tsx`):** the hero's primary CTA — see Download flow above.
+- **Platform icons (`platform-icons.tsx`):** small OS-availability row under the hero CTAs —
+  Windows (available) vs. macOS/Linux (coming soon), generic inline-SVG glyphs, wording sourced
+  from `lib/content.ts`'s `platforms` (kept in sync with the FAQ's platform answer).
 - **FAQ (`faq.tsx`):** native `<details>` accordion.
 - **Footer (`site-footer.tsx`):** maker signature, license, outbound link columns (internal
   links like `/docs` use `next/link` and skip `target="_blank"`; external repo links keep it).

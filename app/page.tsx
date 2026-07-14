@@ -7,6 +7,7 @@ import {
   BranchMedia,
   OwnershipMedia,
   SignatureMedia,
+  PerformanceMedia,
 } from './components/media';
 import { emphasize } from './components/highlight';
 import { why, features, whatsNext } from '@/lib/content';
@@ -16,6 +17,7 @@ const featureMedia = {
   history: <BranchMedia />,
   yours: <OwnershipMedia />,
   settings: <SignatureMedia />,
+  performance: <PerformanceMedia />,
 } as const;
 
 // The one most intriguing detail per paragraph, pulled out in accent color.
@@ -32,7 +34,7 @@ const whyEmphasis = [
 // Same idea, aligned by [featureId][paragraphIndex].
 const featureEmphasis = {
   compare: [
-    { phrase: 'a dashed outline tracing the silhouette', tone: 'blue' },
+    { phrase: 'a dashed outline', tone: 'blue' },
     { phrase: 'as easy to review as a repaint', tone: 'warm' },
   ],
   history: [
@@ -53,6 +55,12 @@ const featureEmphasis = {
     { phrase: "it's obvious who did what", tone: 'warm' },
     { phrase: 'Krita VCS shrinks it down', tone: 'cool' },
     { phrase: 'applies right away, no restart', tone: 'blue' },
+  ],
+  performance: [
+    {
+      phrase: 'around 50% smaller than a full copy by your second save',
+      tone: 'cool',
+    },
   ],
 } as const;
 

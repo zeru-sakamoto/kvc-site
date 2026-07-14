@@ -549,3 +549,127 @@ export function SignatureMedia() {
     </Panel>
   );
 }
+
+// Performance: a per-version storage comparison — a constant-width outline
+// bar for "what a full copy would cost" against a bar for "what this version
+// actually added." The first save still carries a little version-control
+// overhead (+7%, in warm); by the second save that flips into real savings
+// (+50%, in cool) and keeps compounding. Every number here is one already
+// sanctioned in the copy — no invented precision beyond those two.
+export function PerformanceMedia() {
+  const ref = useReveal((el) => {
+    revealTimeline(el)
+      .from('[data-bar-full]', {
+        scaleX: 0,
+        transformOrigin: '0% 50%',
+        stagger: 0.12,
+        duration: 0.5,
+      })
+      .from(
+        '[data-bar-added]',
+        {
+          scaleX: 0,
+          transformOrigin: '0% 50%',
+          stagger: 0.12,
+          duration: 0.5,
+        },
+        '-=0.3',
+      )
+      .from(
+        '[data-badge]',
+        { scale: 0, transformOrigin: '50% 50%', stagger: 0.1, duration: 0.4 },
+        '-=0.2',
+      );
+  });
+
+  // Illustrative only — the shrinking width tells the story, not a literal
+  // reading. Full-copy cost is constant; what each save adds keeps shrinking,
+  // starting from a small overhead on the very first save.
+  const rows: {
+    label: string;
+    added: number;
+    badge?: string;
+    tone?: string;
+  }[] = [
+    { label: 'Version 1', added: 0.93, badge: '+7%', tone: COOL },
+    { label: 'Version 2', added: 0.62, badge: '+50%', tone: COOL },
+    { label: 'Version 3', added: 0.45 },
+    { label: 'Version 4', added: 0.33 },
+  ];
+  const barX = 100;
+  const fullWidth = 180;
+  const rowHeight = 42;
+
+  return (
+    <Panel panelRef={ref}>
+      <svg
+        aria-hidden
+        viewBox={`0 0 400 ${(rows.length - 1) * rowHeight + 36}`}
+        className="w-full"
+        fill="none"
+      >
+        {rows.map((r, i) => {
+          const y = 10 + i * rowHeight;
+          return (
+            <g key={r.label}>
+              <text
+                x={14}
+                y={y + 13}
+                className="font-mono text-[11px]"
+                fill="var(--color-muted)"
+              >
+                {r.label}
+              </text>
+              <rect
+                data-bar-full
+                x={barX}
+                y={y}
+                width={fullWidth}
+                height={16}
+                rx={4}
+                fill="none"
+                stroke={COOL}
+                strokeOpacity={0.4}
+                strokeDasharray="4 4"
+              />
+              <rect
+                data-bar-added
+                x={barX}
+                y={y}
+                width={fullWidth * r.added}
+                height={16}
+                rx={4}
+                style={{ fill: BLUE }}
+                fillOpacity={0.55}
+              />
+              {r.badge && (
+                <g data-badge>
+                  <rect
+                    x={barX + fullWidth + 14}
+                    y={y - 3}
+                    width={54}
+                    height={22}
+                    rx={11}
+                    style={{ fill: r.tone }}
+                    fillOpacity={0.18}
+                    stroke={r.tone}
+                    strokeOpacity={0.6}
+                  />
+                  <text
+                    x={barX + fullWidth + 41}
+                    y={y + 12}
+                    textAnchor="middle"
+                    className="font-mono text-[11px] font-semibold"
+                    style={{ fill: r.tone }}
+                  >
+                    {r.badge}
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+    </Panel>
+  );
+}

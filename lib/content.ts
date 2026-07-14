@@ -89,8 +89,8 @@ export const features = [
     id: 'compare',
     title: 'See exactly what changed, layer by layer.',
     body: [
-      "Compare any two versions of a painting one layer at a time. Toggle side-by-side or drag a swipe slider across the canvas; zoom and pan to inspect the details, perfectly in sync between both views. What changed shows as a dashed outline tracing the silhouette of the edited pixels, and focusing a single layer narrows that outline to just that layer's changes. The flattened image loads first, so you're never staring at a blank panel; individual layers stream in right behind it. Click any layer for its details: type, visibility, opacity, blend mode, and the area it actually paints on. Click the canvas itself for the painting's size, resolution, and color space.",
-      'Working with color palettes too? Krita VCS lays them out swatch by swatch, hex values and all, across every common format: .gpl, .kpl, and Adobe’s .aco and .ase, so a palette tweak is as easy to review as a repaint.',
+      'Compare any two versions side by side, or drag a swipe slider across the canvas, zoomed and panned in sync. Changed pixels show up as a dashed outline, layer by layer. Click a layer for its opacity and blend mode, or the canvas for its size and color space.',
+      'Color palettes get the same treatment, swatch by swatch, across every common format, so a palette tweak is as easy to review as a repaint.',
     ],
     reverse: true,
   },
@@ -98,8 +98,8 @@ export const features = [
     id: 'history',
     title: 'Every save is a place you can go back to.',
     body: [
-      "Each save is a full version you can return to at any time. Choose exactly which files a version includes, or save everything at once. Branch off to try something risky, switch back in an instant, and merge the two when you're happy. Overlapping edits are flagged, never quietly overwritten: if one branch edited a file and the other deleted it, the edit wins. A color-coded graph shows exactly how your branches connect.",
-      "Made a save you regret? Undo it. Want to jump back three versions? Do that instead. Krita VCS never deletes your history behind your back; old versions stay recoverable until you decide otherwise. Mid-edit and want a fresh start on just one file? Discard its unsaved changes on the spot, or discard everything you haven't staged yet in one go, always with a confirmation first.",
+      "Each save is a full version you can return to anytime. Branch off to try something risky, then merge back when you're happy. Overlapping edits are flagged, never quietly overwritten, and a color-coded graph shows how your branches connect.",
+      'Undo a save, or jump back several versions at once; old versions stay recoverable until you decide otherwise. Unsaved changes can be discarded any time, always with a confirmation first.',
     ],
     reverse: false,
   },
@@ -107,8 +107,8 @@ export const features = [
     id: 'yours',
     title: 'Yours, in plain language, on your machine.',
     body: [
-      "Artist Mode turns off the technical talk entirely. Commit hashes become “Version 12,” file paths become asset names, and change codes become plain words like “Updated.” It's on by default, but if you'd rather see the technical view, it's one toggle away.",
-      "Because nothing is ever thrown away automatically, a project's history can grow over time. One button shows you how much space old, unreachable versions are using and clears it, only when you say so. Nothing syncs, nothing uploads; it all stays on your computer.",
+      'Artist Mode turns off the technical talk entirely: commit hashes become “Version 12,” and changes become plain words like “Updated.” One toggle switches back to the technical view.',
+      'History can grow over time, so one button shows how much space old versions are using and clears it, only when you say so. Nothing syncs, nothing uploads.',
     ],
     reverse: true,
   },
@@ -116,11 +116,19 @@ export const features = [
     id: 'settings',
     title: 'Sign your work, tune it to your machine.',
     body: [
-      "Put your name on every version you save, so on a shared project it's obvious who did what. That's set once in the Settings panel, right alongside how much disk space preview thumbnails are allowed to use.",
-      'Working on a painting with a long, heavy revision history? Turn on compact storage and Krita VCS shrinks it down. Everything here is optional, and you can change any of it whenever you like. Prefer your own window frame over ours? Toggle the custom title bar off any time, no restart needed.',
-      'Prefer a different look for the app itself? Krita VCS ships with eight color themes, six dark and two light, from the moody default Charcoal to Krita Blue, Tokyo Night, and True Black. Pick one in Settings and it applies right away, no restart, saved right there on your machine.',
+      "Put your name on every version you save, so on a shared project it's obvious who did what. Set once in Settings, alongside how much space preview thumbnails use.",
+      'Heavy revision history? Turn on compact storage and Krita VCS shrinks it down. Everything here is optional, and the custom title bar can be toggled off anytime, no restart needed.',
+      'Krita VCS ships with eight color themes, six dark and two light. Pick one in Settings and it applies right away, no restart, saved right there on your machine.',
     ],
     reverse: false,
+  },
+  {
+    id: 'performance',
+    title: 'See exactly what version control is saving you.',
+    body: [
+      'A Performance tab shows what each version added next to what a full copy would have cost, with a percent-saved badge: already around 50% smaller than a full copy by your second save. Save and compare times sit right next to it too, no stopwatch required.',
+    ],
+    reverse: true,
   },
 ] as const;
 
@@ -158,6 +166,19 @@ export const whatsNext = {
     },
   ],
   cta: { label: 'Request a feature on GitHub', href: links.issues },
+} as const;
+
+// OS availability, shown as a small icon row under the hero download button.
+// Windows is real and downloadable today; macOS and Linux are not yet
+// buildable, so they render as "coming soon," never as a live download —
+// kept consistent with the FAQ's platform answer below.
+export const platforms = {
+  note: 'Windows today. macOS and Linux are on the way, on the same cross-platform base.',
+  items: [
+    { name: 'Windows', status: 'available' },
+    { name: 'macOS', status: 'soon' },
+    { name: 'Linux', status: 'soon' },
+  ],
 } as const;
 
 // FAQ — rendered as a native <details>/<summary> accordion (no JS).
@@ -374,7 +395,7 @@ export const docsChapters = [
 // button redirects to (the Getting Started chapter, flagged to show the
 // download banner).
 export const download = {
-  fileHref: '/download/Krita-VC_0.2.0_x64-setup.exe',
-  fileName: 'Krita-VC_0.2.0_x64-setup.exe',
+  fileHref: '/download/Krita-VC_0.2.1_x64-setup.exe',
+  fileName: 'Krita-VC_0.2.1_x64-setup.exe',
   redirectHref: '/docs/getting-started?ref=download',
 } as const;

@@ -2,6 +2,7 @@ import { hero } from '@/lib/content';
 import { LayersMedia } from './media';
 import { emphasize } from './highlight';
 import DownloadButton from './download-button';
+import PlatformIcons from './platform-icons';
 
 export default function Hero() {
   return (
@@ -47,6 +48,8 @@ export default function Hero() {
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </div>
+
+          <PlatformIcons />
         </div>
 
         <div className="w-full min-w-0 lg:w-[45%]">
