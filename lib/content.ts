@@ -632,7 +632,7 @@ export const privacyPage = {
       body: [
         "This website doesn't use cookies, analytics, or third-party trackers. We don't know who you are, what you clicked, or how long you stayed.",
         "Like any website, our hosting provider keeps standard server logs for every request it handles, things like IP address, browser type, and timestamp. That's normal web infrastructure, not something we set up: we don't read it for analytics, and we don't share it with anyone.",
-        'One small technical note for completeness: the preview image shown when a link to this site is shared is built on our server using Google Fonts, fetched by that server, not by your browser. Nothing about your visit reaches Google because of it.',
+        'The preview image shown when a link to this site is shared is built on our server, using Google Fonts fetched by that server, not by your browser. Nothing about your visit reaches Google because of it.',
       ],
     },
     {
