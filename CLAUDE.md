@@ -25,6 +25,8 @@ This project pins `next@16.2.4` and `react@19.2.4` — versions ahead of your tr
 - `npm start` — serve production build
 - `npm run lint` — ESLint (flat config via `eslint-config-next`, covers Core Web Vitals + TypeScript rules)
 
+**Dev server hygiene:** don't background `npm run dev` with a plain `(cmd &)` subshell — if the wrapping Bash call times out, the server process detaches and keeps running as an orphan on port 3000. Use the tool's own `run_in_background`, and when done verifying, kill the whole process tree (npm → next-bin → next-server, e.g. via `Get-CimInstance Win32_Process -Filter "name = 'node.exe'"` on Windows) rather than leaving it running. Prefer `npm run build` for a one-shot verification instead of a dev server when a static check will do.
+
 No test runner is configured in this repo.
 
 ## Current state

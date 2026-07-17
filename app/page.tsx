@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import Hero from './components/hero';
 import Section from './components/section';
 import BrushStroke from './components/brush-stroke';
@@ -9,6 +10,7 @@ import {
   OwnershipMedia,
   SignatureMedia,
   PerformanceMedia,
+  PanelMedia,
 } from './components/media';
 import { emphasize } from './components/highlight';
 import JsonLd from './components/json-ld';
@@ -67,6 +69,7 @@ const featureMedia = {
   yours: <OwnershipMedia />,
   settings: <SignatureMedia />,
   performance: <PerformanceMedia />,
+  panel: <PanelMedia />,
 } as const;
 
 // The one most intriguing detail per paragraph, pulled out in accent color.
@@ -87,10 +90,7 @@ const featureEmphasis = {
     { phrase: 'as easy to review as a repaint', tone: 'warm' },
   ],
   history: [
-    {
-      phrase: 'Overlapping edits are flagged, never quietly overwritten',
-      tone: 'cool',
-    },
+    { phrase: 'the edit wins', tone: 'cool' },
     {
       phrase: 'old versions stay recoverable until you decide otherwise',
       tone: 'cool',
@@ -110,6 +110,10 @@ const featureEmphasis = {
       phrase: 'around 50% smaller than a full copy by your second save',
       tone: 'cool',
     },
+  ],
+  panel: [
+    { phrase: 'saves your open paintings for you first', tone: 'warm' },
+    { phrase: 'the same engine and the same history', tone: 'blue' },
   ],
 } as const;
 
@@ -169,6 +173,14 @@ export default function Home() {
                 featureEmphasis[f.id as keyof typeof featureEmphasis][i];
               return <p key={i}>{em ? emphasize(p, em.phrase, em.tone) : p}</p>;
             })}
+            {'cta' in f ? (
+              <Link
+                href={f.cta.href}
+                className="mt-2 inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-white/15 px-5 text-sm font-medium text-primary transition-colors hover:border-brand-blue hover:text-brand-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+              >
+                {f.cta.label}
+              </Link>
+            ) : null}
           </Section>
         ))}
 

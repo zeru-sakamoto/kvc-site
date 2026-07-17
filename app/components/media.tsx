@@ -673,3 +673,107 @@ export function PerformanceMedia() {
     </Panel>
   );
 }
+
+// Panel: two surfaces, "Krita VCS" and "Inside Krita," sharing one synced
+// version node between them — the plugin runs on the same history as the
+// main app, not a separate one. A row of plain action labels below shows
+// what the in-Krita panel can do. Abstract surfaces, not a screenshot of
+// either app's UI.
+export function PanelMedia() {
+  const ref = useReveal((el) => {
+    revealTimeline(el)
+      .from('[data-surface]', {
+        opacity: 0,
+        yPercent: 10,
+        stagger: 0.15,
+        duration: 0.6,
+      })
+      .from(
+        '[data-sync-line]',
+        { scaleX: 0, transformOrigin: '50% 50%', duration: 0.5 },
+        '-=0.3',
+      )
+      .from(
+        '[data-sync-node]',
+        { scale: 0, transformOrigin: '50% 50%', duration: 0.4 },
+        '-=0.2',
+      )
+      .from(
+        '[data-action]',
+        { yPercent: 30, opacity: 0, stagger: 0.06, duration: 0.35 },
+        '-=0.2',
+      );
+  });
+
+  const actions = ['Commit', 'Discard', 'Set aside', 'Switch branch'];
+
+  return (
+    <Panel panelRef={ref}>
+      <svg aria-hidden viewBox="0 0 400 130" className="w-full" fill="none">
+        <rect
+          data-surface
+          x={20}
+          y={20}
+          width={160}
+          height={90}
+          rx={12}
+          style={{ fill: BLUE }}
+          fillOpacity={0.12}
+          stroke={BLUE}
+          strokeOpacity={0.5}
+        />
+        <text
+          x={38}
+          y={45}
+          className="font-mono text-[11px]"
+          fill="var(--color-muted)"
+        >
+          Krita VCS
+        </text>
+        <rect
+          data-surface
+          x={220}
+          y={20}
+          width={160}
+          height={90}
+          rx={12}
+          style={{ fill: COOL }}
+          fillOpacity={0.12}
+          stroke={COOL}
+          strokeOpacity={0.5}
+        />
+        <text
+          x={238}
+          y={45}
+          className="font-mono text-[11px]"
+          fill="var(--color-muted)"
+        >
+          Inside Krita
+        </text>
+        {/* one shared version node — same history either side */}
+        <line
+          data-sync-line
+          x1={180}
+          y1={65}
+          x2={220}
+          y2={65}
+          stroke={WARM}
+          strokeWidth={2}
+          strokeDasharray="4 4"
+        />
+        <circle data-sync-node cx={200} cy={65} r={7} style={{ fill: WARM }} />
+      </svg>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+        {actions.map((label) => (
+          <span
+            key={label}
+            data-action
+            className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-muted"
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    </Panel>
+  );
+}

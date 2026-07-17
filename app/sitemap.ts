@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 import {
   siteUrl,
   docsChapters,
-  docsPlugin,
   discoveryPages,
+  pluginPage,
 } from '@/lib/content';
 
 // Built from the same content exports the pages render from, so adding a docs
@@ -33,13 +33,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   };
 
-  // docsPlugin is hidden from the nav but the page is public and useful.
-  const docsPages = [...docsChapters, docsPlugin].map((c) => ({
+  const docsPages = docsChapters.map((c) => ({
     url: abs(`/docs/${c.slug}`),
     lastModified: now,
     changeFrequency: 'monthly' as const,
     priority: 0.6,
   }));
 
-  return [home, ...discovery, docsIndex, ...docsPages];
+  const plugin = {
+    url: abs(`/${pluginPage.slug}`),
+    lastModified: now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  };
+
+  return [home, ...discovery, docsIndex, ...docsPages, plugin];
 }

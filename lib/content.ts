@@ -18,9 +18,11 @@ export const links = {
   releases: `${repoUrl}/releases`,
   // No standalone download host yet — the latest build lives on GitHub releases.
   download: `${repoUrl}/releases`,
-  // No dedicated docs site yet — the full docs and plugin guide live in the repo.
+  // No dedicated docs site yet — the full docs live in the repo.
   docs: `${repoUrl}#readme`,
-  pluginGuide: `${repoUrl}#readme`,
+  // Technical build-from-source reference for the plugin (Rust/cargo steps) —
+  // linked from /plugin for the rare reader who wants to build it themselves.
+  pluginGuide: `${repoUrl}/blob/main/krita-plugin/README.md`,
   profile: 'https://github.com/zeru-sakamoto',
   portfolio: 'https://zeru-sakamoto.codes',
 } as const;
@@ -30,7 +32,7 @@ export const site = {
   wordmark: 'Krita VCS',
   metaTitle: 'Krita VCS: version control for your paintings, not your code',
   metaDescription:
-    'Free, local-only version control for Krita painters. Every save is a version of your .kra file you can compare, branch from, or go back to. No accounts, no uploads.',
+    'Free, local-only version history for Krita painters: every save becomes a version of your .kra file you can compare, explore, or go back to instantly. No accounts, no uploads, and no coding required.',
   // Low ranking weight, but harmless and read by some engines. These are the
   // problem-phrases people actually search — nobody searches the product name.
   keywords: [
@@ -44,6 +46,14 @@ export const site = {
     'recover a Krita painting',
     'backup Krita art',
     '.kra version history',
+    'Krita crashed lost my painting',
+    'recover unsaved Krita file',
+    'Krita autosave',
+    'save multiple versions of a drawing',
+    'undo limit Krita',
+    'digital art backup app',
+    'Krita plugin version control',
+    'save Krita versions without leaving Krita',
   ],
 } as const;
 
@@ -108,8 +118,8 @@ export const features = [
     id: 'compare',
     title: 'See exactly what changed, layer by layer.',
     body: [
-      'Compare any two versions side by side, or drag a swipe slider across the canvas, zoomed and panned in sync. Changed pixels show up as a dashed outline, layer by layer. Click a layer for its opacity and blend mode, or the canvas for its size and color space.',
-      'Color palettes get the same treatment, swatch by swatch, across every common format, so a palette tweak is as easy to review as a repaint.',
+      "Compare any two versions side by side, or drag a swipe slider across the canvas, zoomed and panned in sync. Composites load first so you're never staring at a blank panel, with layers streaming in right after. Changed pixels show up as a dashed outline, layer by layer. Click a layer for its type, visibility, opacity, and blend mode, or the canvas for its size, resolution, and color space.",
+      'Color palettes get the same treatment: a swatch-by-swatch comparison with hex values, across every common format, so a palette tweak is as easy to review as a repaint.',
     ],
     reverse: true,
   },
@@ -117,8 +127,8 @@ export const features = [
     id: 'history',
     title: 'Every save is a place you can go back to.',
     body: [
-      "Each save is a full version you can return to anytime. Branch off to try something risky, then merge back when you're happy. Overlapping edits are flagged, never quietly overwritten, and a color-coded graph shows how your branches connect.",
-      'Undo a save, or jump back several versions at once; old versions stay recoverable until you decide otherwise. Unsaved changes can be discarded any time, always with a confirmation first.',
+      "Each save is a full version you can return to anytime, and you choose exactly which files it includes, or save everything at once. Branch off to try something risky, then merge back when you're happy. Overlapping edits are flagged for review, never quietly overwritten; if one branch edited a file and the other deleted it, the edit wins. A color-coded graph shows how your branches connect.",
+      'Undo a save, or jump back several versions at once; old versions stay recoverable until you decide otherwise. Not ready to commit? Set the change aside on a shelf instead, and bring it back whenever you like. Unsaved changes can be discarded any time, always with a confirmation first.',
     ],
     reverse: false,
   },
@@ -126,8 +136,9 @@ export const features = [
     id: 'yours',
     title: 'Yours, in plain language, on your machine.',
     body: [
-      'Artist Mode turns off the technical talk entirely: commit hashes become “Version 12,” and changes become plain words like “Updated.” One toggle switches back to the technical view.',
+      'Artist Mode turns off the technical talk entirely: commit hashes become "Version 12," and changes become plain words like "Updated." One toggle switches back to the technical view.',
       'History can grow over time, so one button shows how much space old versions are using and clears it, only when you say so. Nothing syncs, nothing uploads.',
+      "Removing a project moves its folder to your Recycle Bin instead of deleting it outright, so an accidental removal is just a restore away. Back up any project, or every project at once, to a single zip file, ready for an external drive or your own cloud storage. It's the one safety net Krita VCS can't provide automatically: if the project folder is ever lost outside the app entirely, a backup you made yourself is the way back.",
     ],
     reverse: true,
   },
@@ -136,7 +147,7 @@ export const features = [
     title: 'Sign your work, tune it to your machine.',
     body: [
       "Put your name on every version you save, so on a shared project it's obvious who did what. Set once in Settings, alongside how much space preview thumbnails use.",
-      'Heavy revision history? Turn on compact storage and Krita VCS shrinks it down. Everything here is optional, and the custom title bar can be toggled off anytime, no restart needed.',
+      'Heavy revision history? Turn on compact storage and Krita VCS shrinks it down. Working with big files? Low-memory diffs load layers one at a time instead of all together, so RAM stays under control. Everything here is optional, and the custom title bar can be toggled off anytime, no restart needed.',
       'Krita VCS ships with eight color themes, six dark and two light. Pick one in Settings and it applies right away, no restart, saved right there on your machine.',
     ],
     reverse: false,
@@ -148,6 +159,16 @@ export const features = [
       'A Performance tab shows what each version added next to what a full copy would have cost, with a percent-saved badge: already around 50% smaller than a full copy by your second save. Save and compare times sit right next to it too, no stopwatch required.',
     ],
     reverse: true,
+  },
+  {
+    id: 'panel',
+    title: 'Save a version without leaving Krita.',
+    body: [
+      'An optional Version Control panel lives right inside Krita, beside your canvas: save a version, choose exactly which files go into it, discard a change you regret, set work aside, or switch between your version lines.',
+      'Click into the panel and it saves your open paintings for you first, so a version never misses your last few minutes of work. It runs on the same engine and the same history as the main app, so it never matters which one you used last.',
+    ],
+    reverse: false,
+    cta: { label: 'Get the Krita plugin', href: '/plugin' },
   },
 ] as const;
 
@@ -169,7 +190,8 @@ export const themes = [
 export const whatsNext = {
   id: 'next',
   title: "What I'm building next.",
-  intro: "Krita VCS is actively developed. A few things I'm still improving:",
+  intro:
+    "Krita VCS is still a work in progress. A few things I'm still improving:",
   items: [
     {
       title: 'Diff stashing',
@@ -177,11 +199,11 @@ export const whatsNext = {
     },
     {
       title: 'A guided first-launch tour',
-      body: "A dynamic walkthrough of the app on first open, pointing out the repository switcher, Changes, History, and Settings so new users aren't left guessing.",
+      body: "A quick walkthrough of the app on first open, pointing out the repository switcher, Changes, History, and Settings so new users aren't left guessing.",
     },
     {
-      title: 'The Krita plugin',
-      body: 'An optional in-Krita "Version Control" panel (commit, quick-checkpoint, branch switching, no window-switching), built on the same history as the main app. Available today as a manual build; see the plugin guide in the docs.',
+      title: 'A one-click plugin install',
+      body: "The in-Krita panel (above) works today, but getting it running means building a small helper by hand. I'm packaging it so it installs alongside the app instead.",
     },
   ],
   cta: { label: 'Request a feature on GitHub', href: links.issues },
@@ -207,8 +229,24 @@ export const faq = [
     a: 'It keeps every version of your painting as you save, like a save file for each stage of your art. You can look back at any earlier version, compare two side by side, or go back to one if you change your mind, all without leaving a mess of duplicate files on your computer.',
   },
   {
+    q: 'Do I need to know Git, or use a command line?',
+    a: 'No. There\'s no terminal and no git jargon anywhere in the app. Artist Mode (on by default) shows plain labels like "Version 12" instead of hashes and codes, so if you\'re comfortable saving a file in Krita, you already know most of what you need.',
+  },
+  {
+    q: "What's the difference between saving in Krita and saving a version here?",
+    a: "Hitting Ctrl+S in Krita still works exactly like it always has; that part never changes. Committing a version in Krita VCS is a separate step on top: it takes a snapshot of your saved file so you can come back to it, compare it, or go back to it later. Saving isn't the same as committing, so it's worth checking in a version once you've saved something worth keeping.",
+  },
+  {
     q: 'Is my art uploaded anywhere?',
     a: "No. Krita VCS is local-only by design: there's no server, no account, and no sync. Every version lives in a folder on your own machine.",
+  },
+  {
+    q: 'Do I need an internet connection to use it?',
+    a: 'No. Everything runs and is stored entirely on your machine, so it works exactly the same with wifi on or off.',
+  },
+  {
+    q: 'Can I lose work by using this?',
+    a: "It's built to make that harder, not easier. History is never deleted behind your back, actions that would discard something (like Discard) always ask you to confirm first, and version control runs as an extra safety net alongside your normal saving, not a replacement for it. Removing a project moves it to your Recycle Bin rather than deleting it outright, and you can back up any project to a zip file for extra safety, kept wherever you like.",
   },
   {
     q: 'Is it free?',
@@ -219,12 +257,32 @@ export const faq = [
     a: "It's a desktop app built with Tauri, currently targeting Windows, with macOS and Linux following on the same cross-platform base.",
   },
   {
+    q: 'Will it slow down Krita or make my computer laggy?',
+    a: "It's tuned for large, layer-heavy .kra files, so saving, comparing, and restoring stay fast even on big, real paintings, not just small test files.",
+  },
+  {
     q: 'Does it work with any file, or just .kra?',
-    a: "It tracks the file types it understands and leaves the rest of your folder alone: Krita paintings (.kra), with the deep layer-by-layer visual diff, and color palettes (.gpl, .kpl, .aco, .ase), with a color-by-color swatch diff. Other files sitting in the project folder aren't touched; they're never copied into its history.",
+    a: "It tracks the file types it understands and leaves the rest of your folder alone: Krita paintings (.kra), with the deep layer-by-layer visual diff, and color palettes (.gpl, .kpl, .aco, .ase), with a color-by-color swatch diff. Other files sitting in the project folder aren't touched, and Krita's own backup and autosave files are skipped too, so history stays a record of your work, not your app's scratch files.",
+  },
+  {
+    q: "Can I start using it on a painting I've already been working on for a while?",
+    a: "Yes. Point Krita VCS at the folder your painting already lives in and it picks up from there. You don't need to start a fresh file or lose any of your existing work to begin tracking it.",
+  },
+  {
+    q: 'Do I have to use branches?',
+    a: 'No. Branches are entirely optional. You can use Krita VCS just to save and compare versions on a single line of work and never touch branching at all.',
+  },
+  {
+    q: 'Can more than one person work on the same painting with this?',
+    a: "Not currently. Krita VCS is built for one artist working locally, with no accounts and no shared or remote history. Branches let you explore multiple directions yourself, but there's no built-in way to share history between different people or machines.",
   },
   {
     q: 'Will my history get huge over time?',
-    a: 'It only stores what changed between saves, not a full copy each time, so history stays compact. And if you ever want the space back from old, unreachable versions, the built-in “Clean up storage” tool does it, with your confirmation.',
+    a: 'It only stores what changed between saves, not a full copy each time, so history stays compact. And if you ever want the space back from old, unreachable versions, the built-in "Clean up storage" tool does it, with your confirmation.',
+  },
+  {
+    q: 'What happens to my history if I uninstall Krita VCS?',
+    a: 'Nothing. Your painting and its saved history live in a folder inside your own project, not inside the app. Uninstalling only removes the program; your files and their history stay exactly where they are.',
   },
 ] as const;
 
@@ -235,6 +293,7 @@ export const footer = {
       links: [
         { label: 'Download', href: links.download },
         { label: 'Docs', href: '/docs' },
+        { label: 'Krita plugin', href: '/plugin' },
         { label: 'Source', href: links.repo },
         { label: 'Issues', href: links.issues },
       ],
@@ -246,6 +305,10 @@ export const footer = {
       links: [
         { label: 'Go back to a version', href: '/recover-a-krita-version' },
         { label: 'Stop saving copies', href: '/vs-saving-copies' },
+        {
+          label: 'Recover from a crash',
+          href: '/recover-after-a-krita-crash',
+        },
       ],
     },
     {
@@ -266,7 +329,7 @@ export const footer = {
 export const docs = {
   title: 'Documentation',
   intro:
-    'New to Krita VCS? Start here. Every chapter below covers a different part of the app: installing and saving your first version, a reference for each feature, the guardrails that keep your work safe, and the optional Krita plugin.',
+    'New to Krita VCS? Start here. Every chapter below covers a different part of the app: installing and saving your first version, a reference for each feature, and the guardrails that keep your work safe. Want to save versions without leaving Krita? The optional plugin has its own page.',
   cta: { label: 'Read the docs on GitHub', href: links.docs },
 } as const;
 
@@ -288,7 +351,7 @@ export const docsGettingStarted = {
     },
     {
       title: 'Save your first version.',
-      body: "Open Changes, write a short note about what you did, and hit Commit version. Everything in the folder is saved, so there's nothing to pick and choose.",
+      body: "Open Changes, write a short note about what you did, and hit Commit version. Everything changed is included by default; stage just a subset first if you'd rather save only some files.",
     },
     {
       title: 'Compare two versions.',
@@ -311,7 +374,7 @@ export const docsUsingFeatures = {
   items: [
     {
       lead: 'Changes',
-      body: 'Where you save. Write a note, hit Commit. Locks briefly while saving so nothing gets interrupted.',
+      body: 'Where you save. Stage everything or just a few files, write a note, and hit Commit. Locks briefly while saving so nothing gets interrupted.',
     },
     {
       lead: 'History',
@@ -330,16 +393,24 @@ export const docsUsingFeatures = {
       body: 'The ⋯ menu next to Changes or History. Removes only your most recent save; those changes come back as unsaved work, ready to save again.',
     },
     {
+      lead: 'Set aside',
+      body: "The same ⋯ menu. Parks work in progress on a shelf without saving it as a version, and puts your files back to your last saved version. Bring it back from the same menu, either the latest or picked from a list. If a branch switch is blocked because you have unsaved work, you'll be offered this as the way through.",
+    },
+    {
       lead: 'Restore',
       body: 'Pick any older version and bring its files back, saved as a brand-new version. Nothing older is ever deleted.',
     },
     {
       lead: 'Settings',
-      body: '(gear icon) Artist view, title bar style, your name, and 8 color themes. Per project: how much space preview images may use, a compact storage option that shrinks history for files with lots of small edits, a low-memory option that uses less memory (a little slower in exchange), and Clean up storage.',
+      body: "(gear icon) Artist view, title bar style, your name, 8 color themes, and your set-aside shelf (everything you've parked, with the branch it came from and how long it's been there; remove items one at a time or all at once). Per project: how much space preview images may use, a compact storage option that shrinks history for files with lots of small edits, a low-memory option that uses less memory (a little slower in exchange), and Clean up storage.",
     },
     {
       lead: 'Clean up storage',
       body: 'Shows you exactly how much space would be freed before you confirm anything. Only ever clears old, unreachable leftovers, never your current work or anything still visible in your history.',
+    },
+    {
+      lead: 'Back up',
+      body: "Zip a project's files and history to a spot you choose: the zip-icon button right above Settings backs up the project you're in, or use the repository switcher to back up every project at once. Good for an external drive or your own cloud storage.",
     },
   ],
 } as const;
@@ -378,40 +449,22 @@ export const docsSafety = {
     },
     {
       lead: 'Removing a project defaults to the safe choice.',
-      body: '"Remove from list" just forgets it here; your files and history stay untouched. Deleting the folder for good asks you to type its name first, so it\'s never one accidental click away.',
+      body: '"Remove from list" just forgets it here; your files and history stay untouched. Removing the folder for good asks you to type its name first, so it\'s never one accidental click away, and moves it to your Recycle Bin rather than deleting it outright.',
     },
     {
       lead: 'Cleaning up always shows you first.',
       body: "You'll see exactly what would be freed before anything is actually deleted.",
     },
+    {
+      lead: 'You can always keep a copy of your own, outside the app.',
+      body: 'Back up any project, or every project at once, to a zip file whenever you like: the one thing to reach for if a project folder is ever lost outside Krita VCS entirely, like a stray delete outside the app or a failing drive.',
+    },
   ],
 } as const;
 
-export const docsPlugin = {
-  slug: 'plugin',
-  label: 'Installing the plugin',
-  title: 'Installing the Krita plugin (optional)',
-  metaTitle: 'Installing the plugin',
-  metaDescription:
-    'Set up the optional Krita plugin for saving versions without leaving Krita.',
-  intro:
-    'Prefer to save versions without switching windows? The Krita plugin adds a small Version Control panel right inside Krita, with a changelist, a commit button, a one-tap Checkpoint for quick milestones, and branch switching, all working against the same history as the main app.',
-  notes: [
-    "Commit and Checkpoint only turn on once you've saved in Krita. The plugin never saves your file for you.",
-    'Everything it does is local, same as the main app. No new accounts, no new servers.',
-    'Setting up a repository, and browsing or restoring older versions, still happens in the main Krita VCS app. The plugin is just a faster way to commit.',
-  ],
-  closing:
-    "Today, installing it means building one small command-line helper alongside the app and copying a folder into Krita's plugin directory: a five-minute, one-time setup. Full step-by-step instructions live in the plugin's own guide.",
-  cta: {
-    label: 'Plugin guide on GitHub',
-    href: links.pluginGuide,
-  },
-} as const;
-
-// Sidebar/tab order for the /docs chapter nav.
-// docsPlugin is hidden from the nav for now (page + content still exist at
-// /docs/plugin, just not linked) — add it back here to re-show the tab.
+// Sidebar/tab order for the /docs chapter nav. The plugin used to be a fourth
+// chapter here; it's substantial enough (its own install guide, troubleshooting,
+// download) to be its own page at /plugin instead — see pluginPage below.
 export const docsChapters = [
   docsGettingStarted,
   docsUsingFeatures,
@@ -422,9 +475,133 @@ export const docsChapters = [
 // button redirects to (the Getting Started chapter, flagged to show the
 // download banner).
 export const download = {
-  fileHref: '/download/Krita-VC_0.2.1_x64-setup.exe',
-  fileName: 'Krita-VC_0.2.1_x64-setup.exe',
+  fileHref: '/download/Krita-VC_0.3.0_x64-setup.exe',
+  fileName: 'Krita-VC_0.3.0_x64-setup.exe',
   redirectHref: '/docs/getting-started?ref=download',
+} as const;
+
+// The plugin's zip download, served from `public/download/` same as the app installer.
+export const pluginDownload = {
+  fileHref: '/download/kritavc.zip',
+  fileName: 'kritavc.zip',
+} as const;
+
+// The standalone /plugin page: feature rundown, install guide, and
+// troubleshooting, with its own zip download. Kept off the /docs chapter
+// tabs (see docsChapters) since it's substantial enough to be its own page.
+// Installation guide here is deliberately end-user-only (unzip and copy);
+// the Rust/cargo build-from-source steps stay in the repo's own README,
+// linked at the bottom for the rare reader who wants them.
+export const pluginPage = {
+  slug: 'plugin',
+  metaTitle: 'Krita VC plugin',
+  metaDescription:
+    'Save versions, checkpoint your progress, and switch branches without leaving Krita. Download the optional Krita VC plugin and install it in a few minutes.',
+  title: 'The Krita VC plugin',
+  intro:
+    'A small Version Control panel that lives right inside Krita, so you can save a version, set work aside, or switch branches without ever leaving your canvas. It runs on the exact same engine and the exact same history as the desktop app. Save from either one, and the other sees it.',
+  featuresTitle: 'What it does',
+  features: [
+    {
+      lead: 'Commit and checkpoint, without leaving the canvas.',
+      body: "The panel shows your current branch and changelist for the project you're painting in. Write a note and hit Commit, or use Checkpoint for a one-tap save with an auto-written, time-stamped message when you don't want to stop and think of one.",
+    },
+    {
+      lead: 'You never have to save first.',
+      body: "Versions are built from what's actually on disk, so the panel saves your open paintings for you the moment you click in. A version can never quietly miss your last few minutes of painting. But saving still isn't the same as committing: nothing becomes a version until you commit it.",
+    },
+    {
+      lead: 'Pick exactly what goes in.',
+      body: "Every file in the changelist has a checkbox, ticked by default, so Commit saves everything as expected. Untick anything you'd rather leave out; Commit, Checkpoint, Discard, and Set aside all act only on the ticked rows.",
+    },
+    {
+      lead: 'Set work aside, or bring it back.',
+      body: "Parks your ticked changes off to the side without them becoming a version, and puts those files back to your last saved version. Bring the latest one back, or pick from a list, from the same menu. It's also the fastest way past a branch switch blocked by unsaved work.",
+    },
+    {
+      lead: 'Discard, with one honest warning.',
+      body: "Reverts the ticked files to their last saved version. Everything since, including work the panel auto-saved for you, is gone for good. If there's a chance you'll want it back, set it aside instead.",
+    },
+    {
+      lead: 'Documents reload themselves.',
+      body: 'Discarding, setting aside, bringing work back, and switching branches all rewrite files on disk, so the panel closes and reopens any open document it actually changed, and your canvas always matches your history. The one tradeoff: a reopened document starts with an empty undo history.',
+    },
+    {
+      lead: 'Branch-aware.',
+      body: "Switch branches right from the panel. If unsaved work is in the way, you're offered Set aside & switch instead of having to leave Krita to sort it out first.",
+    },
+    {
+      lead: 'Palette files ride along.',
+      body: "Color palettes (.gpl, .kpl, .aco, .ase) sitting next to your art get tracked too, right alongside the .kra file. Untick them if you'd rather leave them out of a version.",
+    },
+    {
+      lead: "What it deliberately doesn't do.",
+      body: 'Creating a project, browsing full history, undoing a version, and merging or deleting branches all stay in the main Krita VCS app. The panel is for painting and quick version-control actions without alt-tabbing away.',
+    },
+  ],
+  installTitle: 'Installing it',
+  installNote:
+    'Needs Krita with Python scripting enabled, on by default in official builds. You can confirm under Settings → Configure Krita → Python Plugin Manager, which should already list a few built-in plugins.',
+  installSteps: [
+    {
+      title: 'Download and unzip.',
+      body: "Download the plugin zip below and unzip it. Inside you'll find a pykrita folder and the kvc tool it talks to, already built, nothing to compile.",
+    },
+    {
+      title: "Find Krita's plugin folder.",
+      body: "In Krita: Settings → Manage Resources → Open Resource Folder. Look for a pykrita folder inside; create it if it isn't there yet.",
+    },
+    {
+      title: 'Copy the plugin in.',
+      body: 'Copy the kritavc.desktop file and the kritavc folder from the zip into that pykrita folder. Both need to land directly inside it, not nested a level deeper.',
+    },
+    {
+      title: 'Enable it and restart.',
+      body: 'Settings → Configure Krita → Python Plugin Manager, find "Krita VC" in the list and check it on, then restart Krita. Python plugins only load at startup, so this step isn\'t optional.',
+    },
+    {
+      title: 'Open the panel.',
+      body: "Settings → Dockers → Version Control. If it's not there, the plugin didn't load. Double-check the previous two steps.",
+    },
+    {
+      title: 'Point it at kvc, if asked.',
+      body: "If the panel says the kvc tool wasn't found, click Locate kvc… and browse to the kvc file from the zip you downloaded.",
+    },
+  ],
+  troubleshootingTitle: 'Troubleshooting',
+  troubleshooting: [
+    {
+      lead: '"Version Control" isn\'t in the Dockers menu.',
+      body: "The plugin didn't load. Recheck the steps above, and confirm both kritavc.desktop and the kritavc folder landed directly inside pykrita, not one level up or down.",
+    },
+    {
+      lead: '"That isn\'t the kvc tool" after Locate kvc….',
+      body: "Point it at the kvc (or kvc.exe) file itself, not the folder, and make sure it's the one from the zip you downloaded.",
+    },
+    {
+      lead: '"Krita VC tracks .kra documents."',
+      body: 'The active document is a .png/.jpg/etc. Only .kra files are versioned. Save it as .kra inside the tracked folder first.',
+    },
+    {
+      lead: '"repository is busy (locked by another process)."',
+      body: "The desktop app is mid-write, or a previous save didn't exit cleanly and left a lock file behind. Safe to delete by hand as long as nothing else is actually writing at the moment.",
+    },
+    {
+      lead: '"Save (Ctrl+S) or undo your changes in … first."',
+      body: "A discard/set-aside/switch would overwrite a file with unsaved edits. You shouldn't normally see this, since opening the panel's menu already saves everything on the way in. If you do, your last autosave failed (see the next entry).",
+    },
+    {
+      lead: '"Couldn\'t save …"',
+      body: "Krita couldn't write the file, usually because it's read-only, the disk is full, or something else has it open elsewhere. Fix the file and click the refresh button to retry.",
+    },
+  ],
+  uninstallTitle: 'Uninstalling',
+  uninstall:
+    'In Krita, turn off "Krita VC" in the Python Plugin Manager, then delete kritavc.desktop and the kritavc folder from the resource folder. Nothing about your projects or their history lives in the plugin folder, so removing it doesn\'t touch your work.',
+  sourceLink: {
+    label: 'Building it from source instead? See the technical guide on GitHub',
+    href: links.pluginGuide,
+  },
 } as const;
 
 // Discovery / landing pages. Nobody searches the product name, so these target
@@ -494,5 +671,43 @@ export const vsCopiesPage = {
   ],
 } as const;
 
+export const recoverAfterCrashPage = {
+  slug: 'recover-after-a-krita-crash',
+  metaTitle: 'Recover from a Krita crash without losing your painting',
+  metaDescription:
+    'Krita crashed and you lost work? Krita VCS keeps a running history of every save, free and local-only, so next time a crash only costs a few minutes, not the whole painting.',
+  headline: 'Stop losing hours of work to a Krita crash.',
+  intro:
+    "Krita crashing, freezing, or closing without saving can cost you hours of painting in one shot. Krita VCS can't bring back a file it never saw, but it makes sure this is the last time it costs you more than a few minutes: every version you save stays in your history, safe on your own machine, ready to go back to.",
+  sections: [
+    {
+      title:
+        'Most crash losses come from having no earlier save to fall back on.',
+      body: [
+        'The usual routine is one file, saved over itself again and again. If Krita crashes, freezes, or the file corrupts before your next save, whatever changed since the last one is simply gone.',
+        'Krita VCS keeps every version you save as its own full point in your history, so a crash never erases more than the time since your last save.',
+      ],
+    },
+    {
+      title:
+        "A version is one click away, right where you're already painting.",
+      body: [
+        'Save a version whenever you reach a good stopping point; it takes a note and a click. From the in-Krita panel, it can even save your open paintings for you the moment you click in, so a save is never more than a few minutes stale.',
+      ],
+    },
+    {
+      title: 'If something still goes wrong, going back takes a few clicks.',
+      body: [
+        'Open History and pick the version from right before things went wrong. Restore brings it back as a brand-new save, and nothing in between is ever deleted, so you can always change your mind again.',
+        'Everything lives in a hidden folder inside your own project. No account, no cloud, nothing that stops working the moment your internet does.',
+      ],
+    },
+  ],
+} as const;
+
 // Shared list for the sitemap + footer internal links.
-export const discoveryPages = [recoverPage, vsCopiesPage] as const;
+export const discoveryPages = [
+  recoverPage,
+  vsCopiesPage,
+  recoverAfterCrashPage,
+] as const;

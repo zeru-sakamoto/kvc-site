@@ -61,7 +61,7 @@ see `app/layout.tsx`:
 ## Layout Flow (sections vary rhythm on purpose)
 
 The brush stroke spans the full page height and follows scroll, connecting the sections. The
-four feature blocks alternate left/right; the surrounding sections deliberately break that
+six feature blocks alternate left/right; the surrounding sections deliberately break that
 rhythm so the page doesn't read as one repeated template.
 
 1. **Hero — left-aligned + visual.** Bold headline ("Version control for your art, not your
@@ -92,9 +92,13 @@ rhythm so the page doesn't read as one repeated template.
    `PerformanceMedia` (shrinking storage bars per version, a warm badge for the first-save
    overhead, a cool badge for the second-save saving — no invented precision beyond those two
    figures already in the copy).
-8. **What's next — narrow roadmap.** No media. Two roadmap items + "Request a feature" CTA.
-9. **FAQ — centered accordion.** Native `<details>/<summary>`, no JS, keyboard-accessible.
-10. **Footer.** Wordmark, maker signature, license note (TBD), Product + Maker link columns. No
+8. **Panel (feature block, media left).** "Save a version without leaving Krita." The in-Krita
+   Version Control panel: file selection, discard, set aside, branch switching, and
+   auto-save-on-open. Media: `PanelMedia` (two labeled surfaces sharing one synced version node,
+   plus a row of plain action labels — not a screenshot of Krita's UI).
+9. **What's next — narrow roadmap.** No media. Two roadmap items + "Request a feature" CTA.
+10. **FAQ — centered accordion.** Native `<details>/<summary>`, no JS, keyboard-accessible.
+11. **Footer.** Wordmark, maker signature, license note (TBD), Product + Maker link columns. No
     metric tiles.
 
 ### `/docs` route
@@ -118,7 +122,7 @@ chapter-tabbed guide (`app/docs/layout.tsx` + one route per chapter):
    automatically", with a plain fallback link) — no fake progress bar or fake precision.
 4. **Using each feature** (`app/docs/using-features/page.tsx`). A dot-bullet reference list
    (`app/components/bullet-list.tsx`, bold lead term + body) covering Changes, History, Branches,
-   comparing versions, Undo, Restore, Settings, and Clean up storage.
+   comparing versions, Undo, Set aside, Restore, Settings, and Clean up storage.
 5. **Keeping your work safe** (`app/docs/safety/page.tsx`). Same `BulletList` component, one
    entry per guardrail (won't switch with unsaved changes, never silently overwrites a conflict,
    etc.).
@@ -135,7 +139,7 @@ intentionally a different rhythm than the landing page, same as Why/What's-next/
 ### Download flow
 
 The hero's primary CTA is `app/components/download-button.tsx`, not a plain link: a real
-`<a href="/download/Krita-VC_0.2.1_x64-setup.exe" download>` (works with JS disabled) whose
+`<a href="/download/Krita-VC_0.3.0_x64-setup.exe" download>` (works with JS disabled) whose
 `onClick` also client-navigates to `/docs/getting-started?ref=download`. Both actions fire from
 the same click — the `download` attribute forces the browser to save the file instead of
 navigating, so there's no conflict with the SPA redirect. The installer lives in
@@ -182,7 +186,8 @@ if (!preferReduced) {
   `flex-row-reverse` for alternation — no duplicated markup. `eyebrow` is optional and used
   sparingly (the page leans on strong headings, not a mono-caps kicker over every section).
 - **Media (`media.tsx`):** `LayersMedia`, `DiffMedia`, `BranchMedia`, `OwnershipMedia`,
-  `SignatureMedia`, `PerformanceMedia` — abstract painterly vector, all colors via tokens.
+  `SignatureMedia`, `PerformanceMedia`, `PanelMedia` — abstract painterly vector, all colors via
+  tokens.
 - **Steps (`steps.tsx`):** plain numbered list for the `/docs` Getting Started chapter. No
   animation, no stepper widget — a static ordered list styled with site tokens.
 - **Bullet list (`bullet-list.tsx`):** dot-bullet list shared by the Using each feature, Keeping
@@ -197,7 +202,7 @@ if (!preferReduced) {
   from `lib/content.ts`'s `platforms` (kept in sync with the FAQ's platform answer).
 - **FAQ (`faq.tsx`):** native `<details>` accordion.
 - **Footer (`site-footer.tsx`):** maker signature, license, link columns — Product, **Guides**
-  (the two discovery pages), Maker. Row wraps (`flex-wrap`) so three columns stay mobile-safe.
+  (the three discovery pages), Maker. Row wraps (`flex-wrap`) so three columns stay mobile-safe.
   Internal links use `next/link`; external repo links keep `target="_blank"`.
 - **JSON-LD (`json-ld.tsx`):** renders one `application/ld+json` block from a passed object,
   escaping `<` to close the `</script>` breakout. Reused by layout, home, docs, discovery pages.
@@ -241,7 +246,9 @@ live in metadata, FAQ answers, and JSON-LD, with only light retuning of visible 
   graceful fallback so an offline build still renders on the built-in font. Covers `twitter:image`
   too (X falls back to `og:image`), so there is no separate `twitter-image`.
 - **`robots.ts` / `sitemap.ts`:** allow-all robots pointing at the sitemap; sitemap built from the
-  `docsChapters`/`docsPlugin`/`discoveryPages` exports so it never drifts from the routes.
-- **Discovery routes:** `/recover-a-krita-version` (go back to an earlier version) and
-  `/vs-saving-copies` (an alternative to `_final_final.kra` copies) — distinct search intent from
-  the homepage, cross-linked from the footer "Guides" column.
+  `docsChapters`/`discoveryPages` exports so it never drifts from the routes.
+- **Discovery routes:** `/recover-a-krita-version` (go back to an earlier version),
+  `/vs-saving-copies` (an alternative to `_final_final.kra` copies), and
+  `/recover-after-a-krita-crash` (the panic search after Krita crashes or closes without saving —
+  targets non-technical searchers who don't know the product exists yet) — distinct search intent
+  from the homepage and from each other, cross-linked from the footer "Guides" column.
