@@ -145,6 +145,16 @@ the same click — the `download` attribute forces the browser to save the file 
 navigating, so there's no conflict with the SPA redirect. The installer lives in
 `public/download/`, served at `/download/...` directly (no external host).
 
+### `/privacy` route
+
+A standalone top-level page (`app/privacy/page.tsx`), same structural pattern as `/plugin`: intro
+(h1 + lede + "last updated" line) then a single prose section, no `DiscoveryPage`/download-CTA
+template since that doesn't fit a legal document. Content is a short, true policy, not padded
+boilerplate — the app is fully offline (no telemetry, no network calls) and the site has no
+analytics or cookies, so there's little to disclose. Copy lives in `privacyPage` in
+`lib/content.ts`. Linked from the footer's copyright line (`footer.legal`), not a nav link or its
+own column. Exists mainly as the privacy-policy URL required for a Microsoft Store submission.
+
 ## GSAP Animation
 
 - **Brush stroke** (`app/components/brush-stroke.tsx`): one stroke drawn via `strokeDashoffset`
@@ -203,7 +213,8 @@ if (!preferReduced) {
 - **FAQ (`faq.tsx`):** native `<details>` accordion.
 - **Footer (`site-footer.tsx`):** maker signature, license, link columns — Product, **Guides**
   (the three discovery pages), Maker. Row wraps (`flex-wrap`) so three columns stay mobile-safe.
-  Internal links use `next/link`; external repo links keep `target="_blank"`.
+  Internal links use `next/link`; external repo links keep `target="_blank"`. The copyright line
+  also carries a lone `Privacy` link (`footer.legal`) — no fourth column for one link.
 - **JSON-LD (`json-ld.tsx`):** renders one `application/ld+json` block from a passed object,
   escaping `<` to close the `</script>` breakout. Reused by layout, home, docs, discovery pages.
 - **Discovery page (`discovery-page.tsx`):** shared template for the SEO landing routes — intro

@@ -321,6 +321,7 @@ export const footer = {
   ],
   signature: 'Made for painters by Zeru Sakamoto.',
   license: 'Free and open source · MIT license',
+  legal: { label: 'Privacy', href: '/privacy' },
 } as const;
 
 // The /docs page — a chapter-tabbed documentation guide, kept off the
@@ -602,6 +603,72 @@ export const pluginPage = {
     label: 'Building it from source instead? See the technical guide on GitHub',
     href: links.pluginGuide,
   },
+} as const;
+
+// The /privacy page. Short and true rather than padded: the app is fully
+// offline and the site has no analytics, so there's very little to disclose.
+// Also the privacy-policy URL required for a Microsoft Store submission.
+export const privacyPage = {
+  slug: 'privacy',
+  metaTitle: 'Privacy Policy',
+  metaDescription:
+    "Krita VCS collects nothing: no accounts, no telemetry, no analytics, no cookies. Here's exactly what the app and this website do and don't do with your data.",
+  title: 'Privacy Policy',
+  updated: 'July 17, 2026',
+  intro:
+    "The short version: Krita VCS doesn't collect anything. No accounts, no telemetry, no analytics, no cookies. Everything below explains what that means, in plain language.",
+  sections: [
+    {
+      heading: 'The app',
+      body: [
+        'Krita VCS runs entirely on your computer. It reads and writes files only inside the project folders you choose, and it never connects to the internet: no update checks, no license pings, no crash reports, nothing. There is no account to create and nothing to sign in to.',
+        "The app is open source, so you don't have to take our word for any of this. You can read exactly what it does yourself, on GitHub.",
+      ],
+      linkLabel: 'View the source on GitHub',
+      linkHref: links.repo,
+    },
+    {
+      heading: 'This website',
+      body: [
+        "This website doesn't use cookies, analytics, or third-party trackers. We don't know who you are, what you clicked, or how long you stayed.",
+        "Like any website, our hosting provider keeps standard server logs for every request it handles, things like IP address, browser type, and timestamp. That's normal web infrastructure, not something we set up: we don't read it for analytics, and we don't share it with anyone.",
+        'One small technical note for completeness: the preview image shown when a link to this site is shared is built on our server using Google Fonts, fetched by that server, not by your browser. Nothing about your visit reaches Google because of it.',
+      ],
+    },
+    {
+      heading: 'Downloading the app',
+      body: [
+        "Downloading the installer doesn't ask for an account, an email address, or any personal information. It's a direct file download, the same as downloading any file from any website.",
+        "You can also get Krita VCS from its GitHub Releases page. If you download it from there instead, GitHub's own privacy policy covers that visit, not this one.",
+      ],
+    },
+    {
+      heading: 'Your version history',
+      body: [
+        "Every version Krita VCS saves stays inside your own project folder, in a local history store next to your files. We never see it, receive it, or back it up. If you delete it, it's gone, that's between you and your file system.",
+      ],
+    },
+    {
+      heading: "Children's privacy",
+      body: [
+        "Krita VCS is a tool for digital painters, not a service aimed at children, and we don't knowingly collect information from anyone, of any age, because we don't collect information at all.",
+      ],
+    },
+    {
+      heading: 'Changes to this policy',
+      body: [
+        'If anything here ever changes, the "last updated" date at the top will change with it. The full history is public in this site\'s own repository, like everything else about it.',
+      ],
+    },
+    {
+      heading: 'Contact',
+      body: [
+        'Krita VCS is made by one person, not a company. Questions about this policy, or anything else: reach out at anzelsakamoto@gmail.com, or on GitHub.',
+      ],
+      linkLabel: 'Find me on GitHub',
+      linkHref: links.profile,
+    },
+  ],
 } as const;
 
 // Discovery / landing pages. Nobody searches the product name, so these target

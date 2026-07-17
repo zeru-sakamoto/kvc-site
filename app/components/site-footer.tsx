@@ -63,7 +63,13 @@ export default function SiteFooter() {
         </div>
 
         <p className="mt-16 text-xs text-muted">
-          © {new Date().getFullYear()} {site.name}.
+          © {new Date().getFullYear()} {site.name} ·{' '}
+          <Link
+            href={footer.legal.href}
+            className="transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+          >
+            {footer.legal.label}
+          </Link>
         </p>
       </div>
     </footer>

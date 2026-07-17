@@ -4,6 +4,7 @@ import {
   docsChapters,
   discoveryPages,
   pluginPage,
+  privacyPage,
 } from '@/lib/content';
 
 // Built from the same content exports the pages render from, so adding a docs
@@ -47,5 +48,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   };
 
-  return [home, ...discovery, docsIndex, ...docsPages, plugin];
+  const privacy = {
+    url: abs(`/${privacyPage.slug}`),
+    lastModified: now,
+    changeFrequency: 'yearly' as const,
+    priority: 0.3,
+  };
+
+  return [home, ...discovery, docsIndex, ...docsPages, plugin, privacy];
 }
