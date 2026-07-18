@@ -65,7 +65,8 @@ six feature blocks alternate left/right; the surrounding sections deliberately b
 rhythm so the page doesn't read as one repeated template.
 
 1. **Hero — left-aligned + visual.** Bold headline ("Version control for your art, not your
-   code."), factual badge, Download + View-source CTAs on the left, with a small
+   code."), factual badge carrying the version ("v1.0 · Free, open source, local-only"), linked
+   to GitHub Releases for provenance, Download + View-source CTAs on the left, with a small
    Windows-available / macOS-Linux-coming-soon icon row beneath (`platform-icons.tsx`);
    painterly `LayersMedia` (translucent painting layers + a version-history trail) on the right.
 2. **Why artists use it — full-width points grid.** No media column. Intro + five value props
@@ -139,7 +140,7 @@ intentionally a different rhythm than the landing page, same as Why/What's-next/
 ### Download flow
 
 The hero's primary CTA is `app/components/download-button.tsx`, not a plain link: a real
-`<a href="/download/Krita-VC_0.3.0_x64-setup.exe" download>` (works with JS disabled) whose
+`<a href="/download/Krita-VC_1.0.0_x64-setup.exe" download>` (works with JS disabled) whose
 `onClick` also client-navigates to `/docs/getting-started?ref=download`. Both actions fire from
 the same click — the `download` attribute forces the browser to save the file instead of
 navigating, so there's no conflict with the SPA redirect. The installer lives in

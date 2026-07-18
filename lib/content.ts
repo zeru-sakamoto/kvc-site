@@ -70,8 +70,10 @@ export const nav = {
 
 export const hero = {
   // Normal-case badge (not an uppercase-tracked eyebrow), so it doesn't add to
-  // the page's eyebrow count.
-  badge: 'Free, open source, local-only',
+  // the page's eyebrow count. Links out to GitHub Releases so the version
+  // claim has provenance.
+  badge: 'v1.0 · Free, open source, local-only',
+  badgeHref: links.download,
   headline: 'Version control for your art, not your code.',
   sub: 'A free, local-only version control app for Krita painters and digital art. No cloud, no accounts, and none of the git jargon.',
   primaryCta: { label: 'Download for free' },
@@ -476,8 +478,8 @@ export const docsChapters = [
 // button redirects to (the Getting Started chapter, flagged to show the
 // download banner).
 export const download = {
-  fileHref: '/download/Krita-VC_0.3.0_x64-setup.exe',
-  fileName: 'Krita-VC_0.3.0_x64-setup.exe',
+  fileHref: '/download/Krita-VC_1.0.0_x64-setup.exe',
+  fileName: 'Krita-VC_1.0.0_x64-setup.exe',
   redirectHref: '/docs/getting-started?ref=download',
 } as const;
 
