@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import Steps from '../../components/steps';
-import { docsGettingStarted, download } from '@/lib/content';
+import { docsGettingStarted } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: docsGettingStarted.metaTitle,
@@ -31,14 +32,14 @@ export default async function GettingStartedPage({
             className="mt-1.5 h-2 w-2 flex-none rounded-full bg-accent-cool"
           />
           <p className="text-sm leading-relaxed text-primary">
-            Your download will start automatically. If it doesn&apos;t,{' '}
-            <a
-              href={download.fileHref}
-              download={download.fileName}
+            Your download will start automatically. If it doesn&apos;t, pick
+            your platform on the{' '}
+            <Link
+              href="/download"
               className="font-semibold text-brand-blue underline underline-offset-2 hover:text-accent-cool"
             >
-              download it directly
-            </a>
+              download page
+            </Link>
             .
           </p>
         </div>

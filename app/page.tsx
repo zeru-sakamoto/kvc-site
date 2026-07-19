@@ -24,10 +24,6 @@ import {
   siteUrl,
 } from '@/lib/content';
 
-// Installer version, kept in sync with the download filename (undefined keys are
-// dropped by JSON.stringify, so a filename format change just omits the field).
-const softwareVersion = download.fileName.match(/(\d+\.\d+\.\d+)/)?.[1];
-
 // The product itself: free, MIT, downloadable. Still earns rich results, and
 // feeds AI answer engines a clean description of what Krita VCS is.
 const softwareLd = {
@@ -35,11 +31,11 @@ const softwareLd = {
   '@type': 'SoftwareApplication',
   name: site.name,
   applicationCategory: 'MultimediaApplication',
-  operatingSystem: 'Windows',
+  operatingSystem: 'Windows, macOS, Linux',
   description: site.metaDescription,
   url: siteUrl,
-  downloadUrl: `${siteUrl}${download.fileHref}`,
-  softwareVersion,
+  downloadUrl: `${siteUrl}/download`,
+  softwareVersion: download.version,
   license: 'https://opensource.org/licenses/MIT',
   isAccessibleForFree: true,
   offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },

@@ -66,9 +66,9 @@ rhythm so the page doesn't read as one repeated template.
 
 1. **Hero — left-aligned + visual.** Bold headline ("Version control for your art, not your
    code."), factual badge carrying the version ("v1.0 · Free, open source, local-only"), linked
-   to GitHub Releases for provenance, Download + View-source CTAs on the left, with a small
-   Windows-available / macOS-Linux-coming-soon icon row beneath (`platform-icons.tsx`);
-   painterly `LayersMedia` (translucent painting layers + a version-history trail) on the right.
+   to the `/download` page, Download + View-source CTAs on the left, with a small all-available
+   OS icon row beneath (`platform-icons.tsx`); painterly `LayersMedia` (translucent painting
+   layers + a version-history trail) on the right.
 2. **Why artists use it — full-width points grid.** No media column. Intro + five value props
    in a two-column grid. Breaks the two-column rhythm before the feature blocks.
 3. **Compare (feature block, media right).** "See exactly what changed, layer by layer." Visual
@@ -97,7 +97,7 @@ rhythm so the page doesn't read as one repeated template.
    Version Control panel: file selection, discard, set aside, branch switching, and
    auto-save-on-open. Media: `PanelMedia` (two labeled surfaces sharing one synced version node,
    plus a row of plain action labels — not a screenshot of Krita's UI).
-9. **What's next — narrow roadmap.** No media. Two roadmap items + "Request a feature" CTA.
+9. **What's next — narrow roadmap.** No media. Three roadmap items + "Request a feature" CTA.
 10. **FAQ — centered accordion.** Native `<details>/<summary>`, no JS, keyboard-accessible.
 11. **Footer.** Wordmark, maker signature, license note (TBD), Product + Maker link columns. No
     metric tiles.
@@ -139,12 +139,31 @@ intentionally a different rhythm than the landing page, same as Why/What's-next/
 
 ### Download flow
 
-The hero's primary CTA is `app/components/download-button.tsx`, not a plain link: a real
-`<a href="/download/Krita-VC_1.0.0_x64-setup.exe" download>` (works with JS disabled) whose
+The hero's primary CTA is `app/components/download-button.tsx`, not a plain link. It detects the
+visitor's OS client-side after mount (`navigator.userAgent` sniffing — good enough for "which
+installer to default to", never load-bearing for anything else) and renders a real
+`<a download>` pointing at that platform's primary installer from `platformDownloads` in
+`lib/content.ts`, labeled "Download for Windows/macOS/Linux" with the matching glyph. Its
 `onClick` also client-navigates to `/docs/getting-started?ref=download`. Both actions fire from
 the same click — the `download` attribute forces the browser to save the file instead of
-navigating, so there's no conflict with the SPA redirect. The installer lives in
-`public/download/`, served at `/download/...` directly (no external host).
+navigating, so there's no conflict with the SPA redirect. Server render (and the brief pre-mount
+client render) show a neutral state — a plain link to `/download` — so there's no hydration
+mismatch; an unrecognized OS (mobile, etc.) simply stays in that neutral state instead of
+guessing. All installers live flat in `public/download/`, served at `/download/<file>` directly
+(no external host, no subfolder).
+
+### `/download` route
+
+A standalone top-level page (`app/download/page.tsx`), same structural pattern as `/plugin`: an
+intro (h1 + lede + version line), then a three-column grid — Windows, macOS, and Linux shown side
+by side as equal-weight cards from page load, no tabs and no platform emphasized over the others.
+Each column has one primary install button (the standard/most-compatible format per OS — `.exe`,
+`.dmg`, `.AppImage`) plus small secondary links for that OS's other formats (`.msi`;
+`.app.tar.gz`; `.deb`/`.rpm`). All file data comes from `platformDownloads`; page copy from
+`downloadPage`, both in `lib/content.ts`. The per-file `<a download>` + click-cooldown logic is
+shared via `app/components/file-download-link.tsx` (also used by `plugin-download-button.tsx`)
+rather than repeated per card. Closes with a line pointing to Getting started for install steps
+and to GitHub for release notes or older versions.
 
 ### `/privacy` route
 
@@ -206,11 +225,16 @@ if (!preferReduced) {
 - **Docs nav (`docs-nav.tsx`):** chapter tabs for `/docs` — vertical list on `lg:` and up,
   horizontal scrollable pill row on mobile. Client component, active tab via `usePathname`.
 - **Download button (`download-button.tsx`):** the hero's primary CTA — see Download flow above.
-  Leads with the shared `WindowsGlyph` (the installer is Windows-only today); the accompanying
-  `PlatformIcons` row shows macOS/Linux as "Soon." Reused on the discovery pages.
-- **Platform icons (`platform-icons.tsx`):** small OS-availability row under the hero CTAs —
-  Windows (available) vs. macOS/Linux (coming soon), generic inline-SVG glyphs, wording sourced
-  from `lib/content.ts`'s `platforms` (kept in sync with the FAQ's platform answer).
+  Detects the visitor's OS after mount and leads with the matching glyph
+  (`WindowsGlyph`/`MacGlyph`/`LinuxGlyph`); falls back to a plain `/download` link pre-mount or on
+  an unrecognized OS. Reused on the discovery pages.
+- **Platform icons (`platform-icons.tsx`):** small, purely informational OS row under the hero
+  CTAs — Windows/macOS/Linux, generic inline-SVG glyphs (also exports the glyphs for reuse by
+  `download-button.tsx` and the `/download` page), wording sourced from `lib/content.ts`'s
+  `platforms` (kept in sync with the FAQ's platform answer).
+- **File download link (`file-download-link.tsx`):** shared `<a download>` + click-cooldown
+  primitive (no redirect) used by the `/download` page's per-file buttons and
+  `plugin-download-button.tsx`, so that logic isn't repeated per file.
 - **FAQ (`faq.tsx`):** native `<details>` accordion.
 - **Footer (`site-footer.tsx`):** maker signature, license, link columns — Product, **Guides**
   (the three discovery pages), Maker. Row wraps (`flex-wrap`) so three columns stay mobile-safe.
@@ -226,8 +250,9 @@ if (!preferReduced) {
 
 - **Download (hero):** served locally from `public/download/`, see Download flow above — not an
   external link.
-- **Download (footer):** still points to GitHub releases; only the hero CTA triggers the local
-  file + redirect flow.
+- **Download (footer):** points to the local `/download` page (`links.download`), same as the
+  hero badge; GitHub Releases is still reachable from "View source" and from `/download`'s
+  closing line, for release notes or older versions.
 - **Source:** hero secondary CTA + nav + footer → the repo.
 - **Issues:** "Request a feature" (What's next) + footer.
 - **Docs / Plugin guide:** `/docs` chapter CTAs → GitHub repo (no dedicated docs site yet, same

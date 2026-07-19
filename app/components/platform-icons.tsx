@@ -1,15 +1,12 @@
-// OS-compatibility row shown under the hero download button. Generic,
+// OS-availability row shown under the hero download button. Generic,
 // non-trademarked glyphs (concept-based, not literal logo reproductions),
-// thin-stroke to match media.tsx's line-art language. Windows renders as
-// available; macOS/Linux render muted with a "Soon" tag — honest about what's
-// actually downloadable today, consistent with the FAQ's platform answer.
+// thin-stroke to match media.tsx's line-art language. Purely informational —
+// all three platforms are downloadable today (see the /download page).
 import { platforms } from '@/lib/content';
 
 export function WindowsGlyph({
-  opacity = 1,
   className = 'h-4 w-4 flex-none',
 }: {
-  opacity?: number;
   className?: string;
 }) {
   return (
@@ -30,16 +27,19 @@ export function WindowsGlyph({
           fill="none"
           stroke="currentColor"
           strokeWidth={1.4}
-          strokeOpacity={opacity}
         />
       ))}
     </svg>
   );
 }
 
-function MacGlyph({ opacity }: { opacity: number }) {
+export function MacGlyph({
+  className = 'h-4 w-4 flex-none',
+}: {
+  className?: string;
+}) {
   return (
-    <svg aria-hidden viewBox="0 0 16 16" className="h-4 w-4 flex-none">
+    <svg aria-hidden viewBox="0 0 16 16" className={className}>
       <rect
         x={1.5}
         y={2}
@@ -49,7 +49,6 @@ function MacGlyph({ opacity }: { opacity: number }) {
         fill="none"
         stroke="currentColor"
         strokeWidth={1.4}
-        strokeOpacity={opacity}
       />
       <line
         x1={5.5}
@@ -58,7 +57,6 @@ function MacGlyph({ opacity }: { opacity: number }) {
         y2={14}
         stroke="currentColor"
         strokeWidth={1.4}
-        strokeOpacity={opacity}
         strokeLinecap="round"
       />
       <line
@@ -68,15 +66,18 @@ function MacGlyph({ opacity }: { opacity: number }) {
         y2={14}
         stroke="currentColor"
         strokeWidth={1.4}
-        strokeOpacity={opacity}
       />
     </svg>
   );
 }
 
-function LinuxGlyph({ opacity }: { opacity: number }) {
+export function LinuxGlyph({
+  className = 'h-4 w-4 flex-none',
+}: {
+  className?: string;
+}) {
   return (
-    <svg aria-hidden viewBox="0 0 16 16" className="h-4 w-4 flex-none">
+    <svg aria-hidden viewBox="0 0 16 16" className={className}>
       <rect
         x={1.5}
         y={2.5}
@@ -86,14 +87,12 @@ function LinuxGlyph({ opacity }: { opacity: number }) {
         fill="none"
         stroke="currentColor"
         strokeWidth={1.4}
-        strokeOpacity={opacity}
       />
       <path
         d="M4.5 6.5 L6.5 8 L4.5 9.5"
         fill="none"
         stroke="currentColor"
         strokeWidth={1.4}
-        strokeOpacity={opacity}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -104,7 +103,6 @@ function LinuxGlyph({ opacity }: { opacity: number }) {
         y2={9.5}
         stroke="currentColor"
         strokeWidth={1.4}
-        strokeOpacity={opacity}
         strokeLinecap="round"
       />
     </svg>
@@ -125,27 +123,15 @@ export default function PlatformIcons() {
       className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2"
     >
       {platforms.items.map((p) => {
-        const available = p.status === 'available';
         const Glyph = glyphs[p.name];
         return (
           <span
             key={p.name}
-            className={`inline-flex items-center gap-1.5 text-xs ${
-              available ? 'text-muted' : 'text-muted/50'
-            }`}
-            style={{
-              color: available ? 'var(--color-accent-cool)' : undefined,
-            }}
+            className="inline-flex items-center gap-1.5 text-xs"
+            style={{ color: 'var(--color-accent-cool)' }}
           >
-            <Glyph opacity={available ? 1 : 0.45} />
-            <span className={available ? 'text-muted' : 'text-muted/50'}>
-              {p.name}
-            </span>
-            {!available && (
-              <span className="text-[10px] tracking-wide text-muted/50">
-                Soon
-              </span>
-            )}
+            <Glyph />
+            <span className="text-muted">{p.name}</span>
           </span>
         );
       })}

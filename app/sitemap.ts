@@ -5,6 +5,7 @@ import {
   discoveryPages,
   pluginPage,
   privacyPage,
+  downloadPage,
 } from '@/lib/content';
 
 // Built from the same content exports the pages render from, so adding a docs
@@ -48,6 +49,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   };
 
+  const download = {
+    url: abs(`/${downloadPage.slug}`),
+    lastModified: now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  };
+
   const privacy = {
     url: abs(`/${privacyPage.slug}`),
     lastModified: now,
@@ -55,5 +63,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.3,
   };
 
-  return [home, ...discovery, docsIndex, ...docsPages, plugin, privacy];
+  return [
+    home,
+    ...discovery,
+    docsIndex,
+    ...docsPages,
+    plugin,
+    download,
+    privacy,
+  ];
 }

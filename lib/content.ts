@@ -16,8 +16,9 @@ export const links = {
   repo: repoUrl,
   issues: `${repoUrl}/issues`,
   releases: `${repoUrl}/releases`,
-  // No standalone download host yet — the latest build lives on GitHub releases.
-  download: `${repoUrl}/releases`,
+  // Every installer is hosted locally now (see the /download page); GitHub
+  // Releases is still linked separately from the hero's "View source" CTA.
+  download: '/download',
   // No dedicated docs site yet — the full docs live in the repo.
   docs: `${repoUrl}#readme`,
   // Technical build-from-source reference for the plugin (Rust/cargo steps) —
@@ -204,24 +205,18 @@ export const whatsNext = {
       body: "A quick walkthrough of the app on first open, pointing out the repository switcher, Changes, History, and Settings so new users aren't left guessing.",
     },
     {
-      title: 'A one-click plugin install',
-      body: "The in-Krita panel (above) works today, but getting it running means building a small helper by hand. I'm packaging it so it installs alongside the app instead.",
+      title: 'Signed installers',
+      body: "Windows and macOS both flag the app as from an unknown developer on first launch, since it isn't code-signed yet. Getting a signing certificate is next, so that warning goes away.",
     },
   ],
   cta: { label: 'Request a feature on GitHub', href: links.issues },
 } as const;
 
-// OS availability, shown as a small icon row under the hero download button.
-// Windows is real and downloadable today; macOS and Linux are not yet
-// buildable, so they render as "coming soon," never as a live download —
-// kept consistent with the FAQ's platform answer below.
+// OS availability, shown as a small informational icon row under the hero
+// download button — kept consistent with the FAQ's platform answer below.
 export const platforms = {
-  note: 'Windows today. macOS and Linux are on the way, on the same cross-platform base.',
-  items: [
-    { name: 'Windows', status: 'available' },
-    { name: 'macOS', status: 'soon' },
-    { name: 'Linux', status: 'soon' },
-  ],
+  note: 'Windows, macOS, and Linux, all downloadable today, on the same cross-platform base.',
+  items: [{ name: 'Windows' }, { name: 'macOS' }, { name: 'Linux' }],
 } as const;
 
 // FAQ — rendered as a native <details>/<summary> accordion (no JS).
@@ -256,7 +251,7 @@ export const faq = [
   },
   {
     q: 'What platforms does it support?',
-    a: "It's a desktop app built with Tauri, currently targeting Windows, with macOS and Linux following on the same cross-platform base.",
+    a: "It's a desktop app built with Tauri, available today for Windows, macOS, and Linux, on the same cross-platform base.",
   },
   {
     q: 'Will it slow down Krita or make my computer laggy?',
@@ -474,19 +469,100 @@ export const docsChapters = [
   docsSafety,
 ] as const;
 
-// The local installer served from `public/download/` + where the download
-// button redirects to (the Getting Started chapter, flagged to show the
-// download banner).
+// Every installer file, served flat from `public/download/`, grouped by OS.
+// `primary` is the format the hero button and the /download page's headline
+// button use for that platform; `alternates` are the other formats listed as
+// secondary links (installer type, not architecture — every build here is
+// the same universal/x64 target).
+export const platformDownloads = {
+  windows: {
+    name: 'Windows',
+    primary: {
+      fileHref: '/download/Krita-VC_1.0.0_x64-setup.exe',
+      fileName: 'Krita-VC_1.0.0_x64-setup.exe',
+      label: '.exe installer',
+    },
+    alternates: [
+      {
+        fileHref: '/download/Krita-VC_1.0.0_x64_en-US.msi',
+        fileName: 'Krita-VC_1.0.0_x64_en-US.msi',
+        label: '.msi installer',
+      },
+    ],
+  },
+  macos: {
+    name: 'macOS',
+    primary: {
+      fileHref: '/download/Krita-VC_1.0.0_universal.dmg',
+      fileName: 'Krita-VC_1.0.0_universal.dmg',
+      label: '.dmg installer (universal)',
+    },
+    alternates: [
+      {
+        fileHref: '/download/Krita-VC_universal.app.tar.gz',
+        fileName: 'Krita-VC_universal.app.tar.gz',
+        label: '.app bundle (.tar.gz)',
+      },
+    ],
+  },
+  linux: {
+    name: 'Linux',
+    primary: {
+      fileHref: '/download/Krita-VC_1.0.0_amd64.AppImage',
+      fileName: 'Krita-VC_1.0.0_amd64.AppImage',
+      label: '.AppImage (any distro)',
+    },
+    alternates: [
+      {
+        fileHref: '/download/Krita-VC_1.0.0_amd64.deb',
+        fileName: 'Krita-VC_1.0.0_amd64.deb',
+        label: '.deb (Debian/Ubuntu)',
+      },
+      {
+        fileHref: '/download/Krita-VC-1.0.0-1.x86_64.rpm',
+        fileName: 'Krita-VC-1.0.0-1.x86_64.rpm',
+        label: '.rpm (Fedora/RHEL)',
+      },
+    ],
+  },
+} as const;
+
+// Shared version + where the hero download button redirects to (the Getting
+// Started chapter, flagged to show the download banner). `version` is the
+// single source of truth for the JSON-LD softwareVersion field, since there's
+// no one canonical filename to parse it from anymore.
 export const download = {
-  fileHref: '/download/Krita-VC_1.0.0_x64-setup.exe',
-  fileName: 'Krita-VC_1.0.0_x64-setup.exe',
+  version: '1.0.0',
   redirectHref: '/docs/getting-started?ref=download',
 } as const;
 
-// The plugin's zip download, served from `public/download/` same as the app installer.
+// The plugin's zip download, served from `public/download/` same as the app installers.
 export const pluginDownload = {
-  fileHref: '/download/kritavc.zip',
-  fileName: 'kritavc.zip',
+  fileHref: '/download/kritavc-plugin.zip',
+  fileName: 'kritavc-plugin.zip',
+} as const;
+
+// The /download page: intro copy + the three-column OS comparison. File data
+// itself comes from platformDownloads; this just holds page-level strings.
+export const downloadPage = {
+  slug: 'download',
+  metaTitle: 'Download',
+  metaDescription:
+    'Download Krita VCS for free: installers for Windows, macOS, and Linux, all local-only, no accounts.',
+  title: 'Download Krita VCS',
+  intro:
+    'Free, open source, and local-only on Windows, macOS, and Linux. Pick a platform below. The installer works the same way on all three.',
+  versionNote: `v${download.version} · Free, open source, local-only`,
+  closing: [
+    {
+      text: 'Need install steps? See ',
+      link: { label: 'Getting started', href: '/docs/getting-started' },
+    },
+    {
+      text: "Looking for release notes or an older version? They're on ",
+      link: { label: 'GitHub', href: links.releases },
+    },
+  ],
 } as const;
 
 // The standalone /plugin page: feature rundown, install guide, and
