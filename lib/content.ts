@@ -469,6 +469,10 @@ export const docsChapters = [
   docsSafety,
 ] as const;
 
+// Bump this on every release and swap the matching files in
+// `public/download/` — nothing else in this file needs to change.
+const APP_VERSION = '1.1.0';
+
 // Every installer file, served flat from `public/download/`, grouped by OS.
 // `primary` is the format the hero button and the /download page's headline
 // button use for that platform; `alternates` are the other formats listed as
@@ -478,14 +482,14 @@ export const platformDownloads = {
   windows: {
     name: 'Windows',
     primary: {
-      fileHref: '/download/Krita-VC_1.0.0_x64-setup.exe',
-      fileName: 'Krita-VC_1.0.0_x64-setup.exe',
+      fileHref: `/download/Krita-VC_${APP_VERSION}_x64-setup.exe`,
+      fileName: `Krita-VC_${APP_VERSION}_x64-setup.exe`,
       label: '.exe installer',
     },
     alternates: [
       {
-        fileHref: '/download/Krita-VC_1.0.0_x64_en-US.msi',
-        fileName: 'Krita-VC_1.0.0_x64_en-US.msi',
+        fileHref: `/download/Krita-VC_${APP_VERSION}_x64_en-US.msi`,
+        fileName: `Krita-VC_${APP_VERSION}_x64_en-US.msi`,
         label: '.msi installer',
       },
     ],
@@ -493,8 +497,8 @@ export const platformDownloads = {
   macos: {
     name: 'macOS',
     primary: {
-      fileHref: '/download/Krita-VC_1.0.0_universal.dmg',
-      fileName: 'Krita-VC_1.0.0_universal.dmg',
+      fileHref: `/download/Krita-VC_${APP_VERSION}_universal.dmg`,
+      fileName: `Krita-VC_${APP_VERSION}_universal.dmg`,
       label: '.dmg installer (universal)',
     },
     alternates: [
@@ -508,19 +512,19 @@ export const platformDownloads = {
   linux: {
     name: 'Linux',
     primary: {
-      fileHref: '/download/Krita-VC_1.0.0_amd64.AppImage',
-      fileName: 'Krita-VC_1.0.0_amd64.AppImage',
+      fileHref: `/download/Krita-VC_${APP_VERSION}_amd64.AppImage`,
+      fileName: `Krita-VC_${APP_VERSION}_amd64.AppImage`,
       label: '.AppImage (any distro)',
     },
     alternates: [
       {
-        fileHref: '/download/Krita-VC_1.0.0_amd64.deb',
-        fileName: 'Krita-VC_1.0.0_amd64.deb',
+        fileHref: `/download/Krita-VC_${APP_VERSION}_amd64.deb`,
+        fileName: `Krita-VC_${APP_VERSION}_amd64.deb`,
         label: '.deb (Debian/Ubuntu)',
       },
       {
-        fileHref: '/download/Krita-VC-1.0.0-1.x86_64.rpm',
-        fileName: 'Krita-VC-1.0.0-1.x86_64.rpm',
+        fileHref: `/download/Krita-VC-${APP_VERSION}-1.x86_64.rpm`,
+        fileName: `Krita-VC-${APP_VERSION}-1.x86_64.rpm`,
         label: '.rpm (Fedora/RHEL)',
       },
     ],
@@ -532,7 +536,7 @@ export const platformDownloads = {
 // single source of truth for the JSON-LD softwareVersion field, since there's
 // no one canonical filename to parse it from anymore.
 export const download = {
-  version: '1.0.0',
+  version: APP_VERSION,
   redirectHref: '/docs/getting-started?ref=download',
 } as const;
 
