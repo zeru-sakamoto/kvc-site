@@ -1,7 +1,8 @@
 {
-  "name": "nextjs",
+  "name": "kvc-site",
   "version": "0.1.0",
   "private": true,
+  "description": "Marketing site for Krita VCS (also called KVC, Krita VC, or Krita Version Control), a free, local-only version control app for Krita painters.",
   "scripts": {
     "dev": "next dev",
     "prebuild": "prettier --write .",

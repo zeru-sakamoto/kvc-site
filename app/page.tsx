@@ -30,6 +30,7 @@ const softwareLd = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
   name: site.name,
+  alternateName: [...site.alternateNames],
   applicationCategory: 'MultimediaApplication',
   operatingSystem: 'Windows, macOS, Linux',
   description: site.metaDescription,

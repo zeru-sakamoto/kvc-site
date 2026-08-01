@@ -31,12 +31,30 @@ export const links = {
 export const site = {
   name: 'Krita VCS',
   wordmark: 'Krita VCS',
+  // Alternate names/spellings for the product itself (not just the plugin) —
+  // feeds JSON-LD `alternateName` on WebSite + SoftwareApplication, and the
+  // keywords below, so search + AI answer engines resolve any of these back
+  // to Krita VCS.
+  alternateNames: [
+    'KVC',
+    'KritaVC',
+    'Krita VC',
+    'Krita-VC',
+    'Krita Version Control',
+  ],
   metaTitle: 'Krita VCS: version control for your paintings, not your code',
   metaDescription:
-    'Free, local-only version history for Krita painters: every save becomes a version of your .kra file you can compare, explore, or go back to instantly. No accounts, no uploads, and no coding required.',
-  // Low ranking weight, but harmless and read by some engines. These are the
-  // problem-phrases people actually search — nobody searches the product name.
+    'Krita VCS (also called KVC) is free, local-only version history for Krita painters: every save becomes a version of your .kra file you can compare, explore, or go back to instantly. No accounts, no uploads, and no coding required.',
+  // Low ranking weight, but harmless and read by some engines. Brand-name
+  // variants come first, so AI answer engines and search resolve "KVC" /
+  // "Krita VC" / etc. to this product, followed by the problem-phrases
+  // people actually search for.
   keywords: [
+    'KVC',
+    'KritaVC',
+    'Krita VC',
+    'Krita-VC',
+    'Krita Version Control',
     'Krita version control',
     'version control for artists',
     'version control for digital art',
@@ -226,6 +244,14 @@ export const faq = [
     a: 'It keeps every version of your painting as you save, like a save file for each stage of your art. You can look back at any earlier version, compare two side by side, or go back to one if you change your mind, all without leaving a mess of duplicate files on your computer.',
   },
   {
+    q: 'What does KVC stand for?',
+    a: 'KVC is just short for Krita VCS. You might also see it written as Krita VC, KritaVC, Krita-VC, or spelled out as Krita Version Control: different ways of writing the name of the same free, local-only app for Krita painters.',
+  },
+  {
+    q: 'Is Krita VC the same as Krita VCS?',
+    a: "Yes, they're the same app. Krita VC is also what Krita's own Python Plugin Manager calls the optional in-Krita panel, but it runs on the exact same engine and history as Krita VCS, not a separate product.",
+  },
+  {
     q: 'Do I need to know Git, or use a command line?',
     a: 'No. There\'s no terminal and no git jargon anywhere in the app. Artist Mode (on by default) shows plain labels like "Version 12" instead of hashes and codes, so if you\'re comfortable saving a file in Krita, you already know most of what you need.',
   },
@@ -318,6 +344,7 @@ export const footer = {
   ],
   signature: 'Made for painters by Zeru Sakamoto.',
   license: 'Free and open source · MIT license',
+  aliasNote: 'Also called KVC, Krita VC, or Krita Version Control.',
   legal: { label: 'Privacy', href: '/privacy' },
 } as const;
 
@@ -580,7 +607,7 @@ export const pluginPage = {
   metaTitle: 'Krita VC plugin',
   metaDescription:
     'Save versions, checkpoint your progress, and switch branches without leaving Krita. Download the optional Krita VC plugin and install it in a few minutes.',
-  title: 'The Krita VC plugin',
+  title: 'The Krita VCS plugin (aka Krita VC)',
   intro:
     'A small Version Control panel that lives right inside Krita, so you can save a version, set work aside, or switch branches without ever leaving your canvas. It runs on the exact same engine and the exact same history as the desktop app. Save from either one, and the other sees it.',
   featuresTitle: 'What it does',

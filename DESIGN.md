@@ -261,22 +261,31 @@ if (!preferReduced) {
 
 ## SEO & Discoverability
 
-Nobody searches "Krita version control," so discovery targets the _problems_ painters search for
-and clean structured data for AI answer engines. The painter-first voice is preserved: keywords
-live in metadata, FAQ answers, and JSON-LD, with only light retuning of visible headings.
+Discovery targets two tracks: the _problems_ painters search for (recovering a painting, avoiding
+`_final_2.kra` copies, surviving a crash) and the product's own name, since "Krita VCS" gets typed
+and typo'd as KVC, Krita VC, KritaVC, Krita-VC, and Krita Version Control. Both feed clean
+structured data for AI answer engines. The painter-first voice is preserved throughout: keywords
+live in metadata, FAQ answers, and JSON-LD, with only light surfacing of aliases in visible copy
+(the footer's alias line, the plugin page heading).
 
 - **Canonical origin:** `https://krita-vc.zeru-sakamoto.codes`, via `siteUrl` in `lib/content.ts`
   (env-overridable with `NEXT_PUBLIC_SITE_URL`). Feeds `metadataBase`, canonicals, sitemap, OG.
-- **Metadata (`app/layout.tsx`):** `metadataBase`, title template `%s · Krita VCS`, keywords,
-  author/creator, Open Graph (`website`, siteName, locale), Twitter `summary_large_image`, robots
-  with `max-image-preview: large`, and a Search Console hook (`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`).
-  Canonical + `og:url` are **not** set on the root layout (metadata inherits root→page, which would
-  point every page at `/`); the homepage sets its own canonical in `app/page.tsx`, other routes set
-  theirs. Docs use a nested template `%s · Documentation · Krita VCS`.
-- **Structured data (JSON-LD):** `WebSite` + `Person` site-wide (layout); `SoftwareApplication`
-  (free/MIT/Windows, `downloadUrl`, version) + `FAQPage` (mapped from the `faq` array) on the home
-  page; `BreadcrumbList` on docs + discovery pages. FAQ/HowTo rich results are Google-restricted
-  now, but the schema still aids AI answer engines — HowTo markup is deliberately skipped.
+- **Metadata (`app/layout.tsx`):** `metadataBase`, title template `%s · Krita VCS`, keywords
+  (problem-phrases plus brand-name variants: KVC, KritaVC, Krita VC, Krita-VC, Krita Version
+  Control), author/creator, Open Graph (`website`, siteName, locale), Twitter `summary_large_image`,
+  robots with `max-image-preview: large`, and a Search Console hook
+  (`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`). Canonical + `og:url` are **not** set on the root layout
+  (metadata inherits root→page, which would point every page at `/`); the homepage sets its own
+  canonical in `app/page.tsx`, other routes set theirs. Docs use a nested template
+  `%s · Documentation · Krita VCS`.
+- **Structured data (JSON-LD):** `WebSite` + `Person` site-wide (layout). `WebSite` and the
+  homepage's `SoftwareApplication` both carry an `alternateName` array (`site.alternateNames` in
+  `lib/content.ts`: KVC, KritaVC, Krita VC, Krita-VC, Krita Version Control) so answer engines
+  resolve any of them to this product. `SoftwareApplication` (free/MIT/Windows, `downloadUrl`,
+  version) + `FAQPage` (mapped from the `faq` array, including two entries disambiguating the
+  KVC/Krita VC naming) on the home page; `BreadcrumbList` on docs + discovery pages. FAQ/HowTo rich
+  results are Google-restricted now, but the schema still aids AI answer engines — HowTo markup is
+  deliberately skipped.
 - **Share image (`app/opengraph-image.tsx`):** dynamic 1200×630 card via `next/og` — brush logo,
   `Krita VCS` in Syne, tagline, `Free · local-only · MIT` on the brand canvas gradient. Honest
   media, literal DESIGN.md hex (Satori can't read CSS vars). Fonts fetched from Google with a
@@ -289,3 +298,6 @@ live in metadata, FAQ answers, and JSON-LD, with only light retuning of visible 
   `/recover-after-a-krita-crash` (the panic search after Krita crashes or closes without saving —
   targets non-technical searchers who don't know the product exists yet) — distinct search intent
   from the homepage and from each other, cross-linked from the footer "Guides" column.
+- **Repo-level signal:** `package.json`'s `name`/`description` and `README.md` also name the
+  product and its aliases, since GitHub and code-crawling AI agents read those directly, not just
+  the rendered site.

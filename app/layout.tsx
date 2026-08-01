@@ -85,6 +85,7 @@ const structuredData = {
       '@id': `${siteUrl}/#website`,
       url: siteUrl,
       name: site.name,
+      alternateName: [...site.alternateNames],
       description: site.metaDescription,
       inLanguage: 'en',
       publisher: { '@id': `${siteUrl}/#person` },

@@ -23,6 +23,7 @@ export default function SiteFooter() {
               {footer.signature}
             </p>
             <p className="mt-3 text-xs text-muted">{footer.license}</p>
+            <p className="mt-1 text-xs text-muted">{footer.aliasNote}</p>
           </div>
 
           <div className="flex flex-wrap gap-x-16 gap-y-10">
