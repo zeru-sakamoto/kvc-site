@@ -7,6 +7,10 @@ export const repo = { owner: 'zeru-sakamoto', name: 'krita-vc' } as const;
 
 const repoUrl = `https://github.com/${repo.owner}/${repo.name}`;
 
+// Bump this on every release and swap the matching files in
+// `public/download/` — nothing else in this file needs to change.
+const APP_VERSION = '1.1.0';
+
 // Canonical production origin. Env-overridable so a domain change is one var,
 // not a code edit. No trailing slash — everything below joins onto it.
 export const siteUrl =
@@ -91,7 +95,7 @@ export const hero = {
   // Normal-case badge (not an uppercase-tracked eyebrow), so it doesn't add to
   // the page's eyebrow count. Links out to GitHub Releases so the version
   // claim has provenance.
-  badge: 'v1.0 · Free, open source, local-only',
+  badge: `v${APP_VERSION} · Free, open source, local-only`,
   badgeHref: links.download,
   headline: 'Version control for your art, not your code.',
   sub: 'A free, local-only version control app for Krita painters and digital art. No cloud, no accounts, and none of the git jargon.',
@@ -495,10 +499,6 @@ export const docsChapters = [
   docsUsingFeatures,
   docsSafety,
 ] as const;
-
-// Bump this on every release and swap the matching files in
-// `public/download/` — nothing else in this file needs to change.
-const APP_VERSION = '1.1.0';
 
 // Every installer file, served flat from `public/download/`, grouped by OS.
 // `primary` is the format the hero button and the /download page's headline

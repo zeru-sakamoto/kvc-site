@@ -19,7 +19,7 @@ export default function Hero() {
 
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-14 lg:flex-row lg:gap-20">
         <div className="w-full min-w-0 lg:w-[55%]">
-          {/* <Link
+          <Link
             href={hero.badgeHref}
             className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3.5 py-1.5 text-xs font-medium text-muted transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
           >
@@ -28,7 +28,7 @@ export default function Hero() {
               className="h-1.5 w-1.5 rounded-full bg-accent-cool"
             />
             {hero.badge}
-          </Link> */}
+          </Link>
 
           <h1 className="mt-6 font-display text-5xl font-extrabold leading-[1.03] tracking-tight text-balance text-primary wrap-anywhere sm:text-6xl lg:text-7xl">
             {hero.headline}
