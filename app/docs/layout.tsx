@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import DocsNav from '../components/docs-nav';
+import DocsShell from '../components/docs-shell';
 import JsonLd from '../components/json-ld';
 import { docs, siteUrl } from '@/lib/content';
 
@@ -49,10 +49,7 @@ export default function DocsLayout({
       </section>
 
       <section className="relative border-t border-white/10 px-6 py-16 sm:py-20">
-        <div className="mx-auto flex max-w-5xl flex-col gap-10 lg:flex-row lg:items-start lg:gap-16">
-          <DocsNav />
-          <div className="min-w-0 flex-1">{children}</div>
-        </div>
+        <DocsShell>{children}</DocsShell>
       </section>
     </div>
   );

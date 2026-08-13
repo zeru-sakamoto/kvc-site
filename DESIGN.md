@@ -105,33 +105,54 @@ rhythm so the page doesn't read as one repeated template.
 ### `/docs` route
 
 A second area, separate from the single-page landing flow, holding the full documentation as a
-chapter-tabbed guide (`app/docs/layout.tsx` + one route per chapter):
+chapter-and-sub-chapter guide (`app/docs/layout.tsx` + one route per chapter, plus one dynamic
+`[slug]` route per sub-chapter). Written for a reader who has never used version control before:
+one short, single-idea page per feature instead of one long flat list, with a colored highlight
+phrase (`emphasize()`, `app/components/highlight.tsx`) in each page's intro and at most one boxed
+callout (`app/components/callout.tsx`) for the single most important safety/behavior fact.
 
-1. **Shared header (`app/docs/layout.tsx`).** Title + one-line framing + "Read the docs on
-   GitHub" CTA (full docs live in the repo, not duplicated here), rendered once above the
+1. **Shared header (`app/docs/layout.tsx`).** Title + one-line framing, rendered once above the
    chapters, not repeated per tab.
-2. **Chapter nav (`app/components/docs-nav.tsx`).** Four chapters, each a real route so they're
-   shareable/bookmarkable: Getting started, Using each feature, Keeping your work safe, Installing
-   the plugin. A vertical list on the left on `lg:` and up (client component, `usePathname` for
-   the active tab); collapses to a horizontal scrollable pill row above the content on mobile —
-   same overflow-safe pattern as the rest of the site, no separate mobile component.
-3. **Getting started** (`app/docs/getting-started/page.tsx`). Five numbered steps
+2. **Chapter nav (`app/components/docs-nav.tsx`).** Five chapters, each a real route so they're
+   shareable/bookmarkable: What is version control?, Getting started, Using each feature, Krita
+   plugin, Keeping your work safe. A vertical list on the left on `lg:` and up (client component,
+   `usePathname` for the active tab); collapses to a horizontal scrollable pill row above the
+   content on mobile. Using each feature and Krita plugin each carry a nested, indented list of
+   their sub-chapters that expands under themselves once a route inside that chapter is active
+   (`lg:` and up only) — mobile stays on the flat top-level pill row, and each sub-chapter page
+   carries its own "← back to chapter" link for mobile nav.
+3. **What is version control?** (`app/docs/what-is-version-control/page.tsx`). A short glossary —
+   version control, a version, a project/repository, committing, a branch, restoring — each one
+   plain-English sentence with an everyday analogy (`BulletList`). The one page every later chapter
+   can assume the reader has seen.
+4. **Getting started** (`app/docs/getting-started/page.tsx`). Five numbered steps
    (`app/components/steps.tsx` — a plain numbered list, no stepper widget, no screenshots),
    covering install → pick a folder → save a version → compare versions → branch/merge/restore.
    This is also the page the hero's download button redirects to: when reached with
    `?ref=download` in the URL, a small callout renders above the steps ("Your download will start
    automatically", with a plain fallback link) — no fake progress bar or fake precision.
-4. **Using each feature** (`app/docs/using-features/page.tsx`). A dot-bullet reference list
-   (`app/components/bullet-list.tsx`, bold lead term + body) covering Changes, History, Branches,
-   comparing versions, Undo, Set aside, Restore, Settings, and Clean up storage.
-5. **Keeping your work safe** (`app/docs/safety/page.tsx`). Same `BulletList` component, one
-   entry per guardrail (won't switch with unsaved changes, never silently overwrites a conflict,
-   etc.).
-6. **Installing the Krita plugin (optional)** (`app/docs/plugin/page.tsx`). Intro paragraph,
-   `BulletList` of caveats, a closing paragraph, and a "Plugin guide on GitHub" CTA.
+5. **Using each feature** (`app/docs/using-features/page.tsx` as an index +
+   `app/docs/using-features/[slug]/page.tsx` per feature). The index is a linked list
+   (`app/components/chapter-links.tsx` — title + one-line summary) to ten short pages: Changes,
+   History, Branches, Comparing versions, Undo, Set aside, Restore, Settings, Storage cleanup,
+   Backup. Each sub-chapter page (`app/components/feature-page.tsx`) is a highlighted intro plus at
+   most one of `Steps`/`BulletList`, plus at most one `Callout`.
+6. **Krita plugin** (`app/plugin/layout.tsx` + `app/plugin/page.tsx` as an index +
+   `app/plugin/[slug]/page.tsx` per sub-chapter). Kept at its existing `/plugin` URL — already
+   linked from the hero, footer, and FAQ — but now shares the docs sidebar and the same
+   index-plus-sub-chapter treatment as Using each feature: its own hero (h1 + intro + download
+   button, in `app/plugin/layout.tsx`) above the shared `DocsShell` sidebar row, then an index
+   linking to nine feature sub-chapters plus Installing and Troubleshooting, closing with a "What
+   it deliberately doesn't do" note. `app/docs/plugin/page.tsx` stays a one-line
+   `redirect('/plugin')` for old links.
+7. **Keeping your work safe** (`app/docs/safety/page.tsx`). `BulletList`, one entry per guardrail
+   (won't switch with unsaved changes, never silently overwrites a conflict, etc.) — stays a single
+   flat page since its items are guardrails, not separate features to use.
 
-`app/docs/page.tsx` (the bare `/docs` route) is a one-line `redirect('/docs/getting-started')` —
-there's exactly one canonical place each chapter's content lives, no duplication.
+`app/docs/page.tsx` (the bare `/docs` route) is a one-line
+`redirect('/docs/what-is-version-control')` — there's exactly one canonical place each chapter's
+content lives, no duplication. The sidebar-plus-content row is shared via
+`app/components/docs-shell.tsx`, used by both `app/docs/layout.tsx` and `app/plugin/layout.tsx`.
 
 Same tokens, same voice, same no-fake-UI rule as the landing page. `SiteHeader`/`SiteFooter` wrap
 it automatically via the root layout; no separate chrome. Not alternating, not media-columned —
@@ -218,12 +239,35 @@ if (!preferReduced) {
 - **Media (`media.tsx`):** `LayersMedia`, `DiffMedia`, `BranchMedia`, `OwnershipMedia`,
   `SignatureMedia`, `PerformanceMedia`, `PanelMedia` — abstract painterly vector, all colors via
   tokens.
-- **Steps (`steps.tsx`):** plain numbered list for the `/docs` Getting Started chapter. No
-  animation, no stepper widget — a static ordered list styled with site tokens.
-- **Bullet list (`bullet-list.tsx`):** dot-bullet list shared by the Using each feature, Keeping
-  your work safe, and plugin chapters — optional bold lead term + body, no new markup per chapter.
-- **Docs nav (`docs-nav.tsx`):** chapter tabs for `/docs` — vertical list on `lg:` and up,
-  horizontal scrollable pill row on mobile. Client component, active tab via `usePathname`.
+- **Steps (`steps.tsx`):** plain numbered list, reused across Getting started and any feature/
+  plugin sub-chapter with a "how to" sequence. No animation, no stepper widget — a static ordered
+  list styled with site tokens.
+- **Bullet list (`bullet-list.tsx`):** dot-bullet list shared by What is version control?, Keeping
+  your work safe, and any feature/plugin sub-chapter that lists options instead of steps —
+  optional bold lead term + body, no new markup per chapter.
+- **Callout (`callout.tsx`):** the one boxed emphasis a feature/plugin sub-chapter is allowed —
+  colored left border + background tint per tone (`cool`/`warm`/`blue`, same tokens as
+  `highlight.tsx`), body text stays `text-primary` so contrast never depends on the tint.
+- **Chapter links (`chapter-links.tsx`):** index-page link list (title + one-line summary) shared
+  by the Using each feature and Krita plugin index pages, pointing at their sub-chapters.
+- **Feature page (`feature-page.tsx`):** shared sub-chapter body — highlighted intro
+  (`emphasize()`), then at most one of `Steps`/`BulletList`, then at most one `Callout`, then an
+  optional closing paragraph/link (used by Installing's uninstall blurb). Also renders the
+  `lg:hidden` "← back to chapter" link for mobile, since the nested sidebar list is `lg:`-only.
+- **Docs shell (`docs-shell.tsx`):** the sidebar-plus-content flex row, shared by `app/docs/layout.tsx`
+  and `app/plugin/layout.tsx` so both chapter areas get the same nav without duplicating layout markup.
+- **Docs nav (`docs-nav.tsx`):** chapter tabs for `/docs` and `/plugin` — vertical list on `lg:` and
+  up, horizontal scrollable pill row on mobile. Client component, active tab via `usePathname`.
+  Chapters with sub-chapters (Using each feature, Krita plugin) expand a nested indented list under
+  themselves once a route inside that chapter is active, `lg:`-only. On `lg:` and up the list is
+  `sticky top-24`, capped at `max-h-[calc(100vh-7rem)]` with `overflow-y-auto` so it stays pinned
+  below the fixed header (and scrolls internally, not the page) even when fully expanded. Every
+  chapter/sub-chapter `Link` uses `scroll={false}` — Next's own default (preserve scroll position on
+  client navigation) is what keeps the reader's place on click; there's no custom scroll-restore
+  code. `ScrollToTop` (`scroll-to-top.tsx`) is the other half: it force-resets scroll to top on every
+  other route change (App Router doesn't do this reliably on its own), but skips that reset for any
+  navigation that starts and ends inside the docs area (`/docs/*` or `/plugin`, since `/plugin`
+  shares this sidebar) so the two mechanisms don't fight each other.
 - **Download button (`download-button.tsx`):** the hero's primary CTA — see Download flow above.
   Detects the visitor's OS after mount and leads with the matching glyph
   (`WindowsGlyph`/`MacGlyph`/`LinuxGlyph`); falls back to a plain `/download` link pre-mount or on
@@ -255,8 +299,9 @@ if (!preferReduced) {
   closing line, for release notes or older versions.
 - **Source:** hero secondary CTA + nav + footer → the repo.
 - **Issues:** "Request a feature" (What's next) + footer.
-- **Docs / Plugin guide:** `/docs` chapter CTAs → GitHub repo (no dedicated docs site yet, same
-  placeholder-link convention as the footer's Download link).
+- **Plugin build-from-source guide:** the Installing sub-chapter's closing link
+  (`pluginSubchapters` → `installing.closingLink`) → the repo's Rust/cargo README, for the rare
+  reader who wants to build the plugin themselves instead of using the zip download.
 - **GitHub profile / Personal portfolio:** footer, tied to the maker signature.
 
 ## SEO & Discoverability

@@ -355,11 +355,74 @@ export const footer = {
 
 // The /docs page — a chapter-tabbed documentation guide, kept off the
 // single-page landing flow since it's read once, not scrolled past. No
-// screenshots: same honest-media rule as the rest of the site.
+// screenshots: same honest-media rule as the rest of the site. Written for a
+// reader who has never used version control before: What is version control?
+// comes first, then a page per feature and per plugin panel, not one long list.
 export const docs = {
   title: 'Documentation',
   intro:
-    'New to Krita VCS? Start here. Every chapter below covers a different part of the app: installing and saving your first version, a reference for each feature, and the guardrails that keep your work safe. Want to save versions without leaving Krita? The optional plugin has its own page.',
+    'New to version control? Start with What is version control?, then Getting started. Everything after that is short, one-topic pages: a page per feature, a page per plugin panel, and the guardrails that keep your work safe.',
+} as const;
+
+type AccentTone = 'cool' | 'warm' | 'blue';
+
+// One short, self-contained page per feature (or plugin panel). `highlight`
+// feeds the existing emphasize() helper — one accent phrase in the intro,
+// nothing more. `note` is the one boxed callout a page is allowed, for the
+// single most important safety/behavior fact. `steps`/`items` reuse the
+// existing <Steps>/<BulletList> components; a page uses at most one of them.
+export type FeatureDetail = {
+  slug: string;
+  label: string;
+  title: string;
+  metaTitle: string;
+  metaDescription: string;
+  summary: string;
+  intro: string;
+  highlight?: { phrase: string; tone: AccentTone };
+  steps?: readonly { title: string; body: string }[];
+  items?: readonly { lead?: string; body: string }[];
+  note?: { tone: AccentTone; body: string };
+  closing?: string;
+  closingLink?: { label: string; href: string };
+};
+
+export const whatIsVersionControl = {
+  slug: 'what-is-version-control',
+  label: 'What is version control?',
+  title: 'What is version control?',
+  metaTitle: 'What is version control?',
+  metaDescription:
+    'Never used version control before? A short, plain-English explanation of what a version, a branch, and a repository actually mean, before you install anything.',
+  intro:
+    "If you've never used anything like this before, start here. A handful of words explain most of what you need.",
+  highlight: { phrase: 'a handful of words', tone: 'cool' } as const,
+  terms: [
+    {
+      lead: 'Version control',
+      body: 'A tool that remembers every version of your file as you save, so you can always look back or go back. Think of it as a row of save points for your painting, not just the one you last hit Ctrl+S on.',
+    },
+    {
+      lead: 'A version',
+      body: 'One saved snapshot of your painting at a point in time, like a save point in a video game. Krita VCS keeps every one you make, so none of them ever get overwritten.',
+    },
+    {
+      lead: 'A project (or "repository")',
+      body: 'The folder Krita VCS is watching. Point it at a folder with your .kra files and it starts keeping versions of what is inside.',
+    },
+    {
+      lead: 'Committing, or saving a version',
+      body: "Turning your current work into a new version. Ctrl+S in Krita still saves your file exactly like it always has; committing is a separate step on top, for when you've reached something worth keeping.",
+    },
+    {
+      lead: 'A branch',
+      body: 'A separate line of work, split off so you can try something risky, like a new color scheme, without touching your original.',
+    },
+    {
+      lead: 'Restoring',
+      body: 'Bringing an older version back as your current one, without deleting anything that came after it.',
+    },
+  ],
 } as const;
 
 export const docsGettingStarted = {
@@ -376,11 +439,11 @@ export const docsGettingStarted = {
     },
     {
       title: 'Pick a project folder.',
-      body: "Use the repository switcher at the top and choose Create repository (name it, choose a folder) or Browse existing repository (a folder you're already tracking). Picking a folder you've already set up just opens it. Nothing gets reset.",
+      body: "Use the switcher at the top and choose Create repository (name it, choose a folder) or Browse existing repository (a folder you're already using). Opening a folder you've set up before just opens it. Nothing gets reset.",
     },
     {
       title: 'Save your first version.',
-      body: "Open Changes, write a short note about what you did, and hit Commit version. Everything changed is included by default; stage just a subset first if you'd rather save only some files.",
+      body: "Open Changes, write a short note about what you did, and hit Commit version. Everything you changed is included by default; choose just some files first if you'd rather save only part of it.",
     },
     {
       title: 'Compare two versions.',
@@ -388,10 +451,234 @@ export const docsGettingStarted = {
     },
     {
       title: 'Try branching, merging, or restoring.',
-      body: "Optional, once you're comfortable: branch off to try something risky, merge it back when you're happy, or restore an older version. All covered in Using each feature.",
+      body: "Optional, once you're comfortable. Each one has its own short page under Using each feature.",
     },
   ],
 } as const;
+
+// Ten short pages, one per panel, replacing the old single flat list.
+export const docsFeatures: readonly FeatureDetail[] = [
+  {
+    slug: 'changes',
+    label: 'Changes',
+    title: 'Saving a version',
+    metaTitle: 'Changes',
+    metaDescription: 'How to turn your current work into a saved version.',
+    summary: 'Where you turn your work into a version you can come back to.',
+    intro:
+      'Changes is where you turn your current work into a saved version. Write a short note about what you did, then save it.',
+    highlight: { phrase: 'saved version', tone: 'cool' },
+    steps: [
+      {
+        title: 'Open Changes.',
+        body: 'It lists every file you have touched since your last version.',
+      },
+      {
+        title: 'Pick what to include.',
+        body: 'Everything is included by default. Untick anything you want to leave out.',
+      },
+      {
+        title: 'Write a short note.',
+        body: 'A word or two about what changed is enough, like "Fixed the eyes."',
+      },
+      {
+        title: 'Hit Commit version.',
+        body: 'Krita VCS locks briefly while it saves, so nothing gets interrupted partway through.',
+      },
+    ],
+  },
+  {
+    slug: 'history',
+    label: 'History',
+    title: 'Looking back at old versions',
+    metaTitle: 'History',
+    metaDescription:
+      'Browse every version you have saved and see what changed.',
+    summary: "Every version you've saved, in one list.",
+    intro:
+      'History lists every version you have ever saved. Click any one to see exactly what changed, layer by layer.',
+    highlight: { phrase: 'every version you have ever saved', tone: 'cool' },
+    note: {
+      tone: 'blue',
+      body: 'Nothing in History is ever deleted just by looking at it. Browsing is always safe.',
+    },
+  },
+  {
+    slug: 'branches',
+    label: 'Branches',
+    title: 'Trying things without risk',
+    metaTitle: 'Branches',
+    metaDescription:
+      'What a branch is, and how to switch, merge, or delete one.',
+    summary: 'A separate line of work you can try things on, safely.',
+    intro:
+      'A branch is a separate line of work, split off from your main line so you can try something risky without touching it.',
+    highlight: { phrase: 'separate line of work', tone: 'warm' },
+    items: [
+      {
+        lead: 'New branch',
+        body: 'Starts a fresh line of work, optionally starting from another branch.',
+      },
+      { lead: 'Switch', body: 'Click a branch to work on it.' },
+      {
+        lead: 'Merge into current',
+        body: "Brings another branch's changes into the one you're on.",
+      },
+      { lead: 'Delete', body: 'Removes a branch you no longer need.' },
+    ],
+    note: {
+      tone: 'warm',
+      body: "You can't delete your main branch, or the one you're currently on. Switch to another one first.",
+    },
+  },
+  {
+    slug: 'comparing-versions',
+    label: 'Comparing versions',
+    title: 'Seeing exactly what changed',
+    metaTitle: 'Comparing versions',
+    metaDescription: 'Compare any two versions of your painting side by side.',
+    summary: 'See exactly what changed, side by side.',
+    intro:
+      'Pick any two versions and see them side by side, or drag a slider across the canvas to swipe between them.',
+    highlight: { phrase: 'side by side', tone: 'cool' },
+    steps: [
+      { title: 'Open History.', body: 'Pick any two versions to compare.' },
+      {
+        title: 'Choose a view.',
+        body: 'Side-by-side, or the swipe slider. Both keep zoom and pan in sync.',
+      },
+      {
+        title: 'Click a layer.',
+        body: 'See its type, visibility, opacity, and blend mode.',
+      },
+    ],
+    note: {
+      tone: 'cool',
+      body: 'Changed pixels are outlined for you, layer by layer, so you never have to guess what moved.',
+    },
+  },
+  {
+    slug: 'undo',
+    label: 'Undo',
+    title: 'Taking back your last save',
+    metaTitle: 'Undo',
+    metaDescription: 'Remove your most recent saved version.',
+    summary: 'Take back your most recent save.',
+    intro:
+      'Undo removes only your most recent saved version. Find it in the ⋯ menu next to Changes or History.',
+    highlight: { phrase: 'only your most recent saved version', tone: 'warm' },
+    note: {
+      tone: 'warm',
+      body: 'Those changes come back as unsaved work, ready to save again. Undo is blocked if a later version or another branch still depends on it, so nothing important gets lost.',
+    },
+  },
+  {
+    slug: 'set-aside',
+    label: 'Set aside',
+    title: 'Parking work without saving it',
+    metaTitle: 'Set aside',
+    metaDescription:
+      'Shelve unfinished work without turning it into a version.',
+    summary: 'Park work in progress without saving it as a version.',
+    intro:
+      'Set aside puts unfinished work on a shelf, without turning it into a version, and returns your files to your last saved version.',
+    highlight: { phrase: 'a shelf', tone: 'cool' },
+    steps: [
+      { title: 'Open the ⋯ menu.', body: 'Next to Changes or History.' },
+      {
+        title: 'Choose Set aside.',
+        body: 'Your unsaved work moves to the shelf.',
+      },
+      {
+        title: 'Bring it back later.',
+        body: 'Pick the latest one, or choose from a list.',
+      },
+    ],
+    note: {
+      tone: 'blue',
+      body: 'If a branch switch is blocked by unsaved work, Krita VCS offers Set aside as the way through.',
+    },
+  },
+  {
+    slug: 'restore',
+    label: 'Restore',
+    title: 'Bringing back an older version',
+    metaTitle: 'Restore',
+    metaDescription:
+      'Bring an older version back without losing anything newer.',
+    summary: 'Bring back an older version, without losing anything newer.',
+    intro:
+      "Restore brings an older version's files back, saved as a brand-new version on top of your history, not a rewrite of it.",
+    highlight: { phrase: 'brand-new version', tone: 'cool' },
+    note: {
+      tone: 'cool',
+      body: 'Nothing older is ever deleted, so you can always change your mind again.',
+    },
+  },
+  {
+    slug: 'settings',
+    label: 'Settings',
+    title: 'Your name, your theme, your space',
+    metaTitle: 'Settings',
+    metaDescription: 'Your name, color theme, and per-project storage options.',
+    summary: 'Your name, your theme, and how the app manages space.',
+    intro:
+      'Settings, the gear icon, is where you set your name, pick a theme, and tune how much space Krita VCS uses on your machine.',
+    highlight: { phrase: 'gear icon', tone: 'blue' },
+    items: [
+      {
+        lead: 'Artist view',
+        body: 'Turns off technical terms in favor of plain words like "Version 12."',
+      },
+      {
+        lead: 'Your name',
+        body: "So it's obvious who did what on a shared project.",
+      },
+      {
+        lead: '8 color themes',
+        body: '6 dark, 2 light. Applies right away, no restart.',
+      },
+      {
+        lead: 'The set-aside shelf',
+        body: 'Everything you have parked, with the branch it came from and how long it has been there.',
+      },
+      {
+        lead: 'Per-project storage options',
+        body: 'How much space preview images may use, compact storage for heavy history, and a low-memory mode for big files.',
+      },
+    ],
+  },
+  {
+    slug: 'storage-cleanup',
+    label: 'Storage cleanup',
+    title: 'Reclaiming space from old versions',
+    metaTitle: 'Storage cleanup',
+    metaDescription: 'Free up space from old, unreachable versions safely.',
+    summary: 'Reclaim space from old versions you can no longer reach.',
+    intro:
+      'Clean up storage shows you exactly how much space would be freed, before anything is deleted.',
+    highlight: { phrase: 'before anything is deleted', tone: 'warm' },
+    note: {
+      tone: 'warm',
+      body: 'It only ever clears old, unreachable leftovers, never your current work or anything still visible in History.',
+    },
+  },
+  {
+    slug: 'backup',
+    label: 'Backup',
+    title: 'Keeping a copy outside the app',
+    metaTitle: 'Backup',
+    metaDescription: 'Zip a project and its history to keep somewhere else.',
+    summary: 'Your one copy that survives a lost or broken project folder.',
+    intro:
+      "Backup zips a project's files and its whole history into one file you keep somewhere else, like an external drive or your own cloud storage.",
+    highlight: { phrase: 'somewhere else', tone: 'cool' },
+    note: {
+      tone: 'warm',
+      body: "It's the one safety net Krita VCS can't provide on its own. If a project folder is ever lost outside the app, a backup you made yourself is the way back.",
+    },
+  },
+] as const;
 
 export const docsUsingFeatures = {
   slug: 'using-features',
@@ -399,49 +686,10 @@ export const docsUsingFeatures = {
   title: 'Using each feature',
   metaTitle: 'Using each feature',
   metaDescription:
-    'A quick reference for every panel in Krita VCS: Changes, History, Branches, comparing versions of your painting, and more.',
-  items: [
-    {
-      lead: 'Changes',
-      body: 'Where you save. Stage everything or just a few files, write a note, and hit Commit. Locks briefly while saving so nothing gets interrupted.',
-    },
-    {
-      lead: 'History',
-      body: "Every version you've saved. Click one to see what changed.",
-    },
-    {
-      lead: 'Branches',
-      body: "Separate lines of work. Click one to switch to it. Hover for Merge into current (bring it into what you're on now) or Delete. New branch starts a fresh line, optionally starting from another one.",
-    },
-    {
-      lead: 'Comparing versions',
-      body: 'Side-by-side or a swipe slider, with zoom and pan that stay in sync between both sides. The eye icon highlights exactly what changed, a precise outline of the changed pixels, or a simpler box around the changed area. Click a layer to see its details.',
-    },
-    {
-      lead: 'Undo',
-      body: 'The ⋯ menu next to Changes or History. Removes only your most recent save; those changes come back as unsaved work, ready to save again.',
-    },
-    {
-      lead: 'Set aside',
-      body: "The same ⋯ menu. Parks work in progress on a shelf without saving it as a version, and puts your files back to your last saved version. Bring it back from the same menu, either the latest or picked from a list. If a branch switch is blocked because you have unsaved work, you'll be offered this as the way through.",
-    },
-    {
-      lead: 'Restore',
-      body: 'Pick any older version and bring its files back, saved as a brand-new version. Nothing older is ever deleted.',
-    },
-    {
-      lead: 'Settings',
-      body: "(gear icon) Artist view, title bar style, your name, 8 color themes, and your set-aside shelf (everything you've parked, with the branch it came from and how long it's been there; remove items one at a time or all at once). Per project: how much space preview images may use, a compact storage option that shrinks history for files with lots of small edits, a low-memory option that uses less memory (a little slower in exchange), and Clean up storage.",
-    },
-    {
-      lead: 'Clean up storage',
-      body: 'Shows you exactly how much space would be freed before you confirm anything. Only ever clears old, unreachable leftovers, never your current work or anything still visible in your history.',
-    },
-    {
-      lead: 'Back up',
-      body: "Zip a project's files and history to a spot you choose: the zip-icon button right above Settings backs up the project you're in, or use the repository switcher to back up every project at once. Good for an external drive or your own cloud storage.",
-    },
-  ],
+    'A short page for every panel in Krita VCS: Changes, History, Branches, comparing versions of your painting, and more.',
+  intro:
+    'Ten short pages, one per panel. Pick the one you need, no need to read them in order.',
+  items: docsFeatures,
 } as const;
 
 export const docsSafety = {
@@ -466,7 +714,7 @@ export const docsSafety = {
     },
     {
       lead: "Won't undo a save that something else depends on.",
-      body: 'If a later save or another branch still needs it, undo is blocked so nothing gets orphaned.',
+      body: 'If a later save or another branch still needs it, undo is blocked so nothing important gets lost.',
     },
     {
       lead: "Nothing happens if there's nothing to do.",
@@ -491,13 +739,249 @@ export const docsSafety = {
   ],
 } as const;
 
-// Sidebar/tab order for the /docs chapter nav. The plugin used to be a fourth
-// chapter here; it's substantial enough (its own install guide, troubleshooting,
-// download) to be its own page at /plugin instead — see pluginPage below.
+// Ten short pages for the plugin panel too, same shape as docsFeatures. "What
+// it deliberately doesn't do" isn't a feature to use, so it lives as a closing
+// note on the /plugin index instead of its own page — see pluginPage below.
+export const pluginSubchapters: readonly FeatureDetail[] = [
+  {
+    slug: 'commit-and-checkpoint',
+    label: 'Commit and checkpoint',
+    title: 'Saving from inside Krita',
+    metaTitle: 'Commit and checkpoint',
+    metaDescription: 'Save a version from the in-Krita panel.',
+    summary: 'Commit, or Checkpoint for a one-tap save.',
+    intro:
+      "The panel shows your current branch and the files you've changed. Write a note and hit Commit, or use Checkpoint for a one-tap save with the note written for you.",
+    highlight: { phrase: 'one-tap save', tone: 'cool' },
+  },
+  {
+    slug: 'no-need-to-save-first',
+    label: 'You never have to save first',
+    title: 'Saving happens automatically',
+    metaTitle: 'You never have to save first',
+    metaDescription: 'The panel saves your open painting before it acts.',
+    summary:
+      'The panel saves your open painting for you the moment you click in.',
+    intro:
+      "Krita VCS builds every version from what's actually on disk, so opening the panel saves your open paintings for you first. A version can never quietly miss your last few minutes of work.",
+    highlight: {
+      phrase: 'saves your open paintings for you first',
+      tone: 'cool',
+    },
+    note: {
+      tone: 'blue',
+      body: "Saving still isn't the same as committing. Nothing becomes a version until you commit it.",
+    },
+  },
+  {
+    slug: 'choose-what-to-include',
+    label: 'Choose what to include',
+    title: 'Picking exactly what goes in',
+    metaTitle: 'Choose what to include',
+    metaDescription: 'Untick any file you want left out of a version.',
+    summary:
+      "Every file has a checkbox, untick anything you'd rather leave out.",
+    intro:
+      "Every file in the list has a checkbox, ticked by default. Untick anything you'd rather leave out, and Commit, Checkpoint, Discard, and Set aside will only act on the ticked files.",
+    highlight: { phrase: 'ticked by default', tone: 'warm' },
+  },
+  {
+    slug: 'set-aside',
+    label: 'Set aside',
+    title: 'Parking work without saving it',
+    metaTitle: 'Set aside',
+    metaDescription:
+      'Shelve ticked changes without turning them into a version.',
+    summary: 'Shelve your changes, then bring them back later.',
+    intro:
+      'Set aside parks your ticked changes on a shelf, without turning them into a version, and puts those files back to your last saved version.',
+    highlight: { phrase: 'a shelf', tone: 'cool' },
+    note: {
+      tone: 'blue',
+      body: "It's also the fastest way past a branch switch that's blocked by unsaved work.",
+    },
+  },
+  {
+    slug: 'discard',
+    label: 'Discard',
+    title: 'Reverting to your last saved version',
+    metaTitle: 'Discard',
+    metaDescription: 'Revert ticked files back to their last saved version.',
+    summary:
+      'One honest warning, then everything since your last save is gone.',
+    intro:
+      'Discard reverts your ticked files to their last saved version. Everything since, including anything the panel auto-saved for you, is gone for good.',
+    highlight: { phrase: 'gone for good', tone: 'warm' },
+    note: {
+      tone: 'warm',
+      body: "If there's any chance you'll want it back, use Set aside instead.",
+    },
+  },
+  {
+    slug: 'documents-reload-themselves',
+    label: 'Documents reload themselves',
+    title: 'Why your canvas refreshes on its own',
+    metaTitle: 'Documents reload themselves',
+    metaDescription:
+      'Krita reopens any document a version-control action changed.',
+    summary:
+      'Krita reopens any document a version-control action actually changed.',
+    intro:
+      'Discarding, setting aside, bringing work back, and switching branches all rewrite files on disk, so the panel closes and reopens any open document it changed, keeping your canvas in sync with your history.',
+    highlight: { phrase: 'in sync with your history', tone: 'cool' },
+    note: {
+      tone: 'warm',
+      body: 'The one tradeoff: a reopened document starts with an empty undo history.',
+    },
+  },
+  {
+    slug: 'branch-switching',
+    label: 'Branch switching',
+    title: 'Switching branches from the panel',
+    metaTitle: 'Branch switching',
+    metaDescription: 'Switch branches without leaving Krita.',
+    summary: 'Switch without leaving Krita, even with unsaved work in the way.',
+    intro:
+      "Switch branches right from the panel. If unsaved work is in the way, you're offered Set aside & switch instead of having to leave Krita to sort it out first.",
+    highlight: { phrase: 'Set aside & switch', tone: 'cool' },
+  },
+  {
+    slug: 'palette-files',
+    label: 'Palette files',
+    title: 'Tracking your color palettes too',
+    metaTitle: 'Palette files',
+    metaDescription:
+      'Color palettes travel alongside your painting automatically.',
+    summary: 'Palettes travel alongside your painting, automatically.',
+    intro:
+      "Color palettes (.gpl, .kpl, .aco, .ase) sitting next to your art get tracked too, right alongside the .kra file. Untick them if you'd rather leave them out of a version.",
+    highlight: { phrase: 'tracked too', tone: 'cool' },
+  },
+  {
+    slug: 'installing',
+    label: 'Installing',
+    title: 'Installing the plugin',
+    metaTitle: 'Installing the plugin',
+    metaDescription: 'Unzip, copy into Krita, and turn the plugin on.',
+    summary: 'Unzip, copy into Krita, and turn it on.',
+    intro:
+      "Needs Krita with Python scripting enabled, which is on by default. Check under Settings → Configure Krita → Python Plugin Manager if you're not sure.",
+    highlight: { phrase: 'on by default', tone: 'blue' },
+    steps: [
+      {
+        title: 'Download and unzip.',
+        body: "Download the plugin zip and unzip it. Inside you'll find a pykrita folder and the kvc tool it talks to, already built, nothing to compile.",
+      },
+      {
+        title: "Find Krita's plugin folder.",
+        body: "In Krita: Settings → Manage Resources → Open Resource Folder. Look for a pykrita folder inside; create it if it isn't there yet.",
+      },
+      {
+        title: 'Copy the plugin in.',
+        body: 'Copy the kritavc.desktop file and the kritavc folder from the zip into that pykrita folder. Both need to land directly inside it, not nested a level deeper.',
+      },
+      {
+        title: 'Enable it and restart.',
+        body: 'Settings → Configure Krita → Python Plugin Manager, find "Krita VC" in the list and check it on, then restart Krita. Python plugins only load at startup, so this step isn\'t optional.',
+      },
+      {
+        title: 'Open the panel.',
+        body: "Settings → Dockers → Version Control. If it's not there, the plugin didn't load. Double-check the previous two steps.",
+      },
+      {
+        title: 'Point it at kvc, if asked.',
+        body: "If the panel says the kvc tool wasn't found, click Locate kvc… and browse to the kvc file from the zip you downloaded.",
+      },
+    ],
+    closing:
+      'Uninstalling: turn off "Krita VC" in the Python Plugin Manager, then delete kritavc.desktop and the kritavc folder from the resource folder. Nothing about your projects or their history lives in the plugin folder, so removing it doesn\'t touch your work.',
+    closingLink: {
+      label:
+        'Building it from source instead? See the technical guide on GitHub',
+      href: links.pluginGuide,
+    },
+  },
+  {
+    slug: 'troubleshooting',
+    label: 'Troubleshooting',
+    title: 'If something goes wrong',
+    metaTitle: 'Troubleshooting',
+    metaDescription:
+      'Fixes for the most common plugin install and usage issues.',
+    summary: 'The most common install and usage snags, and how to fix them.',
+    intro:
+      'Most issues come down to a file landing in the wrong place, or Krita not knowing where to find the kvc tool.',
+    items: [
+      {
+        lead: '"Version Control" isn\'t in the Dockers menu.',
+        body: "The plugin didn't load. Recheck the install steps, and confirm both kritavc.desktop and the kritavc folder landed directly inside pykrita, not one level up or down.",
+      },
+      {
+        lead: '"That isn\'t the kvc tool" after Locate kvc….',
+        body: "Point it at the kvc (or kvc.exe) file itself, not the folder, and make sure it's the one from the zip you downloaded.",
+      },
+      {
+        lead: '"Krita VC tracks .kra documents."',
+        body: 'The active document is a .png/.jpg/etc. Only .kra files are versioned. Save it as .kra inside the tracked folder first.',
+      },
+      {
+        lead: '"repository is busy (locked by another process)."',
+        body: "The desktop app is mid-write, or a previous save didn't exit cleanly and left a lock file behind. Safe to delete by hand as long as nothing else is actually writing at the moment.",
+      },
+      {
+        lead: '"Save (Ctrl+S) or undo your changes in … first."',
+        body: "A discard/set-aside/switch would overwrite a file with unsaved edits. You shouldn't normally see this, since opening the panel's menu already saves everything on the way in. If you do, your last autosave failed (see the next entry).",
+      },
+      {
+        lead: '"Couldn\'t save …"',
+        body: "Krita couldn't write the file, usually because it's read-only, the disk is full, or something else has it open elsewhere. Fix the file and click the refresh button to retry.",
+      },
+    ],
+  },
+] as const;
+
+// Sidebar order for the /docs chapter nav, now nested: Using each feature and
+// the Krita plugin each list their sub-chapters, walked by docs-nav.tsx and
+// used to build the sitemap. `path` is explicit rather than always
+// `/docs/${slug}` since the plugin chapter's canonical URL stays `/plugin`
+// (already linked from the hero, footer, and FAQ) even though it now shares
+// the docs sidebar and sub-chapter treatment.
 export const docsChapters = [
-  docsGettingStarted,
-  docsUsingFeatures,
-  docsSafety,
+  {
+    slug: whatIsVersionControl.slug,
+    label: whatIsVersionControl.label,
+    path: `/docs/${whatIsVersionControl.slug}`,
+  },
+  {
+    slug: docsGettingStarted.slug,
+    label: docsGettingStarted.label,
+    path: `/docs/${docsGettingStarted.slug}`,
+  },
+  {
+    slug: docsUsingFeatures.slug,
+    label: docsUsingFeatures.label,
+    path: `/docs/${docsUsingFeatures.slug}`,
+    subchapters: docsFeatures.map((f) => ({
+      slug: f.slug,
+      label: f.label,
+      path: `/docs/${docsUsingFeatures.slug}/${f.slug}`,
+    })),
+  },
+  {
+    slug: 'plugin',
+    label: 'Krita plugin',
+    path: '/plugin',
+    subchapters: pluginSubchapters.map((f) => ({
+      slug: f.slug,
+      label: f.label,
+      path: `/plugin/${f.slug}`,
+    })),
+  },
+  {
+    slug: docsSafety.slug,
+    label: docsSafety.label,
+    path: `/docs/${docsSafety.slug}`,
+  },
 ] as const;
 
 // Every installer file, served flat from `public/download/`, grouped by OS.
@@ -596,12 +1080,12 @@ export const downloadPage = {
   ],
 } as const;
 
-// The standalone /plugin page: feature rundown, install guide, and
-// troubleshooting, with its own zip download. Kept off the /docs chapter
-// tabs (see docsChapters) since it's substantial enough to be its own page.
-// Installation guide here is deliberately end-user-only (unzip and copy);
-// the Rust/cargo build-from-source steps stay in the repo's own README,
-// linked at the bottom for the rare reader who wants them.
+// The /plugin page: now an index into pluginSubchapters, same shape as
+// docsUsingFeatures — joins the docs sidebar as a chapter (see docsChapters)
+// while keeping its own URL, since it's already linked from the hero, footer,
+// and FAQ. "What it deliberately doesn't do" lives here as a closing note
+// rather than its own sub-chapter, since it's a boundary statement, not a
+// feature to use.
 export const pluginPage = {
   slug: 'plugin',
   metaTitle: 'Krita VC plugin',
@@ -611,107 +1095,10 @@ export const pluginPage = {
   intro:
     'A small Version Control panel that lives right inside Krita, so you can save a version, set work aside, or switch branches without ever leaving your canvas. It runs on the exact same engine and the exact same history as the desktop app. Save from either one, and the other sees it.',
   featuresTitle: 'What it does',
-  features: [
-    {
-      lead: 'Commit and checkpoint, without leaving the canvas.',
-      body: "The panel shows your current branch and changelist for the project you're painting in. Write a note and hit Commit, or use Checkpoint for a one-tap save with an auto-written, time-stamped message when you don't want to stop and think of one.",
-    },
-    {
-      lead: 'You never have to save first.',
-      body: "Versions are built from what's actually on disk, so the panel saves your open paintings for you the moment you click in. A version can never quietly miss your last few minutes of painting. But saving still isn't the same as committing: nothing becomes a version until you commit it.",
-    },
-    {
-      lead: 'Pick exactly what goes in.',
-      body: "Every file in the changelist has a checkbox, ticked by default, so Commit saves everything as expected. Untick anything you'd rather leave out; Commit, Checkpoint, Discard, and Set aside all act only on the ticked rows.",
-    },
-    {
-      lead: 'Set work aside, or bring it back.',
-      body: "Parks your ticked changes off to the side without them becoming a version, and puts those files back to your last saved version. Bring the latest one back, or pick from a list, from the same menu. It's also the fastest way past a branch switch blocked by unsaved work.",
-    },
-    {
-      lead: 'Discard, with one honest warning.',
-      body: "Reverts the ticked files to their last saved version. Everything since, including work the panel auto-saved for you, is gone for good. If there's a chance you'll want it back, set it aside instead.",
-    },
-    {
-      lead: 'Documents reload themselves.',
-      body: 'Discarding, setting aside, bringing work back, and switching branches all rewrite files on disk, so the panel closes and reopens any open document it actually changed, and your canvas always matches your history. The one tradeoff: a reopened document starts with an empty undo history.',
-    },
-    {
-      lead: 'Branch-aware.',
-      body: "Switch branches right from the panel. If unsaved work is in the way, you're offered Set aside & switch instead of having to leave Krita to sort it out first.",
-    },
-    {
-      lead: 'Palette files ride along.',
-      body: "Color palettes (.gpl, .kpl, .aco, .ase) sitting next to your art get tracked too, right alongside the .kra file. Untick them if you'd rather leave them out of a version.",
-    },
-    {
-      lead: "What it deliberately doesn't do.",
-      body: 'Creating a project, browsing full history, undoing a version, and merging or deleting branches all stay in the main Krita VCS app. The panel is for painting and quick version-control actions without alt-tabbing away.',
-    },
-  ],
-  installTitle: 'Installing it',
-  installNote:
-    'Needs Krita with Python scripting enabled, on by default in official builds. You can confirm under Settings → Configure Krita → Python Plugin Manager, which should already list a few built-in plugins.',
-  installSteps: [
-    {
-      title: 'Download and unzip.',
-      body: "Download the plugin zip below and unzip it. Inside you'll find a pykrita folder and the kvc tool it talks to, already built, nothing to compile.",
-    },
-    {
-      title: "Find Krita's plugin folder.",
-      body: "In Krita: Settings → Manage Resources → Open Resource Folder. Look for a pykrita folder inside; create it if it isn't there yet.",
-    },
-    {
-      title: 'Copy the plugin in.',
-      body: 'Copy the kritavc.desktop file and the kritavc folder from the zip into that pykrita folder. Both need to land directly inside it, not nested a level deeper.',
-    },
-    {
-      title: 'Enable it and restart.',
-      body: 'Settings → Configure Krita → Python Plugin Manager, find "Krita VC" in the list and check it on, then restart Krita. Python plugins only load at startup, so this step isn\'t optional.',
-    },
-    {
-      title: 'Open the panel.',
-      body: "Settings → Dockers → Version Control. If it's not there, the plugin didn't load. Double-check the previous two steps.",
-    },
-    {
-      title: 'Point it at kvc, if asked.',
-      body: "If the panel says the kvc tool wasn't found, click Locate kvc… and browse to the kvc file from the zip you downloaded.",
-    },
-  ],
-  troubleshootingTitle: 'Troubleshooting',
-  troubleshooting: [
-    {
-      lead: '"Version Control" isn\'t in the Dockers menu.',
-      body: "The plugin didn't load. Recheck the steps above, and confirm both kritavc.desktop and the kritavc folder landed directly inside pykrita, not one level up or down.",
-    },
-    {
-      lead: '"That isn\'t the kvc tool" after Locate kvc….',
-      body: "Point it at the kvc (or kvc.exe) file itself, not the folder, and make sure it's the one from the zip you downloaded.",
-    },
-    {
-      lead: '"Krita VC tracks .kra documents."',
-      body: 'The active document is a .png/.jpg/etc. Only .kra files are versioned. Save it as .kra inside the tracked folder first.',
-    },
-    {
-      lead: '"repository is busy (locked by another process)."',
-      body: "The desktop app is mid-write, or a previous save didn't exit cleanly and left a lock file behind. Safe to delete by hand as long as nothing else is actually writing at the moment.",
-    },
-    {
-      lead: '"Save (Ctrl+S) or undo your changes in … first."',
-      body: "A discard/set-aside/switch would overwrite a file with unsaved edits. You shouldn't normally see this, since opening the panel's menu already saves everything on the way in. If you do, your last autosave failed (see the next entry).",
-    },
-    {
-      lead: '"Couldn\'t save …"',
-      body: "Krita couldn't write the file, usually because it's read-only, the disk is full, or something else has it open elsewhere. Fix the file and click the refresh button to retry.",
-    },
-  ],
-  uninstallTitle: 'Uninstalling',
-  uninstall:
-    'In Krita, turn off "Krita VC" in the Python Plugin Manager, then delete kritavc.desktop and the kritavc folder from the resource folder. Nothing about your projects or their history lives in the plugin folder, so removing it doesn\'t touch your work.',
-  sourceLink: {
-    label: 'Building it from source instead? See the technical guide on GitHub',
-    href: links.pluginGuide,
-  },
+  items: pluginSubchapters,
+  closingTitle: "What it deliberately doesn't do",
+  closing:
+    'Creating a project, browsing full history, undoing a version, and merging or deleting branches all stay in the main Krita VCS app. The panel is for painting and quick version-control actions without alt-tabbing away.',
 } as const;
 
 // The /privacy page. Short and true rather than padded: the app is fully
