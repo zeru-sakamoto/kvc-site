@@ -6,6 +6,7 @@ import SiteHeader from './components/site-header';
 import SiteFooter from './components/site-footer';
 import CursorBrush from './components/cursor-brush';
 import ScrollToTop from './components/scroll-to-top';
+import SmoothScroll from './components/smooth-scroll';
 import JsonLd from './components/json-ld';
 
 const geistSans = Geist({
@@ -137,6 +138,7 @@ export default function RootLayout({
           />
         </svg>
 
+        <SmoothScroll />
         <ScrollToTop />
         <SiteHeader />
         <main className="flex-1">{children}</main>

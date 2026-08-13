@@ -1,6 +1,6 @@
 {
   "name": "kvc-site",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Marketing site for Krita VCS (also called KVC, Krita VC, or Krita Version Control), a free, local-only version control app for Krita painters.",
   "scripts": {
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "gsap": "^3.15.0",
+    "lenis": "^1.3.26",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4"

@@ -46,7 +46,7 @@ export const site = {
     'Krita-VC',
     'Krita Version Control',
   ],
-  metaTitle: 'Krita VCS: version control for your paintings, not your code',
+  metaTitle: 'KritaVCS | Krita Version Control',
   metaDescription:
     'Krita VCS (also called KVC) is free, local-only version history for Krita painters: every save becomes a version of your .kra file you can compare, explore, or go back to instantly. No accounts, no uploads, and no coding required.',
   // Low ranking weight, but harmless and read by some engines. Brand-name
@@ -54,11 +54,12 @@ export const site = {
   // "Krita VC" / etc. to this product, followed by the problem-phrases
   // people actually search for.
   keywords: [
+    'Krita VCS',
+    'Krita Version Control',
     'KVC',
     'KritaVC',
     'Krita VC',
     'Krita-VC',
-    'Krita Version Control',
     'Krita version control',
     'version control for artists',
     'version control for digital art',
@@ -359,7 +360,6 @@ export const docs = {
   title: 'Documentation',
   intro:
     'New to Krita VCS? Start here. Every chapter below covers a different part of the app: installing and saving your first version, a reference for each feature, and the guardrails that keep your work safe. Want to save versions without leaving Krita? The optional plugin has its own page.',
-  cta: { label: 'Read the docs on GitHub', href: links.docs },
 } as const;
 
 export const docsGettingStarted = {

@@ -45,15 +45,6 @@ export default function DocsLayout({
           <p className="mt-5 text-lg leading-relaxed text-muted">
             {docs.intro}
           </p>
-          <a
-            href={docs.cta.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-8 inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-white/15 px-5 text-sm font-medium text-primary transition-colors hover:border-brand-blue hover:text-brand-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
-          >
-            {docs.cta.label}
-            <span className="sr-only"> (opens in a new tab)</span>
-          </a>
         </div>
       </section>
 
