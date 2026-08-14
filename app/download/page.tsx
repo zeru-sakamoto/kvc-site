@@ -1,28 +1,18 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
-import { downloadPage, platformDownloads } from '@/lib/content';
+import { downloadPage, platformDownloads, pageMeta } from '@/lib/content';
 import {
   WindowsGlyph,
   MacGlyph,
   LinuxGlyph,
-} from '../components/platform-icons';
+} from '../components/platform-glyphs';
 import FileDownloadLink from '../components/file-download-link';
 
-export const metadata: Metadata = {
-  title: downloadPage.metaTitle,
-  description: downloadPage.metaDescription,
-  alternates: { canonical: `/${downloadPage.slug}` },
-  openGraph: {
-    type: 'website',
-    url: `/${downloadPage.slug}`,
-    title: downloadPage.metaTitle,
-    description: downloadPage.metaDescription,
-  },
-  twitter: {
-    title: downloadPage.metaTitle,
-    description: downloadPage.metaDescription,
-  },
-};
+export const metadata = pageMeta({
+  path: `/${downloadPage.slug}`,
+  metaTitle: downloadPage.metaTitle,
+  metaDescription: downloadPage.metaDescription,
+  type: 'website',
+});
 
 const primaryBtn =
   'inline-flex h-11 w-full items-center justify-center whitespace-nowrap rounded-full bg-brand-blue px-5 text-sm font-semibold text-canvas-deep transition-colors hover:bg-accent-cool focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';

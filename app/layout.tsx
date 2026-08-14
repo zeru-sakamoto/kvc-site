@@ -1,12 +1,11 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Syne } from 'next/font/google';
 import './globals.css';
-import { site, siteUrl, links } from '@/lib/content';
+import { site, siteUrl, links, nav } from '@/lib/content';
 import SiteHeader from './components/site-header';
 import SiteFooter from './components/site-footer';
-import CursorBrush from './components/cursor-brush';
 import ScrollToTop from './components/scroll-to-top';
-import SmoothScroll from './components/smooth-scroll';
+import Flourishes from './components/flourishes';
 import JsonLd from './components/json-ld';
 
 const geistSans = Geist({
@@ -76,6 +75,10 @@ export const metadata: Metadata = {
   category: 'technology',
 };
 
+// Dark site — without this, mobile browser chrome renders light around it.
+// Matches --color-canvas-deep in app/globals.css.
+export const viewport: Viewport = { themeColor: '#151518' };
+
 // Site-wide structured data: who publishes the site (a person) and the site
 // itself. Product + FAQ schema live on the homepage; breadcrumbs live per page.
 const structuredData = {
@@ -114,36 +117,14 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <JsonLd data={structuredData} />
 
-        {/* Canvas grain — DESIGN.md noise filter. Fixed, behind content, decorative. */}
-        <svg
-          aria-hidden
-          className="pointer-events-none fixed inset-0 -z-10 h-full w-full"
-        >
-          <filter id="canvas-grain-texture">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.8"
-              numOctaves={3}
-              stitchTiles="stitch"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"
-            />
-          </filter>
-          <rect
-            width="100%"
-            height="100%"
-            filter="url(#canvas-grain-texture)"
-          />
-        </svg>
+        {/* Canvas grain — DESIGN.md noise filter, now a repeating tile in
+            globals.css (body::before) instead of a full-viewport feTurbulence. */}
 
-        <SmoothScroll />
         <ScrollToTop />
-        <SiteHeader />
+        <SiteHeader wordmark={site.wordmark} nav={nav} />
         <main className="flex-1">{children}</main>
         <SiteFooter />
-        <CursorBrush />
+        <Flourishes />
       </body>
     </html>
   );

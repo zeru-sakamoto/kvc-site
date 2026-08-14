@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import gsap from 'gsap';
-import { faq } from '@/lib/content';
+import type { FaqItems } from '@/lib/content';
 
 // <details>/<summary> stays the source of truth for open state (keyboard +
 // screen-reader accessible for free); GSAP only animates the reveal on top of
@@ -87,7 +87,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 // Centered and narrow: this section breaks the alternating two-column rhythm
 // on purpose.
-export default function Faq() {
+export default function Faq({ items }: { items: FaqItems }) {
   return (
     <section id="faq" className="relative scroll-mt-24 py-24 sm:py-32">
       <div className="mx-auto max-w-2xl px-6">
@@ -96,7 +96,7 @@ export default function Faq() {
         </h2>
 
         <div className="border-t border-white/10">
-          {faq.map((item) => (
+          {items.map((item) => (
             <FaqItem key={item.q} q={item.q} a={item.a} />
           ))}
         </div>

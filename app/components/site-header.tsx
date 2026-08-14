@@ -3,9 +3,15 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { site, nav } from '@/lib/content';
+import type { NavContent } from '@/lib/content';
 
-export default function SiteHeader() {
+export default function SiteHeader({
+  wordmark,
+  nav,
+}: {
+  wordmark: string;
+  nav: NavContent;
+}) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -37,7 +43,7 @@ export default function SiteHeader() {
             height={30}
             className="h-7 w-auto"
           />
-          {site.wordmark}
+          {wordmark}
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2">

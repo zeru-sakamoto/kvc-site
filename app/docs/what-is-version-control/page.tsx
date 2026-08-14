@@ -1,12 +1,12 @@
-import type { Metadata } from 'next';
 import BulletList from '../../components/bullet-list';
 import { emphasize } from '../../components/highlight';
-import { whatIsVersionControl } from '@/lib/content';
+import { whatIsVersionControl, pageMeta } from '@/lib/content';
 
-export const metadata: Metadata = {
-  title: whatIsVersionControl.metaTitle,
-  description: whatIsVersionControl.metaDescription,
-};
+export const metadata = pageMeta({
+  path: `/docs/${whatIsVersionControl.slug}`,
+  metaTitle: whatIsVersionControl.metaTitle,
+  metaDescription: whatIsVersionControl.metaDescription,
+});
 
 export default function WhatIsVersionControlPage() {
   return (

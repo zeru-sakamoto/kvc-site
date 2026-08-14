@@ -40,8 +40,12 @@ reference `var(--color-*)`, never inline hex.
 
 ## Canvas Grain Texture
 
-SVG noise filter on the root layer (fixed, `pointer-events-none`, decorative), low opacity —
-see `app/layout.tsx`:
+SVG noise filter, fixed behind the content, `pointer-events-none`, decorative, low opacity.
+It lives in `app/globals.css` as `body::before` — a data-URI SVG on a 180px tile with
+`background-repeat: repeat`, not a full-viewport filtered `<rect>`. Same fractal noise, but
+the browser rasterizes it once on a small tile instead of re-rasterizing the whole viewport
+on every resize. Keep it a tile: the full-viewport version measured as a paint and layout-
+stability cost.
 
 ```html
 <filter id="canvas-grain-texture">
@@ -223,7 +227,7 @@ if (!preferReduced) {
 ## Component Architecture
 
 ```
-1. Visual Foundation Layer — grain (layout.tsx), base theme, tokens (globals.css)
+1. Visual Foundation Layer — grain, base theme, tokens (all in globals.css)
 2. Reversible Content Container — Section template, alternating grid
 3. Painterly Media — honest inline-SVG motifs (media.tsx), no screenshots/fake chrome
 4. Dynamic Vector Directives — GSAP scroll brush stroke
@@ -281,14 +285,17 @@ if (!preferReduced) {
   `plugin-download-button.tsx`, so that logic isn't repeated per file.
 - **FAQ (`faq.tsx`):** native `<details>` accordion.
 - **Footer (`site-footer.tsx`):** maker signature, license, link columns — Product, **Guides**
-  (the three discovery pages), Maker. Row wraps (`flex-wrap`) so three columns stay mobile-safe.
+  (derived from `discoveryPages`, so a new guide needs one entry), Maker. Row wraps (`flex-wrap`) so three columns stay mobile-safe.
   Internal links use `next/link`; external repo links keep `target="_blank"`. The copyright line
   also carries a lone `Privacy` link (`footer.legal`) — no fourth column for one link.
 - **JSON-LD (`json-ld.tsx`):** renders one `application/ld+json` block from a passed object,
   escaping `<` to close the `</script>` breakout. Reused by layout, home, docs, discovery pages.
 - **Discovery page (`discovery-page.tsx`):** shared template for the SEO landing routes — intro
-  (h1 + CTAs), alternating `Section` blocks reusing existing media motifs, closing CTA,
-  `BreadcrumbList` JSON-LD. Copy lives in `lib/content.ts`.
+  (h1 + CTAs), alternating `Section` blocks reusing existing media motifs, a "More guides"
+  cross-link list (the other `discoveryPages`), closing CTA, `BreadcrumbList` + `Article`
+  JSON-LD. Copy lives in `lib/content.ts`.
+- **404 (`not-found.tsx`):** eyebrow + h1 + three pill links (home, getting started, download),
+  `robots: { index: false }`. Same read-once framing as `/privacy`.
 
 ## External Links
 
@@ -321,8 +328,12 @@ live in metadata, FAQ answers, and JSON-LD, with only light surfacing of aliases
   robots with `max-image-preview: large`, and a Search Console hook
   (`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`). Canonical + `og:url` are **not** set on the root layout
   (metadata inherits root→page, which would point every page at `/`); the homepage sets its own
-  canonical in `app/page.tsx`, other routes set theirs. Docs use a nested template
-  `%s · Documentation · Krita VCS`.
+  canonical in `app/page.tsx`, other routes set theirs — all of them through `pageMeta()` in
+  `lib/content.ts`, which is the only supported way to set page metadata here. Setting `openGraph`
+  on a page **replaces** the parent's whole object, including the `opengraph-image.tsx` file
+  convention, so `pageMeta` restates siteName/locale/images; hand-rolling the block silently drops
+  the share image. Docs use a nested template `%s · Documentation · Krita VCS`.
+  `viewport.themeColor` is `--color-canvas-deep`, so mobile browser chrome matches the dark site.
 - **Structured data (JSON-LD):** `WebSite` + `Person` site-wide (layout). `WebSite` and the
   homepage's `SoftwareApplication` both carry an `alternateName` array (`site.alternateNames` in
   `lib/content.ts`: KVC, KritaVC, Krita VC, Krita-VC, Krita Version Control) so answer engines
@@ -337,12 +348,16 @@ live in metadata, FAQ answers, and JSON-LD, with only light surfacing of aliases
   graceful fallback so an offline build still renders on the built-in font. Covers `twitter:image`
   too (X falls back to `og:image`), so there is no separate `twitter-image`.
 - **`robots.ts` / `sitemap.ts`:** allow-all robots pointing at the sitemap; sitemap built from the
-  `docsChapters`/`discoveryPages` exports so it never drifts from the routes.
+  `docsChapters`/`discoveryPages` exports so it never drifts from the routes. `/docs` and
+  `/docs/plugin` are `redirect()` shells and are deliberately kept out of the sitemap.
 - **Discovery routes:** `/recover-a-krita-version` (go back to an earlier version),
   `/vs-saving-copies` (an alternative to `_final_final.kra` copies), and
   `/recover-after-a-krita-crash` (the panic search after Krita crashes or closes without saving —
-  targets non-technical searchers who don't know the product exists yet) — distinct search intent
-  from the homepage and from each other, cross-linked from the footer "Guides" column.
+  targets non-technical searchers who don't know the product exists yet), `/compare-krita-versions`
+  (seeing what changed between two saves), `/backup-krita-files` (backing up the history, not just
+  the newest file), and `/krita-undo-limit` (undo running out, and why saved versions outlive it) —
+  distinct search intent from the homepage and from each other, cross-linked from the footer
+  "Guides" column and from each other's "More guides" list.
 - **Repo-level signal:** `package.json`'s `name`/`description` and `README.md` also name the
   product and its aliases, since GitHub and code-crawling AI agents read those directly, not just
   the rendered site.

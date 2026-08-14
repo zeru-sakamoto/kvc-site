@@ -1,15 +1,14 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import Steps from '../../components/steps';
-import { docsGettingStarted } from '@/lib/content';
+import { docsGettingStarted, pageMeta } from '@/lib/content';
 
-export const metadata: Metadata = {
-  title: docsGettingStarted.metaTitle,
-  description: docsGettingStarted.metaDescription,
-  // The download button lands here with ?ref=download; canonicalize so the
-  // query variant doesn't split ranking signals from the clean URL.
-  alternates: { canonical: '/docs/getting-started' },
-};
+// The download button lands here with ?ref=download; pageMeta's canonical keeps
+// the query variant from splitting ranking signals off the clean URL.
+export const metadata = pageMeta({
+  path: `/docs/${docsGettingStarted.slug}`,
+  metaTitle: docsGettingStarted.metaTitle,
+  metaDescription: docsGettingStarted.metaDescription,
+});
 
 export default async function GettingStartedPage({
   searchParams,

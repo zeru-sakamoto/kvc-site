@@ -2,24 +2,24 @@ import DiscoveryPage from '../components/discovery-page';
 import {
   OwnershipMedia,
   PerformanceMedia,
-  DiffMedia,
+  BranchMedia,
 } from '../components/media';
-import { vsCopiesPage, pageMeta } from '@/lib/content';
+import { backupPage, pageMeta } from '@/lib/content';
 
 export const metadata = pageMeta({
-  path: `/${vsCopiesPage.slug}`,
-  metaTitle: vsCopiesPage.metaTitle,
-  metaDescription: vsCopiesPage.metaDescription,
+  path: `/${backupPage.slug}`,
+  metaTitle: backupPage.metaTitle,
+  metaDescription: backupPage.metaDescription,
 });
 
 export default function Page() {
   return (
     <DiscoveryPage
-      page={vsCopiesPage}
+      page={backupPage}
       media={[
         <OwnershipMedia key="pile" />,
-        <PerformanceMedia key="savings" />,
-        <DiffMedia key="diff" />,
+        <PerformanceMedia key="size" />,
+        <BranchMedia key="yours" />,
       ]}
     />
   );

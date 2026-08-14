@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { hero } from '@/lib/content';
+import { hero, download, platformDownloads } from '@/lib/content';
 import { LayersMedia } from './media';
 import { emphasize } from './highlight';
 import DownloadButton from './download-button';
@@ -39,6 +39,8 @@ export default function Hero() {
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
             <DownloadButton
+              files={platformDownloads}
+              redirectHref={download.redirectHref}
               label={hero.primaryCta.label}
               className="inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full bg-brand-blue px-6 text-sm font-semibold text-canvas-deep transition-colors hover:bg-accent-cool focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             />

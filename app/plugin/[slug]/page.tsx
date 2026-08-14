@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import FeaturePage from '../../components/feature-page';
-import { pluginPage, pluginSubchapters } from '@/lib/content';
+import { pluginPage, pluginSubchapters, pageMeta } from '@/lib/content';
 
 export async function generateStaticParams() {
   return pluginSubchapters.map((sub) => ({ slug: sub.slug }));
@@ -19,7 +19,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const sub = findSubchapter(slug);
   if (!sub) return {};
-  return { title: sub.metaTitle, description: sub.metaDescription };
+  return pageMeta({
+    path: `/${pluginPage.slug}/${sub.slug}`,
+    metaTitle: sub.metaTitle,
+    metaDescription: sub.metaDescription,
+  });
 }
 
 export default async function PluginSubchapterPage({

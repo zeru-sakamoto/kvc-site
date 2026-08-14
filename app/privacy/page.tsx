@@ -1,22 +1,11 @@
-import type { Metadata } from 'next';
 import JsonLd from '../components/json-ld';
-import { privacyPage, siteUrl } from '@/lib/content';
+import { privacyPage, siteUrl, pageMeta } from '@/lib/content';
 
-export const metadata: Metadata = {
-  title: privacyPage.metaTitle,
-  description: privacyPage.metaDescription,
-  alternates: { canonical: `/${privacyPage.slug}` },
-  openGraph: {
-    type: 'article',
-    url: `/${privacyPage.slug}`,
-    title: privacyPage.metaTitle,
-    description: privacyPage.metaDescription,
-  },
-  twitter: {
-    title: privacyPage.metaTitle,
-    description: privacyPage.metaDescription,
-  },
-};
+export const metadata = pageMeta({
+  path: `/${privacyPage.slug}`,
+  metaTitle: privacyPage.metaTitle,
+  metaDescription: privacyPage.metaDescription,
+});
 
 const breadcrumbLd = {
   '@context': 'https://schema.org',

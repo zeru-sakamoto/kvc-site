@@ -3,15 +3,15 @@
 import { useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { download, platformDownloads } from '@/lib/content';
-import { WindowsGlyph, MacGlyph, LinuxGlyph } from './platform-icons';
+import type { PlatformDownloads } from '@/lib/content';
+import { WindowsGlyph, MacGlyph, LinuxGlyph } from './platform-glyphs';
 
 // Blocks re-triggering the download for a few seconds after a click, so
 // spam-clicking (or a double-fire on a slow tap) can't queue up repeat
 // downloads/redirects.
 const COOLDOWN_MS = 3000;
 
-type Platform = keyof typeof platformDownloads;
+type Platform = keyof PlatformDownloads;
 
 const glyphs = { windows: WindowsGlyph, macos: MacGlyph, linux: LinuxGlyph };
 
@@ -48,9 +48,13 @@ function usePlatform(): Platform | null {
 export default function DownloadButton({
   label,
   className,
+  files,
+  redirectHref,
 }: {
   label: string;
   className: string;
+  files: PlatformDownloads;
+  redirectHref: string;
 }) {
   const router = useRouter();
   const [cooling, setCooling] = useState(false);
@@ -63,7 +67,7 @@ export default function DownloadButton({
     }
     setCooling(true);
     setTimeout(() => setCooling(false), COOLDOWN_MS);
-    router.push(download.redirectHref);
+    router.push(redirectHref);
   };
 
   if (!platform) {
@@ -74,7 +78,7 @@ export default function DownloadButton({
     );
   }
 
-  const file = platformDownloads[platform];
+  const file = files[platform];
   const Glyph = glyphs[platform];
 
   return (

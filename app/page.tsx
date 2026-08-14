@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import Hero from './components/hero';
 import Section from './components/section';
@@ -22,6 +21,8 @@ import {
   site,
   download,
   siteUrl,
+  pageMeta,
+  themes,
 } from '@/lib/content';
 
 // The product itself: free, MIT, downloadable. Still earns rich results, and
@@ -43,11 +44,15 @@ const softwareLd = {
   author: { '@id': `${siteUrl}/#person` },
 };
 
-// Homepage's own canonical — set on the page segment, not the root layout, so
-// it isn't inherited by every other route (see app/layout.tsx).
-export const metadata: Metadata = {
-  alternates: { canonical: '/' },
-};
+// Homepage's own canonical + og:url — set on the page segment, not the root
+// layout, so neither is inherited by every other route (see app/layout.tsx).
+export const metadata = pageMeta({
+  path: '/',
+  metaTitle: site.metaTitle,
+  metaDescription: site.metaDescription,
+  type: 'website',
+  absoluteTitle: true,
+});
 
 // FAQ schema, mapped straight from the on-page accordion so the two never drift.
 const faqLd = {
@@ -64,7 +69,7 @@ const featureMedia = {
   compare: <DiffMedia />,
   history: <BranchMedia />,
   yours: <OwnershipMedia />,
-  settings: <SignatureMedia />,
+  settings: <SignatureMedia themes={themes} />,
   performance: <PerformanceMedia />,
   panel: <PanelMedia />,
 } as const;
@@ -219,7 +224,7 @@ export default function Home() {
           </div>
         </section>
 
-        <Faq />
+        <Faq items={faq} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import FeaturePage from '../../../components/feature-page';
-import { docsFeatures, docsUsingFeatures } from '@/lib/content';
+import { docsFeatures, docsUsingFeatures, pageMeta } from '@/lib/content';
 
 export async function generateStaticParams() {
   return docsFeatures.map((feature) => ({ slug: feature.slug }));
@@ -19,7 +19,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const feature = findFeature(slug);
   if (!feature) return {};
-  return { title: feature.metaTitle, description: feature.metaDescription };
+  return pageMeta({
+    path: `/docs/${docsUsingFeatures.slug}/${feature.slug}`,
+    metaTitle: feature.metaTitle,
+    metaDescription: feature.metaDescription,
+  });
 }
 
 export default async function UsingFeatureDetailPage({

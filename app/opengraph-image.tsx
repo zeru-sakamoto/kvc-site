@@ -1,13 +1,14 @@
 import { ImageResponse } from 'next/og';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { site, hero } from '@/lib/content';
+import { site, hero, ogImage } from '@/lib/content';
 
 // One card for the whole site (root segment). Honest media: the real brush
 // logo + wordmark + tagline on the brand canvas, no fake app chrome. Colors are
 // literal DESIGN.md tokens — Satori can't read the CSS custom properties.
-export const alt = `${site.name} — ${hero.headline}`;
-export const size = { width: 1200, height: 630 };
+// alt/size come from lib/content.ts so pageMeta's restatement can't drift.
+export const alt = ogImage.alt;
+export const size = { width: ogImage.width, height: ogImage.height };
 export const contentType = 'image/png';
 
 const FOOTER = 'Free · local-only · MIT';

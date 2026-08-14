@@ -27,12 +27,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const docsIndex = {
-    url: abs('/docs'),
-    lastModified: now,
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  };
+  // No `/docs` entry: app/docs/page.tsx only redirects to the first chapter,
+  // and every chapter is listed below. Never point crawlers at a redirect.
 
   // Each chapter's own page, plus one entry per sub-chapter (Using each
   // feature, Krita plugin) where present.
@@ -67,5 +63,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.3,
   };
 
-  return [home, ...discovery, docsIndex, ...docsPages, download, privacy];
+  return [home, ...discovery, ...docsPages, download, privacy];
 }

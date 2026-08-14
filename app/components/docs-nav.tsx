@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { docsChapters } from '@/lib/content';
+import type { DocsChapter } from '@/lib/content';
 
 // Chapter tabs: a horizontal scrollable pill row on mobile, a plain vertical
 // list — sticky below the fixed header — on the left on lg+ — same content,
@@ -17,7 +17,11 @@ import { docsChapters } from '@/lib/content';
 // inside that chapter is active — mobile keeps the flat top-level pill row,
 // and each sub-chapter page carries its own "back to chapter" link for
 // mobile nav.
-export default function DocsNav() {
+export default function DocsNav({
+  chapters,
+}: {
+  chapters: readonly DocsChapter[];
+}) {
   const pathname = usePathname();
 
   return (
@@ -26,7 +30,7 @@ export default function DocsNav() {
       className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:w-56 lg:flex-none lg:overflow-y-auto"
     >
       <ul className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
-        {docsChapters.map((chapter) => {
+        {chapters.map((chapter) => {
           const isCurrentPage = pathname === chapter.path;
           const isActiveChapter =
             isCurrentPage || pathname?.startsWith(`${chapter.path}/`);

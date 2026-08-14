@@ -1,22 +1,13 @@
-import type { Metadata } from 'next';
 import ChapterLinks from '../components/chapter-links';
-import { pluginPage } from '@/lib/content';
+import { pluginPage, pageMeta } from '@/lib/content';
 
-export const metadata: Metadata = {
-  title: { absolute: pluginPage.metaTitle },
-  description: pluginPage.metaDescription,
-  alternates: { canonical: `/${pluginPage.slug}` },
-  openGraph: {
-    type: 'article',
-    url: `/${pluginPage.slug}`,
-    title: pluginPage.metaTitle,
-    description: pluginPage.metaDescription,
-  },
-  twitter: {
-    title: pluginPage.metaTitle,
-    description: pluginPage.metaDescription,
-  },
-};
+export const metadata = pageMeta({
+  path: `/${pluginPage.slug}`,
+  metaTitle: pluginPage.metaTitle,
+  metaDescription: pluginPage.metaDescription,
+  // The layout's template would append "· Krita VC plugin" to its own title.
+  absoluteTitle: true,
+});
 
 export default function PluginPage() {
   return (

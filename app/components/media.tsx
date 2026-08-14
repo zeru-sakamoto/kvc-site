@@ -15,7 +15,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { themes } from '@/lib/content';
+import type { Theme } from '@/lib/content';
 
 const BLUE = 'var(--color-brand-blue)';
 const COOL = 'var(--color-accent-cool)';
@@ -429,7 +429,7 @@ export function OwnershipMedia() {
 // continuous preview-thumbnail budget, a toggle for the on/off
 // compact-storage switch, and a row of swatches for picking a color theme.
 // Abstract controls, not a screenshot of the Settings panel itself.
-export function SignatureMedia() {
+export function SignatureMedia({ themes }: { themes: readonly Theme[] }) {
   const ref = useReveal((el) => {
     revealTimeline(el)
       .from('[data-track]', { opacity: 0, duration: 0.4 })

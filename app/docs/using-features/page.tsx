@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
 import ChapterLinks from '../../components/chapter-links';
-import { docsUsingFeatures } from '@/lib/content';
+import { docsUsingFeatures, pageMeta } from '@/lib/content';
 
-export const metadata: Metadata = {
-  title: docsUsingFeatures.metaTitle,
-  description: docsUsingFeatures.metaDescription,
-};
+export const metadata = pageMeta({
+  path: `/docs/${docsUsingFeatures.slug}`,
+  metaTitle: docsUsingFeatures.metaTitle,
+  metaDescription: docsUsingFeatures.metaDescription,
+});
 
 export default function UsingFeaturesPage() {
   return (

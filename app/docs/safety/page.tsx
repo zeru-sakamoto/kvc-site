@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
 import BulletList from '../../components/bullet-list';
-import { docsSafety } from '@/lib/content';
+import { docsSafety, pageMeta } from '@/lib/content';
 
-export const metadata: Metadata = {
-  title: docsSafety.metaTitle,
-  description: docsSafety.metaDescription,
-};
+export const metadata = pageMeta({
+  path: `/docs/${docsSafety.slug}`,
+  metaTitle: docsSafety.metaTitle,
+  metaDescription: docsSafety.metaDescription,
+});
 
 export default function SafetyPage() {
   return (
