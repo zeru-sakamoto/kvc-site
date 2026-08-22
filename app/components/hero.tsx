@@ -1,6 +1,7 @@
 import { hero, download, platformDownloads } from '@/lib/content';
 import { emphasize } from './highlight';
 import DownloadButton from './download-button';
+import HeroIntro from './hero-intro';
 import HeroScene from './hero-scene';
 import PlatformIcons from './platform-icons';
 
@@ -24,6 +25,8 @@ export default function Hero() {
       // pt clears the fixed h-16 header.
       className="relative flex min-h-svh flex-col overflow-hidden px-6 pb-12 pt-24 sm:pt-28"
     >
+      <HeroIntro />
+
       {/* Key light, translated to CSS. The 3D scene lights the window from the
           same side, so the page and the mesh agree on where the light is. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
@@ -39,9 +42,10 @@ export default function Hero() {
             reserves the space. That keeps CLS at 0 when the canvas mounts. */}
         <div className="relative mt-8 flex flex-1 flex-col wide:mt-10">
           <h1
+            data-hero-in
             // The overlay covers the controls too, so it must not swallow their
             // clicks; the halves opt back in. Same trick as the canvas layer.
-            className="text-center font-display text-5xl font-extrabold leading-[1.03] tracking-tight text-balance text-primary wrap-anywhere sm:text-7xl wide:pointer-events-none wide:absolute wide:inset-0 wide:z-0 wide:text-left wide:text-[clamp(2.25rem,min(5vw,8.5vh),4.5rem)]"
+            className="text-center font-display text-5xl font-extrabold leading-[1.03] tracking-tight text-balance text-primary wrap-anywhere sm:text-7xl wide:pointer-events-none wide:absolute wide:inset-0 wide:z-20 wide:text-left wide:text-[clamp(2.25rem,min(5vw,8.5vh),4.5rem)]"
           >
             <span className="wide:pointer-events-auto wide:absolute wide:left-0 wide:top-0 wide:block wide:max-w-[12.5em]">
               {headStart}
@@ -52,13 +56,17 @@ export default function Hero() {
           </h1>
 
           <div
+            data-hero-in
             aria-hidden
-            className="pointer-events-none relative z-10 mt-8 h-[15rem] sm:h-[26rem] wide:absolute wide:inset-x-0 wide:top-1/2 wide:mt-0 wide:h-[84%] wide:-translate-y-1/2"
+            className="pointer-events-none relative z-0 mt-8 h-[15rem] sm:h-[26rem] wide:absolute wide:inset-x-0 wide:top-1/2 wide:mt-0 wide:h-[84%] wide:-translate-y-1/2"
           >
             <HeroScene />
           </div>
 
-          <div className="relative z-20 mt-10 flex flex-col items-center wide:mt-auto wide:max-w-sm wide:items-start">
+          <div
+            data-hero-in
+            className="relative z-30 mt-10 flex flex-col items-center wide:mt-auto wide:max-w-sm wide:items-start"
+          >
             <p className="text-center text-lg leading-relaxed text-muted wide:text-left">
               {emphasize(hero.sub, 'No cloud, no accounts', 'cool')}
             </p>

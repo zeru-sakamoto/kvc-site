@@ -5,7 +5,7 @@
   "description": "Marketing site for Krita VCS (also called KVC, Krita VC, or Krita Version Control), a free, local-only version control app for Krita painters.",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "prettier --write .",
+    "prebuild": "prettier --write . && node scripts/build-webp.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -30,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "prettier": "^3.9.4",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

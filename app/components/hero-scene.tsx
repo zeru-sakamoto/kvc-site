@@ -101,21 +101,20 @@ export default function HeroScene() {
     // in CSS, so mounting the canvas over the flat image can't shift the page.
     <div ref={observe} className="relative h-full w-full">
       <Image
-        src="/hero-window-placeholder.svg"
+        src="/hero-screenshot.webp"
         // Matches TextureLoader's fetch, so the 3D layer reuses this preload
         // instead of requesting the file a second time.
         crossOrigin="anonymous"
-        // Decorative: it stands in for a screenshot and carries no information
-        // the headline doesn't already give. Give it real alt text on the day
-        // it becomes a real capture.
+        // Decorative: it stands in for the headline, which already says what
+        // the app does.
         alt=""
         aria-hidden
-        width={1280}
-        height={800}
+        width={1440}
+        height={900}
         priority
         unoptimized
         style={{ transform: FLAT_TILT }}
-        className={`absolute left-1/2 top-1/2 w-[80%] sm:w-[56%] wide:w-[40%] -translate-x-1/2 -translate-y-1/2 rounded-2xl transition-opacity duration-700 ${
+        className={`absolute left-1/2 top-1/2 w-[92%] sm:w-[68%] wide:w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-2xl transition-opacity duration-700 ${
           ready ? 'opacity-0' : 'opacity-100'
         }`}
       />

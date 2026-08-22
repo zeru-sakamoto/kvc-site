@@ -7,9 +7,9 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 // Swap this one file for a real capture and nothing here changes.
-const PLACEHOLDER_SRC = '/hero-window-placeholder.svg';
-const PLACEHOLDER_ASPECT = 1280 / 800;
-const WINDOW_WIDTH = 3.6;
+const PLACEHOLDER_SRC = '/hero-screenshot.webp';
+const PLACEHOLDER_ASPECT = 1440 / 900;
+const WINDOW_WIDTH = 4.7;
 
 // Resting tilt. Gentle on purpose — the window should read as a real object
 // catching light, not as a perspective trick.
@@ -95,7 +95,7 @@ function AppWindow({
         <meshStandardMaterial
           map={texture}
           map-colorSpace={THREE.SRGBColorSpace}
-          map-anisotropy={8}
+          map-anisotropy={16}
           transparent
           roughness={0.55}
           metalness={0.12}
@@ -157,7 +157,7 @@ function Dust({ palette, motion }: { palette: Palette; motion: Motion }) {
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.035}
+        size={0.065}
         sizeAttenuation
         vertexColors
         transparent
