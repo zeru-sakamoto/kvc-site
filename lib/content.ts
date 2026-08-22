@@ -11,7 +11,7 @@ const repoUrl = `https://github.com/${repo.owner}/${repo.name}`;
 
 // Bump this on every release and swap the matching files in
 // `public/download/` — nothing else in this file needs to change.
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 
 // Canonical production origin. Env-overridable so a domain change is one var,
 // not a code edit. No trailing slash — everything below joins onto it.
