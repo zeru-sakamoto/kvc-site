@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" role="img" aria-label="Placeholder standing in for a Krita VCS app screenshot">
+  <!-- PLACEHOLDER ASSET. Swap this one file for a real capture of the Krita VCS
+       window when one exists; nothing else needs to change. Hex is inlined here
+       because a standalone SVG loaded as a WebGL texture cannot read the page's
+       CSS custom properties. Values track the DESIGN.md color table.
+       Explicit width/height on the root are required for TextureLoader. -->
+  <defs>
+    <linearGradient id="canvasWash" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2e86de" stop-opacity="0.30"/>
+      <stop offset="0.55" stop-color="#00d2d3" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#ff6b6b" stop-opacity="0.20"/>
+    </linearGradient>
+    <linearGradient id="chromeEdge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5f6fa" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#f5f6fa" stop-opacity="0.03"/>
+    </linearGradient>
+    <clipPath id="windowClip">
+      <rect x="8" y="8" width="1264" height="784" rx="28"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1280" height="800" fill="none"/>
+  <rect x="8" y="8" width="1264" height="784" rx="28" fill="#151518"/>
+
+  <g clip-path="url(#windowClip)">
+    <!-- Title bar -->
+    <rect x="8" y="8" width="1264" height="60" fill="#1e1e24"/>
+    <circle cx="48" cy="38" r="7" fill="#ff6b6b" fill-opacity="0.75"/>
+    <circle cx="74" cy="38" r="7" fill="#a0a0b0" fill-opacity="0.45"/>
+    <circle cx="100" cy="38" r="7" fill="#00d2d3" fill-opacity="0.65"/>
+    <rect x="140" y="30" width="190" height="16" rx="8" fill="#f5f6fa" fill-opacity="0.10"/>
+
+    <!-- Version trail rail -->
+    <rect x="8" y="68" width="248" height="724" fill="#1e1e24"/>
+    <path d="M 76 150 L 76 660" stroke="#2e86de" stroke-opacity="0.35" stroke-width="3" stroke-linecap="round"/>
+    <g>
+      <circle cx="76" cy="170" r="11" fill="#2e86de"/>
+      <circle cx="76" cy="310" r="11" fill="#00d2d3"/>
+      <circle cx="76" cy="450" r="11" fill="#ff6b6b"/>
+      <circle cx="76" cy="590" r="11" fill="#a0a0b0" fill-opacity="0.7"/>
+    </g>
+    <g fill="#f5f6fa" fill-opacity="0.13">
+      <rect x="110" y="162" width="118" height="16" rx="8"/>
+      <rect x="110" y="302" width="96" height="16" rx="8"/>
+      <rect x="110" y="442" width="126" height="16" rx="8"/>
+      <rect x="110" y="582" width="84" height="16" rx="8"/>
+    </g>
+
+    <!-- Canvas area -->
+    <rect x="296" y="108" width="936" height="644" rx="20" fill="#1e1e24"/>
+    <rect x="296" y="108" width="936" height="644" rx="20" fill="url(#canvasWash)"/>
+    <path d="M 430 640 C 560 380 660 560 780 300 C 860 130 980 240 1090 190"
+          fill="none" stroke="#f5f6fa" stroke-opacity="0.14" stroke-width="26" stroke-linecap="round"/>
+    <path d="M 470 690 C 620 470 700 610 830 380"
+          fill="none" stroke="#2e86de" stroke-opacity="0.22" stroke-width="18" stroke-linecap="round"/>
+
+    <!-- Placeholder label. Non-negotiable: this asset must read as a stand-in. -->
+    <g text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+      <rect x="524" y="386" width="480" height="92" rx="16" fill="#151518" fill-opacity="0.82" stroke="#f5f6fa" stroke-opacity="0.18" stroke-width="2" stroke-dasharray="10 8"/>
+      <text x="764" y="424" fill="#f5f6fa" fill-opacity="0.92" font-size="30" font-weight="700" letter-spacing="1.5">Placeholder</text>
+      <text x="764" y="456" fill="#a0a0b0" font-size="19" font-weight="500">App screenshot pending</text>
+    </g>
+  </g>
+
+  <rect x="8" y="8" width="1264" height="784" rx="28" fill="none" stroke="url(#chromeEdge)" stroke-width="2"/>
+</svg>

@@ -1,5 +1,12 @@
 @import 'tailwindcss';
 
+/* The hero's diagonal layout needs both axes: wide enough to set two headline
+   halves either side of the floating window, and tall enough to keep the
+   controls on screen under them. Below either threshold the hero falls back to
+   the stacked layout, so this gate is what makes "fits one 16:9 screen" true
+   rather than aspirational. */
+@custom-variant wide (@media (min-width: 1280px) and (min-height: 640px));
+
 /* Hallmark · macrostructure: alternating narrative (DESIGN.md, locked system) · tone: painter-first, warm-technical · anchor hue: cool (Krita blue)
  * sections vary rhythm on purpose: hero+visual · full-width value grid · 3 alternating media blocks · narrow roadmap · centered FAQ accordion
  * pre-emit critique: P5 H5 E5 S5 R4 V5 */

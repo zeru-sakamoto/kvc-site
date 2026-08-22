@@ -61,79 +61,13 @@ function Panel({
   return (
     <div
       ref={panelRef}
-      className="rounded-2xl border border-white/10 bg-canvas-deep/60 p-6 sm:p-8"
+      // Same material language as the 3D window: a lit top edge falling to
+      // shadow, and a deep drop so the panel sits above the page rather than
+      // on it. Flat CSS, no WebGL.
+      className="rounded-2xl border border-white/10 bg-canvas-deep/60 bg-linear-to-b from-white/6 to-transparent p-6 shadow-2xl shadow-canvas-deep/70 sm:p-8"
     >
       {children}
     </div>
-  );
-}
-
-// Hero / brand motif: translucent painting layers stacking up, with a small
-// version-history trail threading through them. "Layers, tracked over time."
-export function LayersMedia() {
-  const ref = useReveal((el) => {
-    revealTimeline(el)
-      .from('[data-layer]', {
-        yPercent: 12,
-        opacity: 0,
-        duration: 0.7,
-        stagger: 0.12,
-      })
-      .from(
-        '[data-node]',
-        { scale: 0, transformOrigin: '50% 50%', stagger: 0.1, duration: 0.4 },
-        '-=0.3',
-      );
-  });
-
-  const layers = [
-    { y: 26, fill: BLUE },
-    { y: 58, fill: COOL },
-    { y: 90, fill: WARM },
-  ];
-  return (
-    <Panel panelRef={ref}>
-      <svg aria-hidden viewBox="0 0 400 240" className="w-full" fill="none">
-        {layers.map((l, i) => (
-          <rect
-            key={i}
-            data-layer
-            x={40 + i * 26}
-            y={l.y}
-            width={250}
-            height={96}
-            rx={12}
-            className="mix-blend-screen"
-            style={{ fill: l.fill }}
-            fillOpacity={0.16}
-            stroke={l.fill}
-            strokeOpacity={0.5}
-          />
-        ))}
-        {/* version trail — nodes along the bottom, connected */}
-        <line
-          x1={54}
-          y1={210}
-          x2={346}
-          y2={210}
-          stroke={BLUE}
-          strokeOpacity={0.35}
-        />
-        {[54, 151, 248, 346].map((x, i) => (
-          <circle
-            key={x}
-            data-node
-            cx={x}
-            cy={210}
-            r={i === 3 ? 7 : 5}
-            style={{ fill: i === 3 ? BLUE : 'var(--color-canvas-deep)' }}
-            stroke={BLUE}
-            strokeOpacity={i === 3 ? 1 : 0.6}
-            strokeWidth={2}
-          />
-        ))}
-      </svg>
-    </Panel>
   );
 }
 

@@ -23,15 +23,18 @@ understands what the tool does without needing to know what "commit" or "diff" m
 
 Painter-first, plain-language, calm. Practices what "Artist Mode" (the product's own
 jargon-off feature) preaches: say "version / save / go back," not "commit / hash / rollback."
-Confident and quiet rather than hype-driven — no invented metrics, no fake product screenshots,
-no urgency tactics.
+Confident and quiet rather than hype-driven — no invented metrics, no urgency tactics, and no
+UI invented out of thin air and passed off as the product.
 
 ## Anti-references
 
 - Generic SaaS / dev-tool marketing aesthetic: gradient hero text, hero-metric stat rows,
   glassmorphism cards, tiny uppercase eyebrows over every section, numbered 01/02/03 scaffolding.
-- Fake or implied app chrome — no browser-window screenshots, no fabricated UI mockups standing
-  in for real product shots (per DESIGN.md, media is honest inline-SVG painterly motifs instead).
+- Fabricated UI passed off as real. The hero deliberately shows the app as a floating window,
+  and real screenshots are the goal; until a real capture exists it carries a placeholder that
+  says "Placeholder / App screenshot pending" on its face. What's still out: invented product UI
+  presented as if it were a genuine screenshot, and generic browser chrome used as decoration.
+  Feature-section media stays honest inline-SVG painterly motifs (per DESIGN.md).
 - Developer-tool-coded visuals or copy (terminal aesthetics, monospace-everywhere, git-branded
   iconography) — this is a tool for painters, not programmers, even though it does git-like work
   under the hood.
@@ -40,8 +43,9 @@ no urgency tactics.
 
 - Say it the way a painter would say it — plain language over technical precision, even when
   simplifying loses exactness (this is Artist Mode's whole premise, applied to the copy itself).
-- Show, don't fabricate — honest inline-SVG motifs over screenshots or invented product chrome;
-  no placeholder numbers dressed up as real metrics.
+- Show, don't fabricate — a real screenshot, or a placeholder that admits it is one; never
+  invented UI dressed up as a real capture, and never placeholder numbers dressed up as real
+  metrics. Away from the hero, honest inline-SVG motifs still do the work.
 - Structural variety over template repetition — sections deliberately vary rhythm (media
   left/right/none) so the page doesn't read as one repeated block.
 - Calm confidence over hype — the product's own restraint (local-only, no accounts, no forced

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Hero from './components/hero';
-import Section from './components/section';
+import Section, { SectionGlow } from './components/section';
 import BrushStroke from './components/brush-stroke';
 import Faq from './components/faq';
 import {
@@ -132,6 +132,7 @@ export default function Home() {
         {/* Why — full-width value props, no media column. Breaks the two-column
             rhythm before the alternating feature blocks begin. */}
         <section id={why.id} className="relative scroll-mt-24 py-24 sm:py-32">
+          <SectionGlow side="left" tone="cool" />
           <div className="mx-auto max-w-6xl px-6">
             <div className="max-w-2xl">
               <h2 className="font-display text-3xl font-bold leading-tight tracking-tight text-balance text-primary sm:text-4xl lg:text-[2.75rem]">
@@ -191,6 +192,7 @@ export default function Home() {
           id={whatsNext.id}
           className="relative scroll-mt-24 py-24 sm:py-32"
         >
+          <SectionGlow side="right" tone="warm" />
           <div className="mx-auto max-w-3xl px-6">
             <h2 className="font-display text-3xl font-bold tracking-tight text-balance text-primary sm:text-4xl">
               {whatsNext.title}

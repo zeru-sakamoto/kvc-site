@@ -13,20 +13,35 @@ design **spec-of-record**; keep it in sync when the design changes.
 
 Painter-first, plain-language, calm. The site practises what "Artist Mode" preaches: say
 "version / save / go back", not "commit / hash / rollback". No em-dashes in visible copy. No
-invented metrics or fake product UI.
+invented metrics. Product screenshots are allowed and wanted — a real capture of the app,
+shown honestly — but until one exists the hero carries a placeholder that says so on its face.
+What stays banned is invented UI passed off as real.
 
 ## Stack
 
 - Next.js App Router (Server Components default, Client Components for interactive bits)
 - Tailwind CSS v4 (`@theme inline` tokens in `app/globals.css`, no `tailwind.config.js`)
 - GSAP + ScrollTrigger (scroll-driven brush stroke) — a dependency (`gsap`)
+- Three.js + React Three Fiber (`three`, `@react-three/fiber`) — the 3D hero only, lazy-loaded
 - Fonts: Geist Sans/Mono + Syne (display), via `next/font`
 - Vercel hosting
+
+`@designcodeio/threeui` was evaluated for the hero and rejected. It is not a React Three Fiber
+library (nothing in it references `@react-three/fiber`), and most of its components are
+`<iframe srcDoc>` documents that fetch three.js, GSAP and Tailwind from jsdelivr, unpkg, cdnjs
+and skypack at runtime. Third-party CDN calls contradict the product's local-only promise and
+its privacy policy, so the hero's ambient particle field is built in the scene itself instead.
+No drei either: `useLoader` + `useFrame` cover everything the scene needs.
 
 ## Colors
 
 Dark-locked (Krita workspace theme). Tokens live in the `@theme` block of `app/globals.css`;
 reference `var(--color-*)`, never inline hex.
+
+`globals.css` also defines one custom variant, `wide`
+(`@custom-variant wide (@media (min-width: 1280px) and (min-height: 640px))`), used only by the
+hero. It exists because that layout has a vertical requirement as well as a horizontal one, and
+Tailwind's width-only breakpoints can't express it.
 
 | Role                    | Name           | Hex       | Token            |
 | ----------------------- | -------------- | --------- | ---------------- |
@@ -68,11 +83,45 @@ The brush stroke spans the full page height and follows scroll, connecting the s
 six feature blocks alternate left/right; the surrounding sections deliberately break that
 rhythm so the page doesn't read as one repeated template.
 
-1. **Hero — left-aligned + visual.** Bold headline ("Version control for your art, not your
-   code."), factual badge carrying the version ("v1.0 · Free, open source, local-only"), linked
-   to the `/download` page, Download + View-source CTAs on the left, with a small all-available
-   OS icon row beneath (`platform-icons.tsx`); painterly `LayersMedia` (translucent painting
-   layers + a version-history trail) on the right.
+**Everything below the hero stays 2D by design.** No canvas, no WebGL, no scroll-linked depth
+or `translateZ` parallax in the feature sections. Continuity with the hero is carried in flat
+CSS instead: a soft radial glow per section sitting where the hero's key light would fall
+(`SectionGlow` in `section.tsx`, following the existing left/right alternation rather than
+introducing a second rhythm), panel materials with a lit top edge falling to shadow, and a
+heading scale set at half the hero's display size so the step down reads as deliberate. One
+WebGL context exists on the whole page, and it belongs to the hero.
+
+1. **Hero — diagonal, 3D, one screen.** The headline is split at its comma and set in
+   opposite corners with the floating app-window mesh between them: "Version control for your
+   art," top-left, "not your code." bottom-right. The badge sits above part A in the top-left;
+   the sub-paragraph, Download + View-source CTAs and the OS icon row (`platform-icons.tsx`)
+   sit bottom-left, opposite part B. One X composition, no dead corner.
+
+   - **Still one `<h1>`, one sentence.** Both halves are `<span>`s inside the same `<h1>`, so
+     `h1.textContent` remains the whole headline for crawlers and screen readers. The split is
+     derived in `hero.tsx` from the single `hero.headline` string (first comma), never
+     duplicated into `lib/content.ts` — the same rule the emphasis maps in `page.tsx` follow.
+   - **Sized to fit a 16:9 screen.** The section is `min-h-svh` (not `vh`, so a mobile URL bar
+     can't resize it mid-scroll) with the stage on `flex-1`; the controls sit at the bottom via
+     `mt-auto`, so the stage's own height reserves the space and CLS stays at 0. Headline size
+     is `clamp(2.25rem, min(5vw, 8.5vh), 4.5rem)` — the `vh` term is what keeps short-and-wide
+     laptops honest. Verified fitting entirely above the fold at 1920×1080, 1440×810, 1366×768
+     and 1280×720.
+   - **Halves are capped in `em`, not `%`.** `max-w-[12.5em]` on part A and `max-w-[8em]` on
+     part B, so each breaks at the same word at every font size ("Version control / for your
+     art," and "not your / code."). Percentages drift as the clamp scales and re-break the
+     lines.
+   - **Gated on both axes.** The diagonal layout only applies via the `wide` variant, defined
+     in `globals.css` as `(min-width: 1280px) and (min-height: 640px)`. Narrower or shorter
+     than that there is no room for two halves either side of the window plus the controls, so
+     the hero falls back to the stacked layout — centred headline, image beneath, controls
+     under that. That fallback is also what mobile and tablet get.
+   - The mesh overlaps each half by roughly a fifth of a line — enough to read as an object in
+     front of the text, never enough to hide a word. Measured symmetric at 1366×768 (13px each
+     side) and 1440×810.
+
+   See "3D hero" under GSAP Animation for the scene itself.
+
 2. **Why artists use it — full-width points grid.** No media column. Intro + five value props
    in a two-column grid. Breaks the two-column rhythm before the feature blocks.
 3. **Compare (feature block, media right).** "See exactly what changed, layer by layer." Visual
@@ -202,10 +251,39 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
 
 ## GSAP Animation
 
-- **Brush stroke** (`app/components/brush-stroke.tsx`): one stroke drawn via `strokeDashoffset`
-  tied to scroll position (not timers). A faint always-visible guide reads ahead of the tip.
-  Under `prefers-reduced-motion: reduce`, the stroke shows fully drawn and scroll wiring is
-  skipped.
+- **3D hero** (`app/components/hero-scene.tsx`, `hero-canvas.tsx`): a React Three Fiber canvas
+  holding the floating app-window mesh and an ambient particle field. Lighting is read from the
+  `@theme` tokens at runtime (`getComputedStyle` on `:root`) rather than duplicating hex, so the
+  key light is literally Krita Blue, the rim Electric Cyan and the bounce Sunset Orange; fog is
+  Deep Ink, which fades the particle field out instead of ending it on a hard edge. Idle bob,
+  pointer parallax and scroll parallax all run in one `useFrame` against refs — no React state
+  per frame — with the scroll value fed by a ScrollTrigger sharing the same `gsap.ticker` as the
+  brush stroke. The mesh is textured with `public/hero-window-placeholder.svg`; swapping that one
+  file for a real capture is the whole migration path.
+  - **Fallback is the default, not an afterthought.** `hero.tsx` renders a static, CSS-tilted
+    `<img>` of the same placeholder inside a fixed-height box. That is what SSR emits and what
+    paints first, which keeps the LCP element the `<h1>` and CLS at 0. The canvas mounts over it
+    only when all of these hold: not `prefers-reduced-motion: reduce`, viewport ≥ 768px,
+    `hardwareConcurrency` ≥ 4, and a WebGL context is obtainable. Otherwise the flat image simply
+    stays — a complete state, not a degraded one.
+  - **Never in the shared bundle.** `next/dynamic(..., { ssr: false })` from inside a Client
+    Component, the same shape as `flourishes.tsx`, keeps `three` off every other route. The
+    canvas also waits for an IntersectionObserver before mounting, so it never competes with
+    first paint.
+  - **Lost contexts are recovered.** GPU resets and long backgrounding kill WebGL contexts in the
+    wild, and a lost context can only be replaced by a fresh canvas element, so `webglcontextlost`
+    bumps a key that remounts the canvas (capped at two retries). This also absorbs React
+    StrictMode's dev double-mount, where R3F's unmount fires `forceContextLoss()` on a 500ms timer
+    that would otherwise land on the remounted renderer.
+  - Nothing in the 3D layer is interactive, so nothing there needs a DOM equivalent. The canvas is
+    `pointer-events-none`, `tabIndex={-1}`, and inside an `aria-hidden` wrapper: it never enters
+    the tab order or the accessibility tree, and the headline underneath stays selectable.
+- **Brush stroke** (`app/components/brush-stroke.tsx`): one stroke revealed by a scroll-driven
+  clip-path rect (plain viewBox Y-units, not `strokeDashoffset`) tied to scroll position, not
+  timers. It now enters near the horizontal centre, under where the hero's window floats, so it
+  reads as continuing out of the 3D scene rather than starting on its own. A faint always-visible
+  guide reads ahead of the tip. Under `prefers-reduced-motion: reduce`, the stroke shows fully
+  drawn and scroll wiring is skipped.
 - **Cursor brush** (`app/components/cursor-brush.tsx`): faint Krita-blue smudge trailing the
   pointer, fine-pointer + non-reduced-motion only. Secondary flourish, not the signature.
 - **Media reveals** (`app/components/media.tsx`): each motif animates its own elements in as it
@@ -229,7 +307,8 @@ if (!preferReduced) {
 ```
 1. Visual Foundation Layer — grain, base theme, tokens (all in globals.css)
 2. Reversible Content Container — Section template, alternating grid
-3. Painterly Media — honest inline-SVG motifs (media.tsx), no screenshots/fake chrome
+3. Painterly Media — honest inline-SVG motifs (media.tsx) for the feature sections
+4. 3D Hero — R3F canvas + app-window mesh, lazy, with a static image fallback
 4. Dynamic Vector Directives — GSAP scroll brush stroke
 ```
 
@@ -240,9 +319,16 @@ if (!preferReduced) {
 - **Body blocks (`section.tsx`):** one reusable template, toggles `flex-row` /
   `flex-row-reverse` for alternation — no duplicated markup. `eyebrow` is optional and used
   sparingly (the page leans on strong headings, not a mono-caps kicker over every section).
-- **Media (`media.tsx`):** `LayersMedia`, `DiffMedia`, `BranchMedia`, `OwnershipMedia`,
-  `SignatureMedia`, `PerformanceMedia`, `PanelMedia` — abstract painterly vector, all colors via
-  tokens.
+- **Media (`media.tsx`):** `DiffMedia`, `BranchMedia`, `OwnershipMedia`, `SignatureMedia`,
+  `PerformanceMedia`, `PanelMedia` — abstract painterly vector, all colors via tokens. (`LayersMedia`
+  is gone; the 3D hero replaced the motif it existed for.) The shared `Panel` carries the flat
+  translation of the hero's material: a lit top edge falling to shadow over `canvas-deep`.
+- **Hero scene (`hero-scene.tsx` / `hero-canvas.tsx`):** capability gate + lazy canvas, and the
+  scene itself. The only WebGL on the site.
+- **Download button (`download-button.tsx`):** renders a neutral "Download for free" on the
+  server and swaps to "Download for <OS>" once the platform resolves after hydration. It carries
+  its own `min-w` floor sized to the widest label, so that swap can't shove the CTA beside it
+  sideways — without it the GitHub link jumped 58px about 700ms after load.
 - **Steps (`steps.tsx`):** plain numbered list, reused across Getting started and any feature/
   plugin sub-chapter with a "how to" sequence. No animation, no stepper widget — a static ordered
   list styled with site tokens.

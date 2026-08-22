@@ -30,6 +30,13 @@ function detectPlatform(): Platform | null {
 const noop = () => () => {};
 const getServerSnapshot = () => null;
 
+// The label goes from "Download for free" (168px) to "Download for Windows"
+// (226px, the widest of the three) once the platform resolves. Without a floor,
+// that swap shoves whatever sits beside the button sideways ~700ms after load —
+// a mis-click hazard on a live CTA, and a layout shift. Reserving the widest
+// label's width up front costs nothing and holds the row still.
+const RESERVE_WIDEST_LABEL = 'min-w-[14.25rem]';
+
 // Reads a client-only global (navigator) the hydration-safe way: the server
 // render and the first client render both use getServerSnapshot (null, the
 // neutral state below), then React swaps in the real detected platform right
@@ -72,7 +79,7 @@ export default function DownloadButton({
 
   if (!platform) {
     return (
-      <Link href="/download" className={className}>
+      <Link href="/download" className={`${className} ${RESERVE_WIDEST_LABEL}`}>
         {label}
       </Link>
     );
@@ -86,9 +93,9 @@ export default function DownloadButton({
       href={file.primary.fileHref}
       download={file.primary.fileName}
       aria-disabled={cooling}
-      className={
-        cooling ? `${className} pointer-events-none opacity-60` : className
-      }
+      className={`${className} ${RESERVE_WIDEST_LABEL}${
+        cooling ? ' pointer-events-none opacity-60' : ''
+      }`}
       onClick={handleClick}
     >
       <Glyph />

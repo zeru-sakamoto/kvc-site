@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Every front-end or design change to this project MUST run through this three-stage pipeline, **in order**:
 
 1. **Impeccable** — design language. Establish or confirm the voice, copy, and visual language before building. Site copy lives in [lib/content.ts](lib/content.ts) (single source of truth); write it in the painter-first, plain-language voice ("version / save / go back", not "commit / hash / rollback").
-2. **Hallmark** — layout & execution. Build structure, components, and media against Hallmark's anti-slop gates: honest media (no fake app chrome or screenshots), locked color tokens (reference `var(--color-*)`, never inline hex), mobile-safe (overflow clip, no two-line CTAs), and genuine structural variety between sections.
+2. **Hallmark** — layout & execution. Build structure, components, and media against Hallmark's anti-slop gates: honest media (real screenshots or a placeholder that admits it is one — never invented UI passed off as a real capture; the hero's floating app-window treatment is deliberate), locked color tokens (reference `var(--color-*)`, never inline hex), mobile-safe (overflow clip, no two-line CTAs), and genuine structural variety between sections.
 3. **taste** — finalization. Final polish: rhythm, spacing, contrast, focus states, reduced-motion, and removing AI-slop tells (no em-dashes in visible copy, ≤1 eyebrow per 3 sections, no fake UI or fake-precise numbers).
 
 `DESIGN.md` is the design **spec-of-record** — keep it in sync after design changes. `SITE_CONTENT.md` is the source copy for the site.
@@ -35,12 +35,14 @@ The site is built out: a single-page **Krita VCS** landing page (App Router, Typ
 
 - [app/page.tsx](app/page.tsx) composes the sections in order: Hero → Why → three alternating feature blocks (Compare / History / Ownership) → What's next → FAQ.
 - All copy is centralised in [lib/content.ts](lib/content.ts) (single source of truth). `SITE_CONTENT.md` is the source material it was written from.
-- Section media are honest inline-SVG painterly motifs in [app/components/media.tsx](app/components/media.tsx) — no screenshots or fake app chrome.
+- The hero is a 3D scene: a floating, tilted app-window mesh in a React Three Fiber canvas ([app/components/hero-canvas.tsx](app/components/hero-canvas.tsx)) layered over a massive DOM headline, gated and lazy-loaded by [app/components/hero-scene.tsx](app/components/hero-scene.tsx). It is textured with `public/hero-window-placeholder.svg` — swap that one file for a real capture when one exists. `three` and `@react-three/fiber` are dependencies, deliberately kept out of every other route's bundle.
+- Feature-section media are honest inline-SVG painterly motifs in [app/components/media.tsx](app/components/media.tsx). Everything below the hero stays 2D by design — no canvas, no WebGL, no depth parallax.
 - The FAQ uses a native `<details>` accordion ([app/components/faq.tsx](app/components/faq.tsx)) — no JS.
 
 Design conventions in force (see `DESIGN.md`, the spec-of-record):
 
 - Alternating left/right feature sections connected by a single animated SVG brush stroke ([app/components/brush-stroke.tsx](app/components/brush-stroke.tsx)), driven by GSAP + ScrollTrigger tied to scroll position (not timers), gated behind a `prefers-reduced-motion` check. GSAP is a dependency (`gsap` in package.json).
+- Every motion path has a static fallback. The hero canvas only mounts when motion is allowed, the viewport is ≥ 768px, and WebGL is available; otherwise a static tilted image stands in. The canvas is decorative: `pointer-events-none`, out of the tab order, and out of the accessibility tree.
 - Color tokens are defined in the DESIGN.md color table and in the `@theme` block of [app/globals.css](app/globals.css) — reference the `--color-*` tokens rather than inventing or inlining colors.
 - Body sections share one reusable template ([app/components/section.tsx](app/components/section.tsx)) that toggles `flex-row` / `flex-row-reverse` for alternation, instead of duplicating markup per section.
 
