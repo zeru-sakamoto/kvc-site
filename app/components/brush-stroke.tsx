@@ -7,11 +7,11 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 // Full-page stroke whose reveal tracks scroll via a clip-path rect (plain
 // viewBox Y-units, not stroke-dasharray/dashoffset).
 const VIEWBOX_H = 3000;
-// Starts near the horizontal centre, under where the hero's window floats, so
-// the stroke reads as continuing out of the 3D scene rather than beginning on
-// its own once the flat sections start.
+// Starts in the right-hand column, under the hero's desk scene, so the stroke
+// reads as continuing out of the 3D scene rather than beginning on its own
+// once the flat sections start.
 const PATH_D =
-  'M 470 60 C 640 440 720 640 600 1000 C 480 1380 220 1520 360 1920 ' +
+  'M 700 60 C 760 440 720 640 600 1000 C 480 1380 220 1520 360 1920 ' +
   'C 500 2320 740 2560 600 2960';
 
 // Fraction down the viewport the tip rides once past the initial ramp-in.

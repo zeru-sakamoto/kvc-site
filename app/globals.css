@@ -1,14 +1,41 @@
 @import 'tailwindcss';
 
-/* The hero's diagonal layout needs both axes: wide enough to set two headline
-   halves either side of the floating window, and tall enough to keep the
-   controls on screen under them. Below either threshold the hero falls back to
-   the stacked layout, so this gate is what makes "fits one 16:9 screen" true
-   rather than aspirational. */
-@custom-variant wide (@media (min-width: 1280px) and (min-height: 640px));
+/* The live scene covers the whole hero; only its top (under the header) and
+   bottom (into the next section) need fading. Left and right are the
+   viewport edges, and the desk's own radial falloff handles those. */
+.hero-backdrop {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 12%,
+    black 94%,
+    transparent
+  );
+}
+
+/* Hero scroll cue: a short tick that travels down a hairline. Under reduced
+   motion it rests at the top of the line instead of animating. */
+@keyframes hero-scroll-tick {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(340%);
+  }
+}
+
+.hero-scroll-tick {
+  animation: hero-scroll-tick 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-scroll-tick {
+    animation: none !important;
+  }
+}
 
 /* Hallmark · macrostructure: alternating narrative (DESIGN.md, locked system) · tone: painter-first, warm-technical · anchor hue: cool (Krita blue)
- * sections vary rhythm on purpose: hero+visual · full-width value grid · 3 alternating media blocks · narrow roadmap · centered FAQ accordion
+ * sections vary rhythm on purpose: split hero (text left, lit 3D desk right) · full-width value grid · 3 alternating media blocks · narrow roadmap · centered FAQ accordion
  * pre-emit critique: P5 H5 E5 S5 R4 V5 */
 
 @theme inline {

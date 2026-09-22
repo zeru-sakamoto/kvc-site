@@ -38,10 +38,9 @@ No drei either: `useLoader` + `useFrame` cover everything the scene needs.
 Dark-locked (Krita workspace theme). Tokens live in the `@theme` block of `app/globals.css`;
 reference `var(--color-*)`, never inline hex.
 
-`globals.css` also defines one custom variant, `wide`
-(`@custom-variant wide (@media (min-width: 1280px) and (min-height: 640px))`), used only by the
-hero. It exists because that layout has a vertical requirement as well as a horizontal one, and
-Tailwind's width-only breakpoints can't express it.
+`globals.css` also defines two hero-only mask classes. `.hero-backdrop` fades the top (under
+the header, top 12%) and bottom (into the next section, last 6%) of the full-section 3D layer; left and right are
+the viewport edges and the desk's own radial falloff handles those.
 
 | Role                    | Name           | Hex       | Token            |
 | ----------------------- | -------------- | --------- | ---------------- |
@@ -91,34 +90,56 @@ introducing a second rhythm), panel materials with a lit top edge falling to sha
 heading scale set at half the hero's display size so the step down reads as deliberate. One
 WebGL context exists on the whole page, and it belongs to the hero.
 
-1. **Hero — diagonal, 3D, one screen.** The headline is split at its comma and set in
-   opposite corners with the floating app-window mesh between them: "Version control for your
-   art," top-left, "not your code." bottom-right. The badge sits above part A in the top-left;
-   the sub-paragraph, Download + View-source CTAs and the OS icon row (`platform-icons.tsx`)
-   sit bottom-left, opposite part B. One X composition, no dead corner.
+1. **Hero: text top-left, a big lit tablet filling the rest.** At `lg` the text block (a
+   two-line headline, one short paragraph and one primary CTA, the OS-aware download button)
+   sits at the top-left, 66% of the `max-w-7xl` frame wide. The tablet takes up about three
+   quarters of the hero's width, anchored right and set low, and its raised left end may sit
+   partly behind the text (the text is always on top, `z-10`). No eyebrow, no secondary CTA,
+   no badge, no platform-icon row: GitHub is one click away in the nav. The 3D scene covers
+   the **whole hero section** behind everything (desk, grid, dust and haze run under the words
+   too); its camera frames the tablet on one box, `#hero-scene-anchor`.
 
-   - **Still one `<h1>`, one sentence.** Both halves are `<span>`s inside the same `<h1>`, so
-     `h1.textContent` remains the whole headline for crawlers and screen readers. The split is
-     derived in `hero.tsx` from the single `hero.headline` string (first comma), never
-     duplicated into `lib/content.ts` — the same rule the emphasis maps in `page.tsx` follow.
-   - **Sized to fit a 16:9 screen.** The section is `min-h-svh` (not `vh`, so a mobile URL bar
-     can't resize it mid-scroll) with the stage on `flex-1`; the controls sit at the bottom via
-     `mt-auto`, so the stage's own height reserves the space and CLS stays at 0. Headline size
-     is `clamp(2.25rem, min(5vw, 8.5vh), 4.5rem)` — the `vh` term is what keeps short-and-wide
-     laptops honest. Verified fitting entirely above the fold at 1920×1080, 1440×810, 1366×768
-     and 1280×720.
-   - **Halves are capped in `em`, not `%`.** `max-w-[12.5em]` on part A and `max-w-[8em]` on
-     part B, so each breaks at the same word at every font size ("Version control / for your
-     art," and "not your / code."). Percentages drift as the clamp scales and re-break the
-     lines.
-   - **Gated on both axes.** The diagonal layout only applies via the `wide` variant, defined
-     in `globals.css` as `(min-width: 1280px) and (min-height: 640px)`. Narrower or shorter
-     than that there is no room for two halves either side of the window plus the controls, so
-     the hero falls back to the stacked layout — centred headline, image beneath, controls
-     under that. That fallback is also what mobile and tablet get.
-   - The mesh overlaps each half by roughly a fifth of a line — enough to read as an object in
-     front of the text, never enough to hide a word. Measured symmetric at 1366×768 (13px each
-     side) and 1440×810.
+   - **Copy.** `hero.headlineLines` (`['Version control', 'for your art.']`) is set as two
+     block `<span>`s inside one `<h1>`, so it breaks where the copy says; `hero.headline` is
+     the same sentence joined, for metadata and the OG alt. The sub is 19 words and carries the
+     painter-voice promise ("compare or go back to", "no git jargon"). The old "not your code"
+     half was dropped: it was dev-coded, and the sentence couldn't set as two large lines in a
+     half-width column.
+   - **Size is tied to the column, not the viewport.** From `sm` up each line is `nowrap`
+     and sized `min(8.6cqw, 3.5rem)` (`5.5rem` cap at `lg`) against the text block, which is
+     a `@container`. "Version control" in Syne ExtraBold is ~11.3em wide, so 8.6cqw always
+     fits its block: ~73px at 1440 and ~55px at 1024, scaled up with the tablet. (A viewport-based `4.3vw` pushed the line
+     126px past its column into the scene at 1440.) Below `sm` it's
+     `clamp(1.75rem, 8.2vw, 3.5rem)` and may wrap once at the space.
+   - **The whole tablet stays inside the hero, and the hero is one screen.** At `lg` the
+     anchor wrapper is `display: contents` and the grid is `static`, so the anchor positions
+     against the section itself: its right edge is the page gutter,
+     `max(1.5rem, (100% - 80rem) / 2)`, the same value that puts the text's left edge where it
+     is; 95% of the hero's width, 120% of its height,
+     centred at 54% down. With the zoom formula below that frames a tablet ~75% of the width
+     at 1440×900 and 1024×768 (height-limited, so smaller, on short-wide screens: ~60% at
+     1366×680). Measured by projecting the tablet's and pen's vertices to screen: it stays
+     inside the section at 1440×900, 1024×768, 1920×1080 and 1366×680, above the bottom fade.
+     The section is `min-h-svh`, so the whole hero is always one viewport tall. The parent
+     owns every height (CLS 0).
+   - **Stacked from `md` to `lg`, scene first.** Tablets get the scene _above_ the headline
+     (`order-first`), height `min(26rem, 40svh)`. Below `md` and under reduced motion the
+     anchor box is `hidden`, so phones get a text-only hero. Rows pack with `content-center`.
+   - Verified at 1440×900, 1024×768, 768×1024, 375×812, 375×667 and 320×700: text column fully
+     readable, no horizontal scroll, CTA on one line.
+
+   - **Bottom bar.** An in-flow row under the grid (so it can't collide with the CTA on
+     short screens), on the same gutters as the text. Left: a minimal scroll cue, a 40px
+     hairline with a tick travelling down it (`.hero-scroll-tick` in `globals.css`; it rests
+     at the top under reduced motion), linking to `#why`. Right: a live GitHub badge
+     (`hero-meta.tsx`), a star count plus the license's SPDX id with an icon for its type
+     (GNU head for the GPL family, OSI keyhole for an allow-list of OSI licenses, GitHub's
+     generic license glyph otherwise; `license-glyphs.tsx`, Octicons MIT + Simple Icons CC0,
+     inlined). One link to the repo, with a full sentence as its `aria-label`. The data comes
+     from `lib/github.ts`: a server-side `fetch` of the GitHub API with
+     `next: { revalidate: 3600 }`, so the homepage stays static and refreshes hourly (ISR),
+     and visitors' browsers never call GitHub (the local-only promise holds). If GitHub
+     can't be reached the badge renders nothing rather than a guessed number.
 
    See "3D hero" under GSAP Animation for the scene itself.
 
@@ -251,21 +272,91 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
 
 ## GSAP Animation
 
-- **3D hero** (`app/components/hero-scene.tsx`, `hero-canvas.tsx`): a React Three Fiber canvas
-  holding the floating app-window mesh and an ambient particle field. Lighting is read from the
-  `@theme` tokens at runtime (`getComputedStyle` on `:root`) rather than duplicating hex, so the
-  key light is literally Krita Blue, the rim Electric Cyan and the bounce Sunset Orange; fog is
-  Deep Ink, which fades the particle field out instead of ending it on a hard edge. Idle bob,
-  pointer parallax and scroll parallax all run in one `useFrame` against refs — no React state
-  per frame — with the scroll value fed by a ScrollTrigger sharing the same `gsap.ticker` as the
-  brush stroke. The mesh is textured with `public/hero-window-placeholder.svg`; swapping that one
-  file for a real capture is the whole migration path.
-  - **Fallback is the default, not an afterthought.** `hero.tsx` renders a static, CSS-tilted
-    `<img>` of the same placeholder inside a fixed-height box. That is what SSR emits and what
-    paints first, which keeps the LCP element the `<h1>` and CLS at 0. The canvas mounts over it
-    only when all of these hold: not `prefers-reduced-motion: reduce`, viewport ≥ 768px,
-    `hardwareConcurrency` ≥ 4, and a WebGL context is obtainable. Otherwise the flat image simply
-    stays — a complete state, not a degraded one.
+- **3D hero** (`app/components/hero-scene.tsx`, `hero-canvas.tsx`): an isometric desk scene in
+  a React Three Fiber canvas. A HUION Kamvas 13 (`public/models/kamvas-tablet.glb`) sits on a
+  desk, propped 20° at the back like a pen display on its kickstand, with the stylus
+  (`kamvas-stylus.glb`) hovering over the right of the screen.
+  - **Camera.** `OrthographicCamera`, pitched 35° down and yawed 20° round to the tablet's
+    left: corner-on enough to read as an object, square-on enough that the screen reads (45°
+    was tried and felt too steep). The pen leans out toward the viewer. Pointer orbit is ±2.5°
+    yaw / ±1.5° pitch, with the yaw inverted (the camera swings away from the pointer, so the
+    tablet turns its face toward it). On top of that sits an idle sway, like a handheld camera
+    at rest: two summed sines per axis on slow, unrelated periods (~12–35s), peaking around 2°
+    yaw and 1° pitch, so it never reads as a loop. Scrolling the hero away tilts it up to ~8° toward top-down. The scroll
+    value comes from a ScrollTrigger on `#top`, which shares `gsap.ticker` with Lenis and the
+    brush stroke.
+  - **Framing on an anchor.** The canvas fills the whole hero (`.hero-backdrop`, behind the
+    text). The camera measures `#hero-scene-anchor` (see the Hero layout) against the canvas
+    with a `ResizeObserver`, takes its zoom from the anchor
+    (`min(anchorHeight / 5.2, anchorWidth / 6.5)` px per unit, so the tablet scales with the
+    hero's height), and slides sideways in its own plane to place the tablet. Orthographic,
+    so the slide pans without changing the angle.
+  - **Symmetric margins at `lg`.** Once the models load, `Stage` projects every tablet and pen
+    vertex (pen in its base pose) onto the camera's horizontal axis and stores the outline's
+    left/right extent. At `lg` the camera right-aligns that outline (whichever sticks out
+    further, the tablet corner or the pen end) to the anchor's right edge, the page gutter,
+    so the space right of the tablet equals the space left of the headline. Measured with a
+    vertex probe: 57/53px at 1408×945, 24/22px at 1024×768, 36/33px at 1366×680, 313/309px
+    at 1920×1080 (the few px are the headline's glyph side bearing and the pen's bob).
+    Vertically, `Stage` also stores the outline's lowest point along the rest-pose camera's up
+    axis, and at `lg` the camera bottom-aligns it so the tablet clears the hero's bottom by the
+    same gap the headline's cap tops keep below the fixed header (measured from layout offsets
+    plus the display face's cap metrics, so the headline's entrance transform can't skew it).
+    Stacked below `lg`, the outline is centred in the anchor instead.
+  - **Desk.** One 40×40 `MeshStandardMaterial` plane with two shader patches (`onBeforeCompile`):
+    an `fwidth`-antialiased grid in Krita Blue, ~8.5% at the tablet falling to a 2.5% floor,
+    so it stays subtly visible across the whole hero including under the text (felt, not
+    seen), and a radial alpha falloff (8 to 18 units) wide enough to cover the section with no
+    edge ever showing. The desk's base colour _and_ its emissive floor are `--color-canvas-dark`, the page
+    background, so an unlit patch of desk is exactly the page colour and the canvas never reads
+    as a darker box. The material is dithered, or the long shallow fade bands into rings.
+    Fog uses the same token for the same reason. This deliberately departs from a Deep Ink
+    fade: Deep Ink against the Charcoal Slate page showed as a rectangle.
+  - **Prop.** The tablet group pivots on its front edge (which stays on the desk) and tilts the
+    back up. A flat leg in the tablet's own `BezelPlastic` material runs from the underside to
+    the desk behind. A contact shadow quad is tight and dark along the front edge and soft and
+    faint under the raised back; that difference is what makes the prop read at this angle. The
+    chassis material is cloned at `metalness: 0.35` because fully metallic with no environment
+    renders black, and its sides are what show the wedge.
+  - **The screen is the light.** A `RectAreaLight` (`RectAreaLightUniformsLib.init()`) sits on
+    the panel at the panel's size, emitting along the panel normal and tilting with it. Its
+    colour is the screenshot's average, sampled once from the `fitToPanel()` canvas and
+    normalised to full brightness (hue only; intensity carries brightness). Desk, bezel, leg and
+    pen are all `MeshStandardMaterial`, so they respond. The pen body is lifted from 0.02 to
+    ~0.07 albedo so the spill shows on its underside. An additive light-pool quad on the desk
+    follows the tilted throw, reaching 3.4 units in front and 2.4 behind. Everything else is
+    minimal: a Krita Blue ambient at 0.22 so shadows aren't black, and a dim Electric Cyan rim
+    at 0.7 from behind-left for silhouettes. The Screen material stays emissive-only (black base
+    colour), so no light tints the UI.
+  - **Stylus hover.** Lives in the tilted tablet frame, so the gap is measured along the panel's
+    normal, not world up. The nib sits 1.6cm above the glass (model scale) with a slow bob and
+    drift, clamped to a 1cm minimum every frame; the wobble rotates about the nib, so it can't
+    change the gap. Under the nib, the pen display's own hover cursor (a thin crosshair with an
+    open centre, Paper White on a Deep Ink halo) tracks it straight down the normal; the space
+    between cursor and nib is what shows the height.
+  - **Atmosphere covers the whole hero.** 260 dust motes (sparse on purpose) in a 22-unit
+    field centred 3.5 units left of the tablet along the camera's right axis, so it reaches the
+    text side; additive, in Krita Blue / Electric Cyan / Sunset Orange (warm rarest). Motes near
+    the screen are brighter and lean toward its colour. The field sways rather than spins (a
+    spin would carry the off-centre field out of frame). Six soft haze billboards (Blue, Cyan,
+    Orange at 4.5-11% opacity), three around the tablet and three out toward the text, drift
+    slowly. Their falloff is computed in the shader, because a
+    canvas-gradient sprite banded into visible rings at that scale.
+  - Every colour comes from `readPalette()` (`getComputedStyle` on `:root`); no inline hex. The
+    screen shows `public/hero-screenshot.webp` through `fitToPanel()` (16:10 fitted to the 16:9
+    panel by stretching its outer 1px columns); swapping that one file is the whole migration
+    path.
+  - **No image fallback.** The canvas mounts only when all of these hold: not
+    `prefers-reduced-motion: reduce`, viewport ≥ 768px, `hardwareConcurrency` ≥ 4, and a
+    WebGL context is obtainable. Otherwise the hero is text only: every word and control lives
+    in the DOM, so nothing is lost but the picture.
+  - **Loader (homepage only).** `hero-loader.tsx` is a full-screen Deep Ink overlay (logo + Krita
+    Blue progress bar, counted per file via `THREE.DefaultLoadingManager`) that SSR renders
+    visible, so the page never paints before the tablet. It lifts when the canvas is ready, at
+    hydration when 3D won't render (phones, reduced motion, no WebGL), after 8s, or when WebGL
+    context retries run out (the stage is then left empty). While up it locks scroll and hides the fixed header (the hero sits
+    in a `z-10` stacking context, so it can't out-stack it); the `[data-hero-in]` intro stagger
+    plays as it lifts. A `<noscript>` style hides it for JS-off visitors.
   - **Never in the shared bundle.** `next/dynamic(..., { ssr: false })` from inside a Client
     Component, the same shape as `flourishes.tsx`, keeps `three` off every other route. The
     canvas also waits for an IntersectionObserver before mounting, so it never competes with
@@ -277,10 +368,10 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
     that would otherwise land on the remounted renderer.
   - Nothing in the 3D layer is interactive, so nothing there needs a DOM equivalent. The canvas is
     `pointer-events-none`, `tabIndex={-1}`, and inside an `aria-hidden` wrapper: it never enters
-    the tab order or the accessibility tree, and the headline underneath stays selectable.
+    the tab order or the accessibility tree.
 - **Brush stroke** (`app/components/brush-stroke.tsx`): one stroke revealed by a scroll-driven
   clip-path rect (plain viewBox Y-units, not `strokeDashoffset`) tied to scroll position, not
-  timers. It now enters near the horizontal centre, under where the hero's window floats, so it
+  timers. It enters in the right-hand column (x 700 of 960), under the hero's desk scene, so it
   reads as continuing out of the 3D scene rather than starting on its own. A faint always-visible
   guide reads ahead of the tip. Under `prefers-reduced-motion: reduce`, the stroke shows fully
   drawn and scroll wiring is skipped.
@@ -308,7 +399,7 @@ if (!preferReduced) {
 1. Visual Foundation Layer — grain, base theme, tokens (all in globals.css)
 2. Reversible Content Container — Section template, alternating grid
 3. Painterly Media — honest inline-SVG motifs (media.tsx) for the feature sections
-4. 3D Hero — R3F canvas + app-window mesh, lazy, with a static image fallback
+4. 3D Hero: R3F isometric desk scene, lazy, text-only where it won't run
 4. Dynamic Vector Directives — GSAP scroll brush stroke
 ```
 
@@ -362,8 +453,8 @@ if (!preferReduced) {
   Detects the visitor's OS after mount and leads with the matching glyph
   (`WindowsGlyph`/`MacGlyph`/`LinuxGlyph`); falls back to a plain `/download` link pre-mount or on
   an unrecognized OS. Reused on the discovery pages.
-- **Platform icons (`platform-icons.tsx`):** small, purely informational OS row under the hero
-  CTAs — Windows/macOS/Linux, generic inline-SVG glyphs (also exports the glyphs for reuse by
+- **Platform icons (`platform-icons.tsx`):** small, purely informational OS row under the
+  discovery pages' CTAs (the homepage hero dropped it for a single CTA) — Windows/macOS/Linux, generic inline-SVG glyphs (also exports the glyphs for reuse by
   `download-button.tsx` and the `/download` page), wording sourced from `lib/content.ts`'s
   `platforms` (kept in sync with the FAQ's platform answer).
 - **File download link (`file-download-link.tsx`):** shared `<a download>` + click-cooldown
@@ -388,9 +479,9 @@ if (!preferReduced) {
 - **Download (hero):** served locally from `public/download/`, see Download flow above — not an
   external link.
 - **Download (footer):** points to the local `/download` page (`links.download`), same as the
-  hero badge; GitHub Releases is still reachable from "View source" and from `/download`'s
+  hero badge; GitHub Releases is still reachable from the repo and from `/download`'s
   closing line, for release notes or older versions.
-- **Source:** hero secondary CTA + nav + footer → the repo.
+- **Source:** nav + footer → the repo.
 - **Issues:** "Request a feature" (What's next) + footer.
 - **Plugin build-from-source guide:** the Installing sub-chapter's closing link
   (`pluginSubchapters` → `installing.closingLink`) → the repo's Rust/cargo README, for the rare
