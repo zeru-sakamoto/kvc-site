@@ -15,8 +15,9 @@ export default function Hero() {
     <section
       id="top"
       // min-h-svh (not vh) so a mobile URL bar can't resize the hero mid-scroll.
-      // pt clears the fixed h-16 header.
-      className="relative flex min-h-svh flex-col overflow-clip px-6 pb-8 pt-24"
+      // pt clears the fixed h-16 header. select-none: clicks here tap the
+      // tablet, and a stray drag shouldn't paint a selection over the scene.
+      className="relative flex min-h-svh flex-col overflow-clip px-6 pb-8 pt-24 select-none"
     >
       <HeroLoader />
 

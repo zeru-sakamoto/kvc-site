@@ -51,6 +51,11 @@ the viewport edges and the desk's own radial falloff handles those.
 | Cool accent             | Electric Cyan  | `#00D2D3` | `accent-cool`    |
 | Text primary            | Paper White    | `#F5F6FA` | `text-primary`   |
 | Text muted              | Brush Grey     | `#A0A0B0` | `text-muted`     |
+| Power LED on (hero 3D)  | Status Green   | `#3DDC84` | `status-on`      |
+| Power LED off (hero 3D) | Status Red     | `#FF4757` | `status-off`     |
+
+The two status colours exist only for the hero tablet's power LED ring (the easter egg,
+see the hero section); they are not part of the UI palette and never appear in 2D.
 
 ## Canvas Grain Texture
 
@@ -280,7 +285,8 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
     left: corner-on enough to read as an object, square-on enough that the screen reads (45°
     was tried and felt too steep). The pen leans out toward the viewer. Pointer orbit is ±2.5°
     yaw / ±1.5° pitch, with the yaw inverted (the camera swings away from the pointer, so the
-    tablet turns its face toward it). On top of that sits an idle sway, like a handheld camera
+    tablet turns its face toward it), and it holds still while the pen is following the mouse
+    (see below). On top of that sits an idle sway, like a handheld camera
     at rest: two summed sines per axis on slow, unrelated periods (~12–35s), peaking around 2°
     yaw and 1° pitch, so it never reads as a loop. Scrolling the hero away tilts it up to ~8° toward top-down. The scroll
     value comes from a ScrollTrigger on `#top`, which shares `gsap.ticker` with Lenis and the
@@ -330,10 +336,45 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
     colour), so no light tints the UI.
   - **Stylus hover.** Lives in the tilted tablet frame, so the gap is measured along the panel's
     normal, not world up. The nib sits 1.6cm above the glass (model scale) with a slow bob and
-    drift, clamped to a 1cm minimum every frame; the wobble rotates about the nib, so it can't
+    drift, clamped to a 3mm minimum every frame; the wobble rotates about the nib, so it can't
     change the gap. Under the nib, the pen display's own hover cursor (a thin crosshair with an
     open centre, Paper White on a Deep Ink halo) tracks it straight down the normal; the space
     between cursor and nib is what shows the height.
+  - **Pen follows the mouse over the glass.** Each frame the pointer's last client position is
+    cast into the tablet frame and met with the screen surface as a plain plane (no mesh
+    raycast; the canvas stays `pointer-events: none`). Anywhere on the 16:9 panel counts,
+    including where the headline sits on top of it; a 2mm slack past the edge on the way out
+    absorbs the orbit's last bit of easing. While on the glass the nib eases to the hit
+    point (damp rate 20, ~0.15s), dips from 16mm to 5mm (bob and drift soften to 40%), and the
+    pen's top leans up to ~8° toward its travel, rotating about the nib in the tablet's axes.
+    The nib's final position (after the drift) is clamped to the glass, so neither it nor the
+    crosshair ever sits on the bezel. Off the glass it glides home at rate 4.5 (~0.7s) and
+    lifts back to hover height. While the pen follows, the pointer orbit is _held_ at its value
+    on entry, so the tablet holds still in use (the idle sway and scroll tilt carry on). Held,
+    not faded to zero: easing the orbit back moved the glass up to ~13mm under a still cursor
+    near the right edge, which needed a 1cm exit slack and let the pen overshoot whichever
+    edge it left by. Touch pointers are ignored, and scrolling under a still mouse re-targets
+    or releases the pen, since the hit is recomputed every frame.
+  - **Click to tap.** A primary click (window `pointerdown`, mouse or pen) while the pen is
+    following makes the nib meet the glass: down in 70ms, springing back up in 110ms. Holding
+    the button keeps it on the glass (it drags along with the mouse) until release, or until
+    the pointer leaves the screen; a quick click still gets the full touchdown before the
+    lift. This is the one time the no-contact floor is lifted. Where it touched, the display
+    draws a thin
+    Paper White ring growing to 12mm and fading over 0.5s, clipped to the panel. Clicks whose
+    target is a link, button, form control, `summary` or `label` never reach the scene, so
+    the CTA and nav stay side-effect free. The hero section is `select-none`, so clicking and
+    dragging over the tablet never paints a text selection across the scene.
+  - **Power button easter egg.** The GLB's `PowerButton` (a 14.3 × 4.8mm pill, top-left of the
+    bezel at the back edge) is hit-tested with 3mm padding. Hovering it sets a pointer cursor
+    on `body`, the only hint besides the LED. Clicking it fades the screen off over 0.3s:
+    the Screen's emissive, the `RectAreaLight` and the desk light pool all go to zero, so the
+    scene falls back to its ambient and rim light. The hover crosshair and tap ripple go
+    too (a dark display draws nothing), but the pen still follows and taps. Clicking again
+    fades it back. Not persisted: every load starts on. The LED is a thin additive outline
+    traced around the pill (a stadium SDF, not in the model): Status Green with a soft
+    brightening every ~6s while on, a steady dimmer Status Red while off, cross-fading with
+    the screen. Not keyboard-reachable, by design: the canvas is decorative and `aria-hidden`.
   - **Atmosphere covers the whole hero.** 260 dust motes (sparse on purpose) in a 22-unit
     field centred 3.5 units left of the tablet along the camera's right axis, so it reaches the
     text side; additive, in Krita Blue / Electric Cyan / Sunset Orange (warm rarest). Motes near
@@ -343,9 +384,14 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
     slowly. Their falloff is computed in the shader, because a
     canvas-gradient sprite banded into visible rings at that scale.
   - Every colour comes from `readPalette()` (`getComputedStyle` on `:root`); no inline hex. The
-    screen shows `public/hero-screenshot.webp` through `fitToPanel()` (16:10 fitted to the 16:9
-    panel by stretching its outer 1px columns); swapping that one file is the whole migration
-    path.
+    screen shows `public/hero-screenshot.png` through `fitToPanel()` (16:10 fitted to the 16:9
+    panel by stretching its outer 1px columns); swapping that one file (then rerunning
+    `scripts/build-webp.mjs`, which the build does anyway) is the whole migration path. The
+    canvas loads the pixel-identical lossless `hero-screenshot.webp` the script makes from it.
+  - Performance: DPR capped at 1.5 (the canvas covers the whole hero and every desk pixel runs
+    the RectAreaLight shading); the render loop stops while the hero is off screen; the GLBs are
+    meshopt-compressed and quantized; the models and screenshot are preloaded as soon as the
+    scene is known to mount, in parallel with the 3D chunk.
   - **No image fallback.** The canvas mounts only when all of these hold: not
     `prefers-reduced-motion: reduce`, viewport ≥ 768px, `hardwareConcurrency` ≥ 4, and a
     WebGL context is obtainable. Otherwise the hero is text only: every word and control lives

@@ -55,6 +55,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Hero tablet power LED only (on / off); never for UI. Read at runtime by the
+   3D scene, which no utility sees, so `static` keeps them emitted. */
+@theme static inline {
+  --color-status-on: #3ddc84;
+  --color-status-off: #ff4757;
+}
+
 :root {
   color-scheme: dark;
 }

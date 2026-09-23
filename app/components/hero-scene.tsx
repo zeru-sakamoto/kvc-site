@@ -2,7 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { revealHero } from './hero-loader';
+import { preload } from 'react-dom';
+import { HERO_ASSETS, revealHero } from './hero-loader';
 
 // ssr: false only works from inside a Client Component, and a Server Component
 // importing a Client Component dynamically doesn't code-split at all (Next 16
@@ -22,9 +23,12 @@ function hasWebgl() {
   if (webgl === undefined) {
     try {
       const probe = document.createElement('canvas');
-      webgl = Boolean(
-        probe.getContext('webgl2') ?? probe.getContext('experimental-webgl'),
-      );
+      const gl = (probe.getContext('webgl2') ??
+        probe.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+      webgl = Boolean(gl);
+      // Hand the probe's context straight back: browsers cap live contexts
+      // per page, and the real canvas needs one.
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
     } catch {
       webgl = false;
     }
@@ -64,6 +68,16 @@ export default function HeroScene({ anchorId }: { anchorId: string }) {
   // ponytail: capped at 2 retries — if a machine can't hold a context, stop
   // fighting it, lift the loader and leave the stage empty.
   const [generation, setGeneration] = useState(0);
+
+  // Start the models and screenshot downloading alongside the 3D chunk rather
+  // than after it has loaded and mounted. The crossOrigin values match what
+  // three's FileLoader (fetch) and ImageLoader (<img>) request with, so
+  // useLoader picks these up from the preload cache instead of refetching.
+  if (enabled) {
+    preload(HERO_ASSETS.tablet, { as: 'fetch', crossOrigin: 'anonymous' });
+    preload(HERO_ASSETS.stylus, { as: 'fetch', crossOrigin: 'anonymous' });
+    preload(HERO_ASSETS.screen, { as: 'image', crossOrigin: 'anonymous' });
+  }
 
   const onReady = useCallback(() => {
     setReady(true);

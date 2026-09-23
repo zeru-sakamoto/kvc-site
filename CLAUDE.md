@@ -14,6 +14,10 @@ Every front-end or design change to this project MUST run through this three-sta
 
 `DESIGN.md` is the design **spec-of-record** — keep it in sync after design changes. `SITE_CONTENT.md` is the source copy for the site.
 
+## Git: never commit
+
+Never run `git commit` (or anything that creates a commit, such as `git commit --amend`, `git merge`, `git rebase`, or `git push`) in this repo. When work is ready, prepare the commit message and ask; the user commits themselves.
+
 ## Critical: non-standard Next.js version
 
 This project pins `next@16.2.4` and `react@19.2.4` — versions ahead of your training data with breaking API/convention changes. Before writing any Next.js code (routing, data fetching, caching, config), check `node_modules/next/dist/docs/` (organized as `01-app/`, `02-pages/`, `03-architecture/`, `04-community/`) rather than relying on remembered APIs.
@@ -35,7 +39,7 @@ The site is built out: a single-page **Krita VCS** landing page (App Router, Typ
 
 - [app/page.tsx](app/page.tsx) composes the sections in order: Hero → Why → three alternating feature blocks (Compare / History / Ownership) → What's next → FAQ.
 - All copy is centralised in [lib/content.ts](lib/content.ts) (single source of truth). `SITE_CONTENT.md` is the source material it was written from.
-- The hero is two columns: DOM headline, sub and one CTA on the left; behind everything, covering the whole hero, an orthographic React Three Fiber desk scene framed so a large tablet (about 3/4 of the hero width at `lg`) sits right and low, partly behind the text ([app/components/hero-canvas.tsx](app/components/hero-canvas.tsx)) with a propped HUION Kamvas tablet whose screen is the key light (a `RectAreaLight` tinted from the screenshot) and a hovering stylus, gated and lazy-loaded by [app/components/hero-scene.tsx](app/components/hero-scene.tsx). The screen image is `public/hero-screenshot.webp` — swap that one file for a new capture. A homepage-only loader ([app/components/hero-loader.tsx](app/components/hero-loader.tsx)) covers the page until those assets are in (8s cap). `three` and `@react-three/fiber` are dependencies, deliberately kept out of every other route's bundle.
+- The hero is two columns: DOM headline, sub and one CTA on the left; behind everything, covering the whole hero, an orthographic React Three Fiber desk scene framed so a large tablet (about 3/4 of the hero width at `lg`) sits right and low, partly behind the text ([app/components/hero-canvas.tsx](app/components/hero-canvas.tsx)) with a propped HUION Kamvas tablet whose screen is the key light (a `RectAreaLight` tinted from the screenshot) and a hovering stylus that follows the mouse while it's over the screen, taps the glass on click, and glides home when it leaves (easter egg: the tablet's power button switches the screen off and on, with a green/red LED ring), gated and lazy-loaded by [app/components/hero-scene.tsx](app/components/hero-scene.tsx). The screen image source is `public/hero-screenshot.png` (kept; the `prebuild` step in [scripts/build-webp.mjs](scripts/build-webp.mjs) makes a pixel-identical lossless `hero-screenshot.webp` from it via `LOSSLESS`, which is what the canvas loads) — swap the PNG for a new capture and rerun the script. The GLBs in `public/models/` are meshopt-compressed (`npx @gltf-transform/cli meshopt`); run any replacement model through the same step. A homepage-only loader ([app/components/hero-loader.tsx](app/components/hero-loader.tsx)) covers the page until those assets are in (8s cap). `three` and `@react-three/fiber` are dependencies, deliberately kept out of every other route's bundle.
 - Feature-section media are honest inline-SVG painterly motifs in [app/components/media.tsx](app/components/media.tsx). Everything below the hero stays 2D by design — no canvas, no WebGL, no depth parallax.
 - The FAQ uses a native `<details>` accordion ([app/components/faq.tsx](app/components/faq.tsx)) — no JS.
 

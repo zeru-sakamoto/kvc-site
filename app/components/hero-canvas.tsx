@@ -4,21 +4,22 @@ import { Suspense, useEffect, useMemo, useRef, type RefObject } from 'react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { setHeroProgress } from './hero-loader';
+import { HERO_ASSETS, setHeroProgress } from './hero-loader';
 
 // The screen's RectAreaLight needs its LTC lookup tables registered once.
 RectAreaLightUniformsLib.init();
 
-// Swap this one file for a real capture and nothing here changes.
-const SCREEN_SRC = '/hero-screenshot.webp';
+const {
+  screen: SCREEN_SRC,
+  tablet: TABLET_SRC,
+  stylus: STYLUS_SRC,
+} = HERO_ASSETS;
 // The Kamvas panel is exactly 16:9 (see the model's README).
 const PANEL_ASPECT = 16 / 9;
-
-const TABLET_SRC = '/models/kamvas-tablet.glb';
-const STYLUS_SRC = '/models/kamvas-stylus.glb';
 
 // The GLBs are in real metres (tablet 0.356m wide) and lie flat with the
 // screen facing +Y and its top edge at -Z. Both share one scale so the pen is
@@ -51,16 +52,66 @@ const VIEW_W = 6.5;
 // Nib hover, in model metres above the glass, measured along the panel's own
 // normal (the pen lives in the tilted tablet frame, so local +Y is that normal).
 const HOVER = 0.016;
-const MIN_GAP = 0.01;
+// The no-contact floor. Low enough for the follow dip (DIP_HOVER, below) and
+// its reduced bob to clear it.
+const MIN_GAP = 0.003;
 // Where the nib hovers: over the right third of the screen.
 const NIB_AT = { x: 0.1, z: 0.018 };
 
+// Pen follow: while the mouse is over the glass the nib tracks it, dipped
+// closer to the glass; off it, the pen glides home. Damp rates (1/s): ~0.15s
+// to catch the cursor, ~0.7s to settle home.
+const FOLLOW_RATE = 20;
+const RETURN_RATE = 4.5;
+const DIP_RATE = 5;
+const DIP_HOVER = 0.005;
+// Leaving takes the pointer this far past the glass edge (model metres): just
+// enough to absorb the orbit's last bit of easing after it's held on entry.
+const EDGE_SLACK = 0.002;
+// Lean into travel: radians per m/s of nib speed, capped at ~8°.
+const LEAN_GAIN = 0.35;
+const LEAN_MAX = 0.14;
+
 type Motion = {
-  // Pointer, normalised to -1..1 across the viewport.
-  pointer: RefObject<{ x: number; y: number }>;
+  // Pointer, normalised to -1..1 across the viewport (x, y), its raw client
+  // position (cx, cy), whether a hovering pointer is on the page at all, and
+  // a count of primary clicks (Stage acts on each new one), and whether the
+  // last one is still held down.
+  pointer: RefObject<{
+    x: number;
+    y: number;
+    cx: number;
+    cy: number;
+    on: boolean;
+    presses: number;
+    held: boolean;
+  }>;
   // 0 at the top of the hero, 1 once it has scrolled out.
   scroll: RefObject<number>;
 };
+
+// Whether the pen is following the mouse. Written by Stage each frame, read
+// by CameraRig to hold the pointer orbit still.
+const follow = { on: false };
+
+// Click to tap: the nib drops to the glass, stays on it while the button is
+// held, and springs back on release; the display draws a ring where it
+// touched (seconds, model metres).
+const TAP_DOWN = 0.07;
+const TAP_UP = 0.11;
+const RIPPLE_TIME = 0.5;
+const RIPPLE_R = 0.012;
+
+// The easter egg: the power button (top-left of the bezel, at the back edge)
+// switches the screen off and on. Bounds read off the GLB's PowerButton node:
+// a 14.3 x 4.8mm pill. PAD makes the tiny target forgiving to click.
+const BUTTON = { x: -0.163, z: -0.08775, top: 0.01072, hw: 0.007165, hd: 0.0024 };
+const BUTTON_PAD = 0.003;
+// Fade time for the screen switching off or on (seconds).
+const POWER_FADE = 0.3;
+// Screen power: `on` is the switch, `level` its eased 0..1 brightness. Shared
+// with LightPool, whose light is the screen's.
+const power = { on: true, level: 1 };
 
 type Palette = ReturnType<typeof readPalette>;
 
@@ -78,6 +129,8 @@ function readPalette() {
     deep: color('--color-canvas-deep'),
     dark: color('--color-canvas-dark'),
     paper: color('--color-primary'),
+    ledOn: color('--color-status-on'),
+    ledOff: color('--color-status-off'),
   };
 }
 
@@ -197,6 +250,7 @@ const up = new THREE.Vector3();
 function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
   const gl = useThree((state) => state.gl);
   const orbit = useRef({ yaw: YAW, pitch: PITCH });
+  const aim = useRef({ x: 0, y: 0 });
   const frame = useRef<Frame | null>(null);
 
   useEffect(() => {
@@ -247,7 +301,16 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
       cam.zoom = zoom;
       cam.updateProjectionMatrix();
     }
-    const { x: px, y: py } = motion.pointer.current;
+    // While the pen follows the mouse, the pointer orbit holds where it was
+    // on entry, so the tablet stays still while it's being "used". Held, not
+    // faded to zero: easing it back would slide the glass under the cursor
+    // (up to ~13mm near the right edge) and move the pen with it.
+    const held = aim.current;
+    if (!follow.on) {
+      held.x = motion.pointer.current.x;
+      held.y = motion.pointer.current.y;
+    }
+    const { x: px, y: py } = held;
     const s = motion.scroll.current;
     const o = orbit.current;
     // An idle sway, like a handheld camera at rest: up to ~2° of yaw and ~1°
@@ -397,6 +460,12 @@ function LightPool({ tint }: { tint: THREE.Color }) {
     }),
     [tint, origin],
   );
+  // The pool is the screen's light, so it goes out with the screen.
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+  useFrame(() => {
+    if (matRef.current)
+      matRef.current.uniforms.uStrength.value = 0.3 * power.level;
+  });
   return (
     <mesh
       rotation-x={-Math.PI / 2}
@@ -405,6 +474,7 @@ function LightPool({ tint }: { tint: THREE.Color }) {
     >
       <planeGeometry args={[16, 16]} />
       <shaderMaterial
+        ref={matRef}
         vertexShader={POOL_VERT}
         fragmentShader={POOL_FRAG}
         uniforms={uniforms}
@@ -471,6 +541,7 @@ const CURSOR_FRAG = `
 varying vec2 vUv;
 uniform vec3 uCore;
 uniform vec3 uHalo;
+uniform float uAlpha;
 void main() {
   vec2 p = abs(vUv - 0.5) * 2.0;
   float h = max(p.y, max(0.22 - p.x, p.x - 0.9));
@@ -479,7 +550,48 @@ void main() {
   float aa = fwidth(d);
   float core = 1.0 - smoothstep(0.045 - aa, 0.045 + aa, d);
   float halo = 1.0 - smoothstep(0.12 - aa, 0.12 + aa, d);
-  gl_FragColor = vec4(mix(uHalo, uCore, core), max(core, halo * 0.6));
+  gl_FragColor = vec4(mix(uHalo, uCore, core), max(core, halo * 0.6) * uAlpha);
+}`;
+
+// The tap ripple, drawn by the display: a thin ring growing out of the
+// contact point and fading as it goes. Clipped to the panel, since the
+// display can't draw on its bezel. uCenter is in model metres, the quad spans
+// 2 * RIPPLE_R around it (the quad lies flat, so its v runs along -z).
+const RIPPLE_FRAG = `
+varying vec2 vUv;
+uniform vec3 uColor;
+uniform float uProgress;
+uniform vec2 uCenter;
+uniform vec4 uPanel;
+void main() {
+  vec2 q = (vUv - 0.5) * 2.0;
+  vec2 m = uCenter + vec2(q.x, -q.y) * ${RIPPLE_R.toFixed(4)};
+  if (abs(m.x - uPanel.x) > uPanel.z || abs(m.y - uPanel.y) > uPanel.w) discard;
+  float r = length(q);
+  float ease = 1.0 - pow(1.0 - uProgress, 3.0);
+  float d = abs(r - ease);
+  float aa = fwidth(r);
+  float ring = 1.0 - smoothstep(0.035 - aa, 0.035 + aa, d);
+  gl_FragColor = vec4(uColor, ring * (1.0 - uProgress) * 0.85);
+}`;
+
+// The power LED: a thin glowing line tracing the pill's outline (a stadium,
+// SDF in mm), with a soft falloff either side. Additive, lights nothing.
+const LED_MARGIN = 0.003;
+const LED_FRAG = `
+varying vec2 vUv;
+uniform vec3 uColor;
+uniform float uGlow;
+void main() {
+  vec2 ext = vec2(${((BUTTON.hw + LED_MARGIN) * 1000).toFixed(3)}, ${((BUTTON.hd + LED_MARGIN) * 1000).toFixed(3)});
+  vec2 p = (vUv - 0.5) * 2.0 * ext;
+  float rad = ${(BUTTON.hd * 1000).toFixed(3)};
+  vec2 a = vec2(${(BUTTON.hw * 1000).toFixed(3)}, rad) - rad;
+  float d = length(max(abs(p) - a, 0.0)) - rad;
+  float aa = fwidth(d);
+  float line = 1.0 - smoothstep(0.22 - aa, 0.22 + aa, abs(d));
+  float glow = exp(-abs(d) / 0.7) * 0.45;
+  gl_FragColor = vec4(uColor * uGlow, max(line, glow) * uGlow);
 }`;
 const CURSOR_VERT = `
 varying vec2 vUv;
@@ -490,21 +602,45 @@ void main() {
 // ~9mm across on the glass.
 const CURSOR_SIZE = 0.009 * MODEL_SCALE;
 
+// Scratch for the per-frame hit test: the mouse ray, taken into the tablet
+// frame and met with the glass as a plain plane (y = screen surface), which is
+// all the "is it over the screen" question needs. No mesh raycast.
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const localRay = new THREE.Ray();
+const toTablet = new THREE.Matrix4();
+const glassPlane = new THREE.Plane(
+  new THREE.Vector3(0, 1, 0),
+  -SCREEN.y * MODEL_SCALE,
+);
+const hit = new THREE.Vector3();
+const penBase = new THREE.Quaternion();
+const penLean = new THREE.Quaternion();
+const euler = new THREE.Euler();
+
+// The GLBs are meshopt-compressed and quantized (gltf-transform meshopt). To
+// swap in a new model, run it through the same step:
+//   npx @gltf-transform/cli meshopt in.glb public/models/out.glb
+const withMeshopt = (loader: GLTFLoader) =>
+  loader.setMeshoptDecoder(MeshoptDecoder);
+
 // ---------------------------------------------------------------------------
 function Stage({
   palette,
+  motion,
   onReady,
 }: {
   palette: Palette;
+  motion: Motion;
   onReady: () => void;
 }) {
-  const tabletGltf = useLoader(GLTFLoader, TABLET_SRC);
-  const stylusGltf = useLoader(GLTFLoader, STYLUS_SRC);
+  const tabletGltf = useLoader(GLTFLoader, TABLET_SRC, withMeshopt);
+  const stylusGltf = useLoader(GLTFLoader, STYLUS_SRC, withMeshopt);
   const shot = useLoader(THREE.TextureLoader, SCREEN_SRC);
 
   // useLoader hands back cache-shared objects, so the screenshot goes onto a
   // cloned scene with a cloned Screen material and a cloned texture.
-  const { tablet, tint, bezel } = useMemo(() => {
+  const { tablet, tint, bezel, screenMat } = useMemo(() => {
     const scene = tabletGltf.scene.clone();
     const screen = scene.getObjectByName('Screen') as THREE.Mesh;
     const panel = fitToPanel(shot.image);
@@ -539,7 +675,7 @@ function Stage({
     }
     const bezel = byName('BezelPlastic')?.material as
       THREE.Material | undefined;
-    return { tablet: scene, tint: averageTint(panel), bezel };
+    return { tablet: scene, tint: averageTint(panel), bezel, screenMat: mat };
   }, [tabletGltf, shot]);
 
   // The pen body is near-black (albedo 0.02); lift it a touch so the screen's
@@ -610,9 +746,57 @@ function Stage({
     silhouette.ready = true;
   }, [tablet, stylus]);
   const cursorRef = useRef<THREE.Mesh>(null);
+  const cursorMatRef = useRef<THREE.ShaderMaterial>(null);
   const cursorUniforms = useMemo(
-    () => ({ uCore: { value: palette.paper }, uHalo: { value: palette.deep } }),
+    () => ({
+      uCore: { value: palette.paper },
+      uHalo: { value: palette.deep },
+      uAlpha: { value: 1 },
+    }),
     [palette],
+  );
+
+  // Tap ripple and power LED. Their uniforms are written each frame through
+  // the material refs.
+  const rippleRef = useRef<THREE.Mesh>(null);
+  const rippleMatRef = useRef<THREE.ShaderMaterial>(null);
+  const rippleUniforms = useMemo(
+    () => ({
+      uColor: { value: palette.paper },
+      uProgress: { value: 0 },
+      uCenter: { value: new THREE.Vector2() },
+      uPanel: {
+        value: new THREE.Vector4(SCREEN.x, 0, SCREEN.w / 2, SCREEN.h / 2),
+      },
+    }),
+    [palette],
+  );
+  const ledMatRef = useRef<THREE.ShaderMaterial>(null);
+  const ledUniforms = useMemo(
+    () => ({ uColor: { value: new THREE.Color() }, uGlow: { value: 1 } }),
+    [],
+  );
+  const lightRef = useRef<THREE.RectAreaLight>(null);
+  // The frame loop dims the screen through a ref, not the memo value itself.
+  const screenMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  useEffect(() => {
+    screenMatRef.current = screenMat;
+  }, [screenMat]);
+
+  // A tap in flight: when it started (clock seconds, -1 = none), when the
+  // button came up (-1 = still held), and when and where its ripple started
+  // once the nib touched down.
+  const tap = useRef({ t0: -1, up0: -1, ripple0: -1, x: 0, z: 0 });
+  const seenPresses = useRef(0);
+  const overButton = useRef(false);
+
+  // The hover hand over the power button is set on <body>; don't leave it
+  // behind if the canvas goes away while the pointer is there.
+  useEffect(
+    () => () => {
+      document.body.style.cursor = '';
+    },
+    [],
   );
 
   // Fires only once Suspense has resolved every model and the texture, which
@@ -622,22 +806,172 @@ function Stage({
     onReady();
   }, [onReady]);
 
-  useFrame(({ clock }) => {
+  // The tablet frame (tilted, origin at the panel centre), and the nib's eased
+  // state in it: position, dip (0 hover..1 dipped) and lean, in model metres.
+  const tabletRef = useRef<THREE.Group>(null);
+  const nib = useRef({
+    x: NIB_AT.x,
+    z: NIB_AT.z,
+    dip: 0,
+    leanX: 0,
+    leanZ: 0,
+    on: false,
+  });
+
+  useFrame(({ clock, camera, gl }, delta) => {
     const t = clock.elapsedTime;
     const pen = penRef.current;
-    if (!pen) return;
+    const frame = tabletRef.current;
+    if (!pen || !frame) return;
+    const n = nib.current;
+    const p = motion.pointer.current;
+
+    // Is the mouse over the glass? Recomputed every frame from the last
+    // client position, so scrolling the screen out from under a still mouse
+    // sends the pen home too. Whatever DOM sits on top doesn't matter.
+    let tx = NIB_AT.x;
+    let tz = NIB_AT.z;
+    let on = false;
+    let onButton = false;
+    if (p.on) {
+      const r = gl.domElement.getBoundingClientRect();
+      ndc.set(
+        ((p.cx - r.left) / r.width) * 2 - 1,
+        -((p.cy - r.top) / r.height) * 2 + 1,
+      );
+      // CameraRig pans the camera after lookAt(), which is the last thing to
+      // refresh its matrix, so bring it up to date before casting from it.
+      camera.updateMatrixWorld();
+      raycaster.setFromCamera(ndc, camera);
+      localRay
+        .copy(raycaster.ray)
+        .applyMatrix4(toTablet.copy(frame.matrixWorld).invert());
+      if (localRay.intersectPlane(glassPlane, hit)) {
+        const hx = hit.x / MODEL_SCALE - SCREEN.x;
+        const hz = hit.z / MODEL_SCALE;
+        const slack = n.on ? EDGE_SLACK : 0;
+        const halfW = SCREEN.w / 2;
+        const halfH = SCREEN.h / 2;
+        on = Math.abs(hx) < halfW + slack && Math.abs(hz) < halfH + slack;
+        if (on) {
+          // Inside the slack band the nib holds at the glass edge.
+          tx = SCREEN.x + THREE.MathUtils.clamp(hx, -halfW, halfW);
+          tz = THREE.MathUtils.clamp(hz, -halfH, halfH);
+        }
+        // The power button sits 0.3mm below the glass plane; at this angle
+        // that's far inside BUTTON_PAD, so the same hit serves.
+        onButton =
+          Math.abs(hit.x / MODEL_SCALE - BUTTON.x) < BUTTON.hw + BUTTON_PAD &&
+          Math.abs(hz - BUTTON.z) < BUTTON.hd + BUTTON_PAD;
+      }
+    }
+    n.on = on;
+
+    // A hand over the power button is the only hint it does anything.
+    if (onButton !== overButton.current) {
+      overButton.current = onButton;
+      document.body.style.cursor = onButton ? 'pointer' : '';
+    }
+
+    // Each new click: the power button toggles the screen, a click on the
+    // glass taps it. (HeroCanvas already dropped clicks on links and buttons.)
+    if (p.presses !== seenPresses.current) {
+      seenPresses.current = p.presses;
+      if (onButton) power.on = !power.on;
+      else if (on)
+        tap.current = { t0: t, up0: -1, ripple0: -1, x: n.x, z: n.z };
+    }
+    // Contact lasts while the button is held and the pen is over the glass;
+    // letting go, or sliding off the screen, lifts it.
+    const live = tap.current;
+    if (live.t0 >= 0 && live.up0 < 0 && (!p.held || !on)) live.up0 = t;
+
+    // Power fades linearly over POWER_FADE, eased for the eye.
+    power.level = THREE.MathUtils.clamp(
+      power.level + (power.on ? 1 : -1) * (delta / POWER_FADE),
+      0,
+      1,
+    );
+    const lit = THREE.MathUtils.smoothstep(power.level, 0, 1);
+    if (screenMatRef.current) screenMatRef.current.emissiveIntensity = lit;
+    if (lightRef.current) lightRef.current.intensity = 7 * lit;
+    // The display draws the hover cursor, so it goes dark with it.
+    if (cursorMatRef.current) cursorMatRef.current.uniforms.uAlpha.value = lit;
+    // LED: green while on, with a soft brightening every ~6s as a hint; a
+    // steady, dimmer red when off. Cross-fades with the screen.
+    const led = ledMatRef.current;
+    if (led) {
+      const beat = (t % 6) - 0.6;
+      const pulse = Math.exp(-(beat * beat) / 0.08);
+      led.uniforms.uColor.value.lerpColors(palette.ledOff, palette.ledOn, lit);
+      led.uniforms.uGlow.value = THREE.MathUtils.lerp(0.55, 0.8 + pulse * 0.5, lit);
+    }
+
+    const rate = on ? FOLLOW_RATE : RETURN_RATE;
+    const x0 = n.x;
+    const z0 = n.z;
+    n.x = THREE.MathUtils.damp(n.x, tx, rate, delta);
+    n.z = THREE.MathUtils.damp(n.z, tz, rate, delta);
+    n.dip = THREE.MathUtils.damp(n.dip, on ? 1 : 0, DIP_RATE, delta);
+    follow.on = on;
+
+    // Lean: the top of the pen tips toward where the nib is heading, like a
+    // hand dragging it, and eases upright as it stops.
+    const vx = delta > 0 ? (n.x - x0) / delta : 0;
+    const vz = delta > 0 ? (n.z - z0) / delta : 0;
+    const clampLean = (v: number) =>
+      THREE.MathUtils.clamp(v * LEAN_GAIN, -LEAN_MAX, LEAN_MAX);
+    n.leanX = THREE.MathUtils.damp(n.leanX, clampLean(vz), 6, delta);
+    n.leanZ = THREE.MathUtils.damp(n.leanZ, -clampLean(vx), 6, delta);
+
     // All in model metres, in the tilted tablet frame: y is height above the
     // glass along the panel normal. The clamp is the no-contact guarantee.
-    const gap = Math.max(MIN_GAP, HOVER + Math.sin(t * 0.8) * 0.004);
-    const x = NIB_AT.x + Math.sin(t * 0.23) * 0.006;
-    const z = NIB_AT.z + Math.sin(t * 0.31 + 1.3) * 0.004;
-    pen.position.set(x, GLASS_TOP + gap, z).multiplyScalar(MODEL_SCALE);
-    // Rotation pivots on the nib, so the wobble never changes the gap.
-    pen.rotation.set(
-      0,
-      -0.55 + Math.sin(t * 0.27) * 0.06,
-      1.12 + Math.sin(t * 0.37) * 0.03,
+    // The idle bob and drift carry on over the follow, gentler when dipped.
+    const calm = 1 - n.dip * 0.6;
+    const hover = Math.max(
+      MIN_GAP,
+      THREE.MathUtils.lerp(HOVER, DIP_HOVER, n.dip) +
+        Math.sin(t * 0.8) * 0.004 * calm,
     );
+    // A tap is the one time the nib meets the glass: accelerate down, stay
+    // down while held, spring back up. The lift never starts before the
+    // touchdown finishes, so a quick click is still a full tap. `touch` 1 =
+    // on the glass.
+    const tp = tap.current;
+    const age = tp.t0 < 0 ? -1 : t - tp.t0;
+    let touch = 0;
+    if (age >= 0 && age < TAP_DOWN) touch = (age / TAP_DOWN) ** 2;
+    else if (age >= TAP_DOWN && tp.up0 < 0) touch = 1;
+    else if (age >= TAP_DOWN) {
+      const lift = (t - Math.max(tp.up0, tp.t0 + TAP_DOWN)) / TAP_UP;
+      if (lift < 1) touch = (1 - lift) ** 3;
+      else tp.t0 = -1;
+    }
+    const gap = hover * (1 - touch);
+    // Clamped after the drift, so the drift can't carry the nib (and the
+    // crosshair under it) off the glass onto the bezel.
+    const x = THREE.MathUtils.clamp(
+      n.x + Math.sin(t * 0.23) * 0.006 * calm,
+      SCREEN.x - SCREEN.w / 2,
+      SCREEN.x + SCREEN.w / 2,
+    );
+    const z = THREE.MathUtils.clamp(
+      n.z + Math.sin(t * 0.31 + 1.3) * 0.004 * calm,
+      -SCREEN.h / 2,
+      SCREEN.h / 2,
+    );
+    pen.position.set(x, GLASS_TOP + gap, z).multiplyScalar(MODEL_SCALE);
+    // Rotation pivots on the nib, so neither the wobble nor the lean changes
+    // the gap. The lean goes on in the tablet's axes, over the base pose.
+    penBase.setFromEuler(
+      euler.set(
+        0,
+        -0.55 + Math.sin(t * 0.27) * 0.06,
+        1.12 + Math.sin(t * 0.37) * 0.03,
+      ),
+    );
+    penLean.setFromEuler(euler.set(n.leanX, 0, n.leanZ));
+    pen.quaternion.multiplyQuaternions(penLean, penBase);
 
     // The cursor tracks the nib straight down the panel normal, like the real
     // thing; the distance between the two is what shows the hover height.
@@ -646,6 +980,29 @@ function Stage({
       (GLASS_TOP + 0.0003) * MODEL_SCALE,
       z * MODEL_SCALE,
     );
+
+    // The ripple starts where the nib visibly touched, and only on a lit
+    // screen: a dark display draws nothing.
+    if (age >= TAP_DOWN && tp.ripple0 < 0 && power.on) {
+      tp.ripple0 = t;
+      tp.x = x;
+      tp.z = z;
+    }
+    const ripple = rippleRef.current;
+    const rippleMat = rippleMatRef.current;
+    if (ripple && rippleMat) {
+      const r = tp.ripple0 < 0 ? 1 : (t - tp.ripple0) / RIPPLE_TIME;
+      ripple.visible = r < 1;
+      if (ripple.visible) {
+        ripple.position.set(
+          tp.x * MODEL_SCALE,
+          (GLASS_TOP + 0.0002) * MODEL_SCALE,
+          tp.z * MODEL_SCALE,
+        );
+        rippleMat.uniforms.uProgress.value = r;
+        rippleMat.uniforms.uCenter.value.set(tp.x, tp.z);
+      }
+    }
   });
 
   return (
@@ -654,13 +1011,14 @@ function Stage({
           and PROP lifts the back. Everything screen-relative lives inside it,
           so the light, the cursor and the pen all tilt with the panel. */}
       <group ref={rootRef} position={tabletPivot} rotation-x={PROP}>
-        <group position-z={-HALF_DEPTH * MODEL_SCALE}>
+        <group ref={tabletRef} position-z={-HALF_DEPTH * MODEL_SCALE}>
           <primitive object={tablet} scale={MODEL_SCALE} />
 
           {/* The key requirement: the screen is the light. Same size as the
               panel, sitting on it, emitting along its normal (a RectAreaLight
               shines down its local -Z; rotating +90° about X turns that to +Y). */}
           <rectAreaLight
+            ref={lightRef}
             position={[
               SCREEN.x * MODEL_SCALE,
               (SCREEN.y + 0.0006) * MODEL_SCALE,
@@ -676,11 +1034,58 @@ function Stage({
           <mesh ref={cursorRef} rotation-x={-Math.PI / 2} renderOrder={2}>
             <planeGeometry args={[CURSOR_SIZE, CURSOR_SIZE]} />
             <shaderMaterial
+              ref={cursorMatRef}
               vertexShader={CURSOR_VERT}
               fragmentShader={CURSOR_FRAG}
               uniforms={cursorUniforms}
               transparent
               depthWrite={false}
+            />
+          </mesh>
+
+          <mesh
+            ref={rippleRef}
+            rotation-x={-Math.PI / 2}
+            renderOrder={2}
+            visible={false}
+          >
+            <planeGeometry
+              args={[RIPPLE_R * 2 * MODEL_SCALE, RIPPLE_R * 2 * MODEL_SCALE]}
+            />
+            <shaderMaterial
+              ref={rippleMatRef}
+              vertexShader={CURSOR_VERT}
+              fragmentShader={RIPPLE_FRAG}
+              uniforms={rippleUniforms}
+              transparent
+              depthWrite={false}
+            />
+          </mesh>
+
+          {/* The power LED ring, a hair above the button's top face. */}
+          <mesh
+            position={[
+              BUTTON.x * MODEL_SCALE,
+              (BUTTON.top + 0.0001) * MODEL_SCALE,
+              BUTTON.z * MODEL_SCALE,
+            ]}
+            rotation-x={-Math.PI / 2}
+            renderOrder={2}
+          >
+            <planeGeometry
+              args={[
+                (BUTTON.hw + LED_MARGIN) * 2 * MODEL_SCALE,
+                (BUTTON.hd + LED_MARGIN) * 2 * MODEL_SCALE,
+              ]}
+            />
+            <shaderMaterial
+              ref={ledMatRef}
+              vertexShader={CURSOR_VERT}
+              fragmentShader={LED_FRAG}
+              uniforms={ledUniforms}
+              transparent
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
             />
           </mesh>
 
@@ -889,6 +1294,21 @@ function Clouds({ palette }: { palette: Palette }) {
   );
 }
 
+// The loop never idles, so stop it outright once the hero has scrolled away:
+// nothing off screen is worth a full-hero redraw every frame.
+function PauseOffscreen() {
+  const gl = useThree((state) => state.gl);
+  const setFrameloop = useThree((state) => state.setFrameloop);
+  useEffect(() => {
+    const io = new IntersectionObserver(([entry]) =>
+      setFrameloop(entry.isIntersecting ? 'always' : 'never'),
+    );
+    io.observe(gl.domElement);
+    return () => io.disconnect();
+  }, [gl, setFrameloop]);
+  return null;
+}
+
 function Scene({
   motion,
   anchorId,
@@ -916,6 +1336,7 @@ function Scene({
         intensity={0.7}
       />
 
+      <PauseOffscreen />
       <CameraRig motion={motion} anchorId={anchorId} />
       <Desk palette={palette} />
       <Clouds palette={palette} />
@@ -926,7 +1347,7 @@ function Scene({
           context 500ms later and remounts the canvas: a visible flicker right
           after load. */}
       <Suspense fallback={null}>
-        <Stage palette={palette} onReady={onReady} />
+        <Stage palette={palette} motion={motion} onReady={onReady} />
       </Suspense>
     </>
   );
@@ -941,7 +1362,15 @@ export default function HeroCanvas({
   onReady: () => void;
   onContextLost: () => void;
 }) {
-  const pointer = useRef({ x: 0, y: 0 });
+  const pointer = useRef({
+    x: 0,
+    y: 0,
+    cx: 0,
+    cy: 0,
+    on: false,
+    presses: 0,
+    held: false,
+  });
   const scroll = useRef(0);
 
   useEffect(() => {
@@ -954,11 +1383,45 @@ export default function HeroCanvas({
       setHeroProgress(loaded, total);
 
     const onMove = (e: PointerEvent) => {
-      pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-      pointer.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
+      const p = pointer.current;
+      p.x = (e.clientX / window.innerWidth) * 2 - 1;
+      p.y = -((e.clientY / window.innerHeight) * 2 - 1);
+      p.cx = e.clientX;
+      p.cy = e.clientY;
+      // Only a hovering pointer steers the pen; a finger dragging to scroll
+      // on a touch screen shouldn't yank it about.
+      p.on = e.pointerType !== 'touch';
+    };
+    // Leaving the window: no related target means the pointer left the page.
+    const onOut = (e: PointerEvent) => {
+      if (!e.relatedTarget) pointer.current.on = false;
+    };
+    // Primary clicks drive the tap and the power button. Clicks meant for the
+    // page (links, buttons, form controls, the FAQ) never reach the scene.
+    const onDown = (e: PointerEvent) => {
+      if (e.button !== 0 || e.pointerType === 'touch') return;
+      const target = e.target as Element | null;
+      if (
+        target?.closest(
+          'a, button, input, select, textarea, summary, label, [role="button"]',
+        )
+      )
+        return;
+      onMove(e);
+      pointer.current.presses++;
+      pointer.current.held = true;
+    };
+    // Any release ends a hold, wherever it happens (even off the page).
+    const onUp = () => {
+      pointer.current.held = false;
     };
     // Listens on the window, not the canvas: the canvas is pointer-events:none.
     window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerout', onOut, { passive: true });
+    window.addEventListener('pointerdown', onDown, { passive: true });
+    window.addEventListener('pointerup', onUp, { passive: true });
+    window.addEventListener('pointercancel', onUp, { passive: true });
+    window.addEventListener('blur', onUp);
 
     // Rides the same ScrollTrigger that smooth-scroll.tsx keeps in lockstep
     // with Lenis via gsap.ticker, so hero parallax and the brush stroke share
@@ -975,6 +1438,11 @@ export default function HeroCanvas({
     return () => {
       THREE.DefaultLoadingManager.onProgress = () => {};
       window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerout', onOut);
+      window.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('blur', onUp);
       st.kill();
     };
   }, []);
@@ -984,7 +1452,9 @@ export default function HeroCanvas({
       // flat = NoToneMapping. ACES would wash out a UI screenshot.
       flat
       orthographic
-      dpr={[1, 2]}
+      // The canvas covers the whole hero and every desk pixel runs the
+      // RectAreaLight shading; 2x cost ~78% more pixels for little gain.
+      dpr={[1, 1.5]}
       gl={{ alpha: true, antialias: true }}
       camera={{ position: [20, 17, 20], zoom: 100, near: 0.1, far: 100 }}
       // The idle bob never stops, so on-demand rendering would buy nothing.

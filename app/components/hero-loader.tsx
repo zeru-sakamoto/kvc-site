@@ -20,6 +20,17 @@ function subscribe(l: () => void) {
 }
 const SERVER_STATE = { revealed: false, progress: 0 };
 
+// What the 3D hero waits on. Kept here, not in hero-canvas.tsx, so
+// hero-scene.tsx can start fetching them without pulling three into the main
+// bundle.
+export const HERO_ASSETS = {
+  tablet: '/models/kamvas-tablet.glb',
+  stylus: '/models/kamvas-stylus.glb',
+  // A lossless WebP of public/hero-screenshot.png, made by
+  // scripts/build-webp.mjs. Swap the PNG for a new capture and rerun it.
+  screen: '/hero-screenshot.webp',
+};
+
 export function revealHero() {
   if (!state.revealed) set({ revealed: true, progress: 1 });
 }
