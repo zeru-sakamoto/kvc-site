@@ -46,7 +46,7 @@ The site is built out: a single-page **Krita VCS** landing page (App Router, Typ
 Design conventions in force (see `DESIGN.md`, the spec-of-record):
 
 - Alternating left/right feature sections connected by a single animated SVG brush stroke ([app/components/brush-stroke.tsx](app/components/brush-stroke.tsx)), driven by GSAP + ScrollTrigger tied to scroll position (not timers), gated behind a `prefers-reduced-motion` check. GSAP is a dependency (`gsap` in package.json).
-- Every motion path has a static fallback. The hero canvas only mounts when motion is allowed, the viewport is ≥ 768px, and WebGL is available; otherwise the hero is text only (no image stands in). The canvas is decorative: `pointer-events-none`, out of the tab order, and out of the accessibility tree.
+- Every motion path has a static fallback. The hero canvas only mounts when the viewport matches `HERO_STAGE` (≥ 768px wide and tall enough for its layout; landscape phones are excluded) and WebGL is available; otherwise the hero is text only (no image stands in). Under reduced motion it still mounts, but every ambient movement is stopped and the pen doesn't follow the mouse. The canvas is decorative: `pointer-events-none`, out of the tab order, and out of the accessibility tree.
 - Color tokens are defined in the DESIGN.md color table and in the `@theme` block of [app/globals.css](app/globals.css) — reference the `--color-*` tokens rather than inventing or inlining colors.
 - Body sections share one reusable template ([app/components/section.tsx](app/components/section.tsx)) that toggles `flex-row` / `flex-row-reverse` for alternation, instead of duplicating markup per section.
 

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { preload } from 'react-dom';
-import { HERO_ASSETS, revealHero } from './hero-loader';
+import { HERO_ASSETS, HERO_STAGE, revealHero } from './hero-loader';
 
 // ssr: false only works from inside a Client Component, and a Server Component
 // importing a Client Component dynamically doesn't code-split at all (Next 16
@@ -11,10 +11,10 @@ import { HERO_ASSETS, revealHero } from './hero-loader';
 // out of every other route's bundle — same reason flourishes.tsx exists.
 const HeroCanvas = dynamic(() => import('./hero-canvas'), { ssr: false });
 
-const REDUCED = '(prefers-reduced-motion: reduce)';
 // The scene is decorative and not worth the battery or the bundle on a small
-// screen, so phones get the text-only hero.
-const WIDE = '(min-width: 768px)';
+// screen, so phones (upright or on their side) get the text-only hero; see
+// HERO_STAGE. Reduced motion still gets the scene, held still by
+// hero-canvas.tsx.
 
 // Probed once and remembered: getSnapshot runs on every render, and building a
 // throwaway canvas each time would be silly.
@@ -38,19 +38,16 @@ function hasWebgl() {
 
 // Every word and control in the hero lives in the DOM either way; a "no" only
 // leaves the scene out. useSyncExternalStore (rather than an effect) keeps the
-// server snapshot honest and re-decides for free if the viewport or the motion
-// preference changes.
+// server snapshot honest and re-decides for free if the viewport changes.
 function subscribe(onChange: () => void) {
-  const queries = [window.matchMedia(REDUCED), window.matchMedia(WIDE)];
-  queries.forEach((q) => q.addEventListener('change', onChange));
-  return () =>
-    queries.forEach((q) => q.removeEventListener('change', onChange));
+  const query = window.matchMedia(HERO_STAGE);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
 }
 
 function canRender3d() {
   return (
-    !window.matchMedia(REDUCED).matches &&
-    window.matchMedia(WIDE).matches &&
+    window.matchMedia(HERO_STAGE).matches &&
     (navigator.hardwareConcurrency ?? 8) >= 4 &&
     hasWebgl()
   );
@@ -91,7 +88,7 @@ export default function HeroScene({ anchorId }: { anchorId: string }) {
     });
   }, []);
 
-  // Nothing to wait for on phones, reduced motion or no WebGL. Asks
+  // Nothing to wait for on phones, short screens or no WebGL. Asks
   // canRender3d() directly: `enabled` is still the server snapshot (false)
   // during this first effect, even on a desktop.
   useEffect(() => {

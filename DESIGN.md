@@ -95,7 +95,7 @@ introducing a second rhythm), panel materials with a lit top edge falling to sha
 heading scale set at half the hero's display size so the step down reads as deliberate. One
 WebGL context exists on the whole page, and it belongs to the hero.
 
-1. **Hero: text top-left, a big lit tablet filling the rest.** At `lg` the text block (a
+1. **Hero: text top-left, a big lit tablet filling the rest.** Side by side (`hero-wide`, landscape `lg`) the text block (a
    two-line headline, one short paragraph and one primary CTA, the OS-aware download button)
    sits at the top-left, 66% of the `max-w-7xl` frame wide. The tablet takes up about three
    quarters of the hero's width, anchored right and set low, and its raised left end may sit
@@ -111,12 +111,12 @@ WebGL context exists on the whole page, and it belongs to the hero.
      half was dropped: it was dev-coded, and the sentence couldn't set as two large lines in a
      half-width column.
    - **Size is tied to the column, not the viewport.** From `sm` up each line is `nowrap`
-     and sized `min(8.6cqw, 3.5rem)` (`5.5rem` cap at `lg`) against the text block, which is
+     and sized `min(8.6cqw, 3.5rem)` (`5.5rem` cap at `hero-wide`) against the text block, which is
      a `@container`. "Version control" in Syne ExtraBold is ~11.3em wide, so 8.6cqw always
      fits its block: ~73px at 1440 and ~55px at 1024, scaled up with the tablet. (A viewport-based `4.3vw` pushed the line
      126px past its column into the scene at 1440.) Below `sm` it's
      `clamp(1.75rem, 8.2vw, 3.5rem)` and may wrap once at the space.
-   - **The whole tablet stays inside the hero, and the hero is one screen.** At `lg` the
+   - **The whole tablet stays inside the hero, and the hero is one screen.** At `hero-wide` the
      anchor wrapper is `display: contents` and the grid is `static`, so the anchor positions
      against the section itself: its right edge is the page gutter,
      `max(1.5rem, (100% - 80rem) / 2)`, the same value that puts the text's left edge where it
@@ -127,11 +127,32 @@ WebGL context exists on the whole page, and it belongs to the hero.
      inside the section at 1440×900, 1024×768, 1920×1080 and 1366×680, above the bottom fade.
      The section is `min-h-svh`, so the whole hero is always one viewport tall. The parent
      owns every height (CLS 0).
-   - **Stacked from `md` to `lg`, scene first.** Tablets get the scene _above_ the headline
-     (`order-first`), height `min(26rem, 40svh)`. Below `md` and under reduced motion the
-     anchor box is `hidden`, so phones get a text-only hero. Rows pack with `content-center`.
-   - Verified at 1440×900, 1024×768, 768×1024, 375×812, 375×667 and 320×700: text column fully
-     readable, no horizontal scroll, CTA on one line.
+   - **Two layout queries, not `md`/`lg`.** Side by side is the `hero-wide` custom variant,
+     `(min-width: 1024px) and (min-aspect-ratio: 1/1)`: landscape only, because on a portrait
+     lg screen (iPad Pro, 1024×1366) the width-bound tablet sank to the bottom under ~500px of
+     empty grid. Whether the scene mounts at all is `hero-stage`: side by side with ≥ 500px of
+     height, or stacked (≥ 768px wide) with ≥ 780px. Both are
+     defined in `globals.css` (`@custom-variant`, `hero-stage` first so `hero-wide:contents`
+     wins) and mirrored as `HERO_WIDE` / `HERO_STAGE` in `hero-loader.tsx` for the JS gates.
+   - **Stacked, scene first.** Tablets and portrait lg get the scene _above_ the headline
+     (`order-first`), height `min(36rem, 100svh - 32rem)`: whatever the ~32rem of header, text
+     and bottom bar leave, so the hero stays one screen. The camera fits the tablet's own
+     outline to that box (92%, see Camera below) instead of the side-by-side framing constants,
+     so the tablet runs ~85% of the width at 768–1024 wide instead of ~50%. Phones, phones on
+     their side (844×390: the old width-only gate put a 150px tablet above the fold and the CTA
+     below it) and short windows leave the box `hidden` and get the text-only hero. Rows pack
+     with `content-center`.
+   - **Reduced motion keeps the tablet, still.** Under `prefers-reduced-motion: reduce` the
+     scene mounts like any other and every ambient movement stops (camera sway, pointer
+     orbit, scroll tilt, pen bob and drift, dust and haze drift, LED pulse). The pen doesn't
+     follow the mouse or tap; the power button still switches the screen, instantly instead
+     of fading. `hero-canvas.tsx` reads the live `MediaQueryList`, so an OS toggle takes
+     effect on the next frame.
+   - Verified at 3440×1440, 2560×1440, 1920×1080, 1536×864, 1366×768, 1280×1024, 1280×720,
+     1100×1050, 1024×768, 1024×600, 1024×1366, 912×1368, 820×1180, 768×1024, 768×800, 768×760,
+     932×430, 844×390, 390×844 and 360×740, plus reduced motion (still scene) at 1920×1080,
+     1024×1366 and 820×1180: the hero is one screen (text-only landscape phones overflow slightly but keep
+     the CTA in view), no horizontal scroll, CTA on one line.
 
    - **Bottom bar.** An in-flow row under the grid (so it can't collide with the CTA on
      short screens), on the same gutters as the text. Left: a minimal scroll cue, a 40px
@@ -297,18 +318,20 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
     (`min(anchorHeight / 5.2, anchorWidth / 6.5)` px per unit, so the tablet scales with the
     hero's height), and slides sideways in its own plane to place the tablet. Orthographic,
     so the slide pans without changing the angle.
-  - **Symmetric margins at `lg`.** Once the models load, `Stage` projects every tablet and pen
+  - **Symmetric margins at `hero-wide`.** Once the models load, `Stage` projects every tablet and pen
     vertex (pen in its base pose) onto the camera's horizontal axis and stores the outline's
-    left/right extent. At `lg` the camera right-aligns that outline (whichever sticks out
+    left/right extent. At `hero-wide` the camera right-aligns that outline (whichever sticks out
     further, the tablet corner or the pen end) to the anchor's right edge, the page gutter,
     so the space right of the tablet equals the space left of the headline. Measured with a
     vertex probe: 57/53px at 1408×945, 24/22px at 1024×768, 36/33px at 1366×680, 313/309px
     at 1920×1080 (the few px are the headline's glyph side bearing and the pen's bob).
     Vertically, `Stage` also stores the outline's lowest point along the rest-pose camera's up
-    axis, and at `lg` the camera bottom-aligns it so the tablet clears the hero's bottom by the
+    axis, and at `hero-wide` the camera bottom-aligns it so the tablet clears the hero's bottom by the
     same gap the headline's cap tops keep below the fixed header (measured from layout offsets
     plus the display face's cap metrics, so the headline's entrance transform can't skew it).
-    Stacked below `lg`, the outline is centred in the anchor instead.
+    Stacked (not `hero-wide`), `Stage` also stores the outline's highest point, and the
+    camera zooms so the outline fills 92% of the anchor (the rest is room for the orbit, sway
+    and pen bob) and centres it both ways.
   - **Desk.** One 40×40 `MeshStandardMaterial` plane with two shader patches (`onBeforeCompile`):
     an `fwidth`-antialiased grid in Krita Blue, ~8.5% at the tablet falling to a 2.5% floor,
     so it stays subtly visible across the whole hero including under the text (felt, not
@@ -392,14 +415,14 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
     the RectAreaLight shading); the render loop stops while the hero is off screen; the GLBs are
     meshopt-compressed and quantized; the models and screenshot are preloaded as soon as the
     scene is known to mount, in parallel with the 3D chunk.
-  - **No image fallback.** The canvas mounts only when all of these hold: not
-    `prefers-reduced-motion: reduce`, viewport ≥ 768px, `hardwareConcurrency` ≥ 4, and a
+  - **No image fallback.** The canvas mounts only when all of these hold: the viewport
+    matches `HERO_STAGE` (see the hero section above), `hardwareConcurrency` ≥ 4, and a
     WebGL context is obtainable. Otherwise the hero is text only: every word and control lives
     in the DOM, so nothing is lost but the picture.
   - **Loader (homepage only).** `hero-loader.tsx` is a full-screen Deep Ink overlay (logo + Krita
     Blue progress bar, counted per file via `THREE.DefaultLoadingManager`) that SSR renders
     visible, so the page never paints before the tablet. It lifts when the canvas is ready, at
-    hydration when 3D won't render (phones, reduced motion, no WebGL), after 8s, or when WebGL
+    hydration when 3D won't render (phones, short screens, no WebGL), after 8s, or when WebGL
     context retries run out (the stage is then left empty). While up it locks scroll and hides the fixed header (the hero sits
     in a `z-10` stacking context, so it can't out-stack it); the `[data-hero-in]` intro stagger
     plays as it lifts. A `<noscript>` style hides it for JS-off visitors.

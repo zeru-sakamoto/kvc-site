@@ -31,6 +31,17 @@ export const HERO_ASSETS = {
   screen: '/hero-screenshot.webp',
 };
 
+// The hero's two layout queries, mirrored by the hero-wide / hero-stage
+// variants in globals.css (CSS can't import these, so keep the pairs equal).
+// Side by side needs a landscape screen at lg: a portrait one would leave the
+// width-bound tablet sunk at the bottom under a tall void, so it stacks.
+export const HERO_WIDE = '(min-width: 1024px) and (min-aspect-ratio: 1/1)';
+// Where the scene mounts at all. Side by side it needs 500px of height.
+// Stacked, the header, text and bottom bar take ~32rem around the scene box,
+// so 780px leaves it ~16rem. Shorter (phones on their side, squat windows)
+// gets the text-only hero.
+export const HERO_STAGE = `${HERO_WIDE} and (min-height: 500px), (min-width: 768px) and (min-height: 780px)`;
+
 export function revealHero() {
   if (!state.revealed) set({ revealed: true, progress: 1 });
 }

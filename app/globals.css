@@ -1,5 +1,22 @@
 @import 'tailwindcss';
 
+/* Hero layout queries; HERO_WIDE / HERO_STAGE in hero-loader.tsx are the same
+   strings for the canvas. hero-wide: text and tablet side by side (landscape
+   lg). hero-stage: the 3D scene mounts at all. Variants emit in definition
+   order, and hero-wide:contents must beat hero-stage:block, so stage first. */
+/* One @media per branch: Tailwind splits a comma-separated media list into
+   selectors. Reduced motion still gets the scene (held still), so it isn't a
+   condition here. */
+@custom-variant hero-stage {
+  @media (min-width: 1024px) and (min-aspect-ratio: 1/1) and (min-height: 500px) {
+    @slot;
+  }
+  @media (min-width: 768px) and (min-height: 780px) {
+    @slot;
+  }
+}
+@custom-variant hero-wide (@media (min-width: 1024px) and (min-aspect-ratio: 1/1));
+
 /* The live scene covers the whole hero; only its top (under the header) and
    bottom (into the next section) need fading. Left and right are the
    viewport edges, and the desk's own radial falloff handles those. */

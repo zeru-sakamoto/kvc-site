@@ -8,7 +8,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { HERO_ASSETS, setHeroProgress } from './hero-loader';
+import { HERO_ASSETS, HERO_WIDE, setHeroProgress } from './hero-loader';
 
 // The screen's RectAreaLight needs its LTC lookup tables registered once.
 RectAreaLightUniformsLib.init();
@@ -94,6 +94,14 @@ type Motion = {
 // by CameraRig to hold the pointer orbit still.
 const follow = { on: false };
 
+// Reduced motion keeps the scene but stills it: no sway, orbit, scroll tilt,
+// bob, drift or pen follow, and the power button switches without a fade.
+// This module only loads in the browser (ssr: false), and a MediaQueryList's
+// `matches` is live, so flipping the OS setting takes effect on the next frame.
+// ponytail: the loop still runs every frame while still; switch to
+// frameloop="demand" plus invalidate() on pointer moves if battery matters.
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
 // Click to tap: the nib drops to the glass, stays on it while the button is
 // held, and springs back on release; the display draws a ring where it
 // touched (seconds, model metres).
@@ -105,7 +113,13 @@ const RIPPLE_R = 0.012;
 // The easter egg: the power button (top-left of the bezel, at the back edge)
 // switches the screen off and on. Bounds read off the GLB's PowerButton node:
 // a 14.3 x 4.8mm pill. PAD makes the tiny target forgiving to click.
-const BUTTON = { x: -0.163, z: -0.08775, top: 0.01072, hw: 0.007165, hd: 0.0024 };
+const BUTTON = {
+  x: -0.163,
+  z: -0.08775,
+  top: 0.01072,
+  hw: 0.007165,
+  hd: 0.0024,
+};
 const BUTTON_PAD = 0.003;
 // Fade time for the screen switching off or on (seconds).
 const POWER_FADE = 0.3;
@@ -198,11 +212,11 @@ function tabletToWorld(x: number, y: number, z: number) {
 // Camera: orthographic, with a few degrees of pointer orbit and a slow tilt
 // toward top-down as the hero scrolls away. The canvas covers the whole hero,
 // but zoom and framing come from the anchor box: the camera slides sideways
-// in its own plane to place the tablet. At lg the tablet's outline is
-// right-aligned to the anchor's right edge (the page gutter, mirroring the
-// text's left margin) and bottom-aligned so it clears the hero's bottom by the
-// same gap the headline keeps below the header; stacked, the outline is
-// centred in the anchor.
+// in its own plane to place the tablet. Side by side (HERO_WIDE) the tablet's
+// outline is right-aligned to the anchor's right edge (the page gutter,
+// mirroring the text's left margin) and bottom-aligned so it clears the hero's
+// bottom by the same gap the headline keeps below the header; stacked, the
+// outline itself is fitted to the anchor (STACK_FILL) and centred in it.
 type Frame = {
   dx: number;
   dy: number;
@@ -213,7 +227,6 @@ type Frame = {
   h: number;
   alignRight: boolean;
 };
-const LG = '(min-width: 1024px)';
 
 // Where an element's first line of capitals starts, in px from the top of its
 // section. Offsets, not rects, so the headline's entrance transform doesn't
@@ -243,7 +256,10 @@ function capTop(el: HTMLElement) {
 // The tablet + pen outline along the camera's horizontal and vertical axes, in
 // world units relative to TARGET. Measured once from the real vertices when
 // the models land (Stage), read every frame by CameraRig.
-const silhouette = { left: 0, right: 0, bottom: 0, ready: false };
+const silhouette = { left: 0, right: 0, top: 0, bottom: 0, ready: false };
+// Stacked, the share of the anchor box the outline fills, leaving room for the
+// pointer orbit, the idle sway and the pen's bob to move it without clipping.
+const STACK_FILL = 0.92;
 const right = new THREE.Vector3();
 const up = new THREE.Vector3();
 
@@ -273,7 +289,7 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
         by: c.height / 2 - gap,
         w: a.width,
         h: a.height,
-        alignRight: window.matchMedia(LG).matches,
+        alignRight: window.matchMedia(HERO_WIDE).matches,
       };
     };
     measure();
@@ -296,7 +312,17 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
       h: size.height,
       alignRight: false,
     };
-    const zoom = Math.min(f.h / VIEW_H, f.w / VIEW_W);
+    // Side by side, VIEW_H/VIEW_W keep headroom for the desk around the
+    // tablet. Stacked, the box is only as tall as the text leaves room for,
+    // so the outline fills it instead of floating small in the middle.
+    const stacked = silhouette.ready && !f.alignRight;
+    const zoom = stacked
+      ? STACK_FILL *
+        Math.min(
+          f.h / (silhouette.top - silhouette.bottom),
+          f.w / (silhouette.right - silhouette.left),
+        )
+      : Math.min(f.h / VIEW_H, f.w / VIEW_W);
     if (cam.zoom !== zoom) {
       cam.zoom = zoom;
       cam.updateProjectionMatrix();
@@ -310,16 +336,21 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
       held.x = motion.pointer.current.x;
       held.y = motion.pointer.current.y;
     }
-    const { x: px, y: py } = held;
-    const s = motion.scroll.current;
+    // Reduced motion zeroes every term below, so the camera rests at YAW and
+    // PITCH (where it starts) and never moves.
+    const live = reducedMotion.matches ? 0 : 1;
+    const px = held.x * live;
+    const py = held.y * live;
+    const s = motion.scroll.current * live;
     const o = orbit.current;
     // An idle sway, like a handheld camera at rest: up to ~2° of yaw and ~1°
     // of pitch, on slow, unrelated periods so it never reads as a loop.
     const t = clock.elapsedTime;
     const swayYaw =
-      Math.sin(t * 0.5) * 0.022 + Math.sin(t * 0.23 + 1.3) * 0.014;
+      (Math.sin(t * 0.5) * 0.022 + Math.sin(t * 0.23 + 1.3) * 0.014) * live;
     const swayPitch =
-      Math.sin(t * 0.37 + 0.7) * 0.012 + Math.sin(t * 0.19 + 2.1) * 0.008;
+      (Math.sin(t * 0.37 + 0.7) * 0.012 + Math.sin(t * 0.19 + 2.1) * 0.008) *
+      live;
     // ±2.5° yaw and ±1.5° pitch at most from the pointer; the scroll term
     // adds up to ~8°. The yaw term is inverted: the camera swings away from
     // the pointer, so the tablet turns its face toward it.
@@ -348,7 +379,9 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
       dx = f.alignRight
         ? f.rx - silhouette.right * zoom
         : f.dx - ((silhouette.left + silhouette.right) / 2) * zoom;
-      if (f.alignRight) dy = f.by + silhouette.bottom * zoom;
+      dy = f.alignRight
+        ? f.by + silhouette.bottom * zoom
+        : f.dy + ((silhouette.top + silhouette.bottom) / 2) * zoom;
     }
     camera.position
       .addScaledVector(right, -dx / zoom)
@@ -726,6 +759,7 @@ function Stage({
     let lo = Infinity;
     let hi = -Infinity;
     let bottom = Infinity;
+    let top = -Infinity;
     root.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh || mesh.material instanceof THREE.ShaderMaterial) return;
@@ -737,11 +771,14 @@ function Stage({
         const d = v.dot(axis);
         lo = Math.min(lo, d);
         hi = Math.max(hi, d);
-        bottom = Math.min(bottom, v.dot(upAxis));
+        const h = v.dot(upAxis);
+        bottom = Math.min(bottom, h);
+        top = Math.max(top, h);
       }
     });
     silhouette.left = lo;
     silhouette.right = hi;
+    silhouette.top = top;
     silhouette.bottom = bottom;
     silhouette.ready = true;
   }, [tablet, stylus]);
@@ -820,6 +857,10 @@ function Stage({
 
   useFrame(({ clock, camera, gl }, delta) => {
     const t = clock.elapsedTime;
+    // The idle bob, drift, wobble and LED pulse run on `at`, which reduced
+    // motion holds at 0; taps and fades keep real time.
+    const still = reducedMotion.matches;
+    const at = still ? 0 : t;
     const pen = penRef.current;
     const frame = tabletRef.current;
     if (!pen || !frame) return;
@@ -865,6 +906,9 @@ function Stage({
           Math.abs(hz - BUTTON.z) < BUTTON.hd + BUTTON_PAD;
       }
     }
+    // Reduced motion: the pen stays home and the glass takes no taps. The
+    // power button still works; it's a switch, not a movement.
+    if (still) on = false;
     n.on = on;
 
     // A hand over the power button is the only hint it does anything.
@@ -886,12 +930,15 @@ function Stage({
     const live = tap.current;
     if (live.t0 >= 0 && live.up0 < 0 && (!p.held || !on)) live.up0 = t;
 
-    // Power fades linearly over POWER_FADE, eased for the eye.
-    power.level = THREE.MathUtils.clamp(
-      power.level + (power.on ? 1 : -1) * (delta / POWER_FADE),
-      0,
-      1,
-    );
+    // Power fades linearly over POWER_FADE, eased for the eye; reduced motion
+    // switches it outright.
+    power.level = still
+      ? Number(power.on)
+      : THREE.MathUtils.clamp(
+          power.level + (power.on ? 1 : -1) * (delta / POWER_FADE),
+          0,
+          1,
+        );
     const lit = THREE.MathUtils.smoothstep(power.level, 0, 1);
     if (screenMatRef.current) screenMatRef.current.emissiveIntensity = lit;
     if (lightRef.current) lightRef.current.intensity = 7 * lit;
@@ -901,10 +948,14 @@ function Stage({
     // steady, dimmer red when off. Cross-fades with the screen.
     const led = ledMatRef.current;
     if (led) {
-      const beat = (t % 6) - 0.6;
+      const beat = (at % 6) - 0.6;
       const pulse = Math.exp(-(beat * beat) / 0.08);
       led.uniforms.uColor.value.lerpColors(palette.ledOff, palette.ledOn, lit);
-      led.uniforms.uGlow.value = THREE.MathUtils.lerp(0.55, 0.8 + pulse * 0.5, lit);
+      led.uniforms.uGlow.value = THREE.MathUtils.lerp(
+        0.55,
+        0.8 + pulse * 0.5,
+        lit,
+      );
     }
 
     const rate = on ? FOLLOW_RATE : RETURN_RATE;
@@ -931,7 +982,7 @@ function Stage({
     const hover = Math.max(
       MIN_GAP,
       THREE.MathUtils.lerp(HOVER, DIP_HOVER, n.dip) +
-        Math.sin(t * 0.8) * 0.004 * calm,
+        Math.sin(at * 0.8) * 0.004 * calm,
     );
     // A tap is the one time the nib meets the glass: accelerate down, stay
     // down while held, spring back up. The lift never starts before the
@@ -951,12 +1002,12 @@ function Stage({
     // Clamped after the drift, so the drift can't carry the nib (and the
     // crosshair under it) off the glass onto the bezel.
     const x = THREE.MathUtils.clamp(
-      n.x + Math.sin(t * 0.23) * 0.006 * calm,
+      n.x + Math.sin(at * 0.23) * 0.006 * calm,
       SCREEN.x - SCREEN.w / 2,
       SCREEN.x + SCREEN.w / 2,
     );
     const z = THREE.MathUtils.clamp(
-      n.z + Math.sin(t * 0.31 + 1.3) * 0.004 * calm,
+      n.z + Math.sin(at * 0.31 + 1.3) * 0.004 * calm,
       -SCREEN.h / 2,
       SCREEN.h / 2,
     );
@@ -966,8 +1017,8 @@ function Stage({
     penBase.setFromEuler(
       euler.set(
         0,
-        -0.55 + Math.sin(t * 0.27) * 0.06,
-        1.12 + Math.sin(t * 0.37) * 0.03,
+        -0.55 + Math.sin(at * 0.27) * 0.06,
+        1.12 + Math.sin(at * 0.37) * 0.03,
       ),
     );
     penLean.setFromEuler(euler.set(n.leanX, 0, n.leanZ));
@@ -1178,7 +1229,7 @@ function Dust({ palette, tint }: { palette: Palette; tint: THREE.Color }) {
   useFrame(({ clock }) => {
     // A slow sway, not a spin: the field is off-centre, and a full rotation
     // would carry it away from the frame.
-    if (ref.current)
+    if (ref.current && !reducedMotion.matches)
       ref.current.rotation.y = Math.sin(clock.elapsedTime * 0.05) * 0.15;
   });
 
@@ -1254,7 +1305,7 @@ function Clouds({ palette }: { palette: Palette }) {
   );
 
   useFrame(({ clock, camera }) => {
-    const t = clock.elapsedTime;
+    const t = reducedMotion.matches ? 0 : clock.elapsedTime;
     CLOUDS.forEach((c, i) => {
       const m = refs.current[i];
       if (!m) return;
