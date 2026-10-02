@@ -12,6 +12,7 @@ import {
   PanelMedia,
 } from './components/media';
 import { emphasize } from './components/highlight';
+import WhyGlyph from './components/why-glyphs';
 import JsonLd from './components/json-ld';
 import {
   why,
@@ -25,7 +26,7 @@ import {
   themes,
 } from '@/lib/content';
 
-// The product itself: free, MIT, downloadable. Still earns rich results, and
+// The product itself: free, GPL-3.0, downloadable. Still earns rich results, and
 // feeds AI answer engines a clean description of what Krita VCS is.
 const softwareLd = {
   '@context': 'https://schema.org',
@@ -38,7 +39,7 @@ const softwareLd = {
   url: siteUrl,
   downloadUrl: `${siteUrl}/download`,
   softwareVersion: download.version,
-  license: 'https://opensource.org/licenses/MIT',
+  license: 'https://www.gnu.org/licenses/gpl-3.0.html',
   isAccessibleForFree: true,
   offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },
   author: { '@id': `${siteUrl}/#person` },
@@ -74,49 +75,25 @@ const featureMedia = {
   panel: <PanelMedia />,
 } as const;
 
-// The one most intriguing detail per paragraph, pulled out in accent color.
-// Aligned by index to `why.points`; kept here (not in lib/content.ts) since
-// it's a presentation choice, not copy.
-const whyEmphasis = [
-  { phrase: 'No account, no sync, no server', tone: 'cool' },
-  { phrase: 'only stores what actually changed', tone: 'blue' },
-  { phrase: 'side by side or on a swipe slider', tone: 'blue' },
-  { phrase: 'switch back to your original whenever you like', tone: 'warm' },
-  { phrase: 'stay fast on large, layer-heavy files', tone: 'blue' },
+// Accent color of each Why glyph. Aligned by index to `why.points`; kept here
+// (not in lib/content.ts) since it's a presentation choice, not copy.
+const whyTone = [
+  'text-accent-cool',
+  'text-brand-blue',
+  'text-brand-blue',
+  'text-accent-warm',
+  'text-brand-blue',
 ] as const;
 
-// Same idea, aligned by [featureId][paragraphIndex].
+// The one most intriguing detail per paragraph, pulled out in accent color.
+// Aligned by [featureId][paragraphIndex].
 const featureEmphasis = {
-  compare: [
-    { phrase: 'a dashed outline', tone: 'blue' },
-    { phrase: 'as easy to review as a repaint', tone: 'warm' },
-  ],
-  history: [
-    { phrase: 'the edit wins', tone: 'cool' },
-    {
-      phrase: 'old versions stay recoverable until you decide otherwise',
-      tone: 'cool',
-    },
-  ],
-  yours: [
-    { phrase: 'turns off the technical talk entirely', tone: 'warm' },
-    { phrase: 'Nothing syncs, nothing uploads', tone: 'cool' },
-  ],
-  settings: [
-    { phrase: "it's obvious who did what", tone: 'warm' },
-    { phrase: 'Krita VCS shrinks it down', tone: 'cool' },
-    { phrase: 'applies right away, no restart', tone: 'blue' },
-  ],
-  performance: [
-    {
-      phrase: 'around 50% smaller than a full copy by your second save',
-      tone: 'cool',
-    },
-  ],
-  panel: [
-    { phrase: 'saves your open paintings for you first', tone: 'warm' },
-    { phrase: 'the same engine and the same history', tone: 'blue' },
-  ],
+  compare: [{ phrase: 'a dashed outline', tone: 'blue' }],
+  history: [{ phrase: 'a full version you can return to', tone: 'cool' }],
+  yours: [{ phrase: 'Nothing syncs, nothing uploads', tone: 'cool' }],
+  settings: [{ phrase: 'eight color themes', tone: 'blue' }],
+  performance: [{ phrase: 'what a full copy would have cost', tone: 'cool' }],
+  panel: [{ phrase: 'right beside your canvas', tone: 'warm' }],
 } as const;
 
 export default function Home() {
@@ -143,18 +120,14 @@ export default function Home() {
               </p>
             </div>
 
-            <ul className="mt-14 grid gap-x-12 gap-y-10 sm:grid-cols-2">
+            <ul className="mt-14 grid gap-x-12 gap-y-8 sm:grid-cols-2">
               {why.points.map((p, i) => (
-                <li key={p.title} className="min-w-0">
-                  <p className="font-display text-lg font-semibold text-primary">
+                <li key={p.title} className="flex min-w-0 items-center gap-4">
+                  <span className={whyTone[i]}>
+                    <WhyGlyph index={i} />
+                  </span>
+                  <p className="min-w-0 font-display text-lg font-semibold text-balance text-primary sm:text-xl">
                     {p.title}
-                  </p>
-                  <p className="mt-2 text-base leading-relaxed text-muted">
-                    {emphasize(
-                      p.body,
-                      whyEmphasis[i].phrase,
-                      whyEmphasis[i].tone,
-                    )}
                   </p>
                 </li>
               ))}

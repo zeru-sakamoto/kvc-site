@@ -15,7 +15,8 @@ Painter-first, plain-language, calm. The site practises what "Artist Mode" preac
 "version / save / go back", not "commit / hash / rollback". No em-dashes in visible copy. No
 invented metrics. Product screenshots are allowed and wanted — a real capture of the app,
 shown honestly — but until one exists the hero carries a placeholder that says so on its face.
-What stays banned is invented UI passed off as real.
+What stays banned is invented UI passed off as real. Landing-page copy stays short: one or two
+sentences per feature block and one line per roadmap item. The detail lives in `/docs`.
 
 ## Stack
 
@@ -170,7 +171,12 @@ WebGL context exists on the whole page, and it belongs to the hero.
    See "3D hero" under GSAP Animation for the scene itself.
 
 2. **Why artists use it — full-width points grid.** No media column. Intro + five value props
-   in a two-column grid. Breaks the two-column rhythm before the feature blocks.
+   in a two-column grid. Breaks the two-column rhythm before the feature blocks. Each prop is a
+   heading only, with an authored line glyph beside it (`why-glyphs.tsx`: 24px grid, 1.5 stroke,
+   `currentColor`, decorative) tinted cool / blue / blue / warm / blue. No body paragraphs here;
+   the feature blocks below carry the detail. Glyphs stay painter-coded (screen with a lock,
+   tile grid, swipe-split canvas, a stroke that wanders off and returns, layer stack), never
+   git-graph or terminal iconography, and sit bare with no tinted tile behind them.
 3. **Compare (feature block, media right).** "See exactly what changed, layer by layer." Visual
    layer diffs (including per-layer/canvas metadata on click) + palette diffs. Media: `DiffMedia`
    (two versions split by a swipe handle, a dashed-outline silhouette tracing the changed pixels,
@@ -607,13 +613,13 @@ live in metadata, FAQ answers, and JSON-LD, with only light surfacing of aliases
 - **Structured data (JSON-LD):** `WebSite` + `Person` site-wide (layout). `WebSite` and the
   homepage's `SoftwareApplication` both carry an `alternateName` array (`site.alternateNames` in
   `lib/content.ts`: KVC, KritaVC, Krita VC, Krita-VC, Krita Version Control) so answer engines
-  resolve any of them to this product. `SoftwareApplication` (free/MIT/Windows, `downloadUrl`,
-  version) + `FAQPage` (mapped from the `faq` array, including two entries disambiguating the
+  resolve any of them to this product. `SoftwareApplication` (free/GPL-3.0/Windows, `downloadUrl`,
+  version) + `FAQPage` (mapped from the `faq` array, including one entry disambiguating the
   KVC/Krita VC naming) on the home page; `BreadcrumbList` on docs + discovery pages. FAQ/HowTo rich
   results are Google-restricted now, but the schema still aids AI answer engines — HowTo markup is
   deliberately skipped.
 - **Share image (`app/opengraph-image.tsx`):** dynamic 1200×630 card via `next/og` — brush logo,
-  `Krita VCS` in Syne, tagline, `Free · local-only · MIT` on the brand canvas gradient. Honest
+  `Krita VCS` in Syne, tagline, `Free · local-only · GPL-3.0` on the brand canvas gradient. Honest
   media, literal DESIGN.md hex (Satori can't read CSS vars). Fonts fetched from Google with a
   graceful fallback so an offline build still renders on the built-in font. Covers `twitter:image`
   too (X falls back to `og:image`), so there is no separate `twitter-image`.

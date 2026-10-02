@@ -170,8 +170,9 @@ export const ogImage = {
   alt: `${site.name} — ${hero.headline}`,
 } as const;
 
-// "Why artists use it" — the five value props, condensed. Full-width points grid,
-// no media column, above the deeper feature blocks.
+// "Why artists use it" — the five value props as headings only, each paired
+// with a glyph (app/components/why-glyphs.tsx, aligned by index). Full-width
+// points grid, no media column; the feature blocks below carry the detail.
 export const why = {
   id: 'why',
   title: 'Made for painters, not programmers.',
@@ -179,26 +180,11 @@ export const why = {
     'Version control has always been built for code. Krita VCS is built for paintings, and for the way you actually work.',
   reverse: false,
   points: [
-    {
-      title: 'Nothing ever leaves your computer.',
-      body: 'All history lives in a hidden folder inside your own project. No account, no sync, no server. Ever.',
-    },
-    {
-      title: 'It reads your painting, not just your file.',
-      body: 'Krita VCS understands .kra files down to the tile, so a single brush stroke only stores what actually changed, not a fresh copy every time you save.',
-    },
-    {
-      title: 'See what changed, visually.',
-      body: 'No line numbers, no diffs full of symbols. Just your layers, before and after, side by side or on a swipe slider.',
-    },
-    {
-      title: 'Explore without fear.',
-      body: "Try a new color direction or a redesign on a branch, switch back to your original whenever you like, and bring the two together when you're ready.",
-    },
-    {
-      title: 'Built for real paintings.',
-      body: "Tuned to stay fast on large, layer-heavy files, so saves, comparisons, and restores don't crawl on anything but toy test cases.",
-    },
+    { title: 'Nothing ever leaves your computer.' },
+    { title: 'It reads every layer, not just your file.' },
+    { title: 'See what changed, visually.' },
+    { title: 'Try anything, and lose nothing.' },
+    { title: 'Built for digital art.' },
   ],
 } as const;
 
@@ -210,8 +196,7 @@ export const features = [
     id: 'compare',
     title: 'See exactly what changed, layer by layer.',
     body: [
-      "Compare any two versions side by side, or drag a swipe slider across the canvas, zoomed and panned in sync. Composites load first so you're never staring at a blank panel, with layers streaming in right after. Changed pixels show up as a dashed outline, layer by layer. Click a layer for its type, visibility, opacity, and blend mode, or the canvas for its size, resolution, and color space.",
-      'Color palettes get the same treatment: a swatch-by-swatch comparison with hex values, across every common format, so a palette tweak is as easy to review as a repaint.',
+      'Put any two versions side by side, or drag a slider across them. Whatever changed gets a dashed outline, and palettes compare swatch by swatch.',
     ],
     reverse: true,
   },
@@ -219,8 +204,7 @@ export const features = [
     id: 'history',
     title: 'Every save is a place you can go back to.',
     body: [
-      "Each save is a full version you can return to anytime, and you choose exactly which files it includes, or save everything at once. Branch off to try something risky, then merge back when you're happy. Overlapping edits are flagged for review, never quietly overwritten; if one branch edited a file and the other deleted it, the edit wins. A color-coded graph shows how your branches connect.",
-      'Undo a save, or jump back several versions at once; old versions stay recoverable until you decide otherwise. Not ready to commit? Set the change aside on a shelf instead, and bring it back whenever you like. Unsaved changes can be discarded any time, always with a confirmation first.',
+      'Each save is a full version you can return to. Try something risky on a branch, and merge it back if you like how it turned out.',
     ],
     reverse: false,
   },
@@ -228,9 +212,7 @@ export const features = [
     id: 'yours',
     title: 'Yours, in plain language, on your machine.',
     body: [
-      'Artist Mode turns off the technical talk entirely: commit hashes become "Version 12," and changes become plain words like "Updated." One toggle switches back to the technical view.',
-      'History can grow over time, so one button shows how much space old versions are using and clears it, only when you say so. Nothing syncs, nothing uploads.',
-      "Removing a project moves its folder to your Recycle Bin instead of deleting it outright, so an accidental removal is just a restore away. Back up any project, or every project at once, to a single zip file, ready for an external drive or your own cloud storage. It's the one safety net Krita VCS can't provide automatically: if the project folder is ever lost outside the app entirely, a backup you made yourself is the way back.",
+      'Artist Mode swaps the technical talk for plain words like "Version 12." Nothing syncs, nothing uploads. You can back a project up to a single zip file.',
     ],
     reverse: true,
   },
@@ -238,9 +220,7 @@ export const features = [
     id: 'settings',
     title: 'Sign your work, tune it to your machine.',
     body: [
-      "Put your name on every version you save, so on a shared project it's obvious who did what. Set once in Settings, alongside how much space preview thumbnails use.",
-      'Heavy revision history? Turn on compact storage and Krita VCS shrinks it down. Working with big files? Low-memory diffs load layers one at a time instead of all together, so RAM stays under control. Everything here is optional, and the custom title bar can be toggled off anytime, no restart needed.',
-      'Krita VCS ships with eight color themes, six dark and two light. Pick one in Settings and it applies right away, no restart, saved right there on your machine.',
+      'Put your name on every version you save. There are eight color themes to pick from, and compact storage if your history gets heavy.',
     ],
     reverse: false,
   },
@@ -248,7 +228,7 @@ export const features = [
     id: 'performance',
     title: 'See exactly what version control is saving you.',
     body: [
-      'A Performance tab shows what each version added next to what a full copy would have cost, with a percent-saved badge: already around 50% smaller than a full copy by your second save. Save and compare times sit right next to it too, no stopwatch required.',
+      'A Performance tab shows what each version added next to what a full copy would have cost.',
     ],
     reverse: true,
   },
@@ -256,8 +236,7 @@ export const features = [
     id: 'panel',
     title: 'Save a version without leaving Krita.',
     body: [
-      'An optional Version Control panel lives right inside Krita, beside your canvas: save a version, choose exactly which files go into it, discard a change you regret, set work aside, or switch between your version lines.',
-      'Click into the panel and it saves your open paintings for you first, so a version never misses your last few minutes of work. It runs on the same engine and the same history as the main app, so it never matters which one you used last.',
+      "There's an optional panel inside Krita, so you can save a version right beside your canvas. It shares its history with the main app.",
     ],
     reverse: false,
     cta: { label: 'Get the Krita plugin', href: '/plugin' },
@@ -287,15 +266,15 @@ export const whatsNext = {
   items: [
     {
       title: 'Diff stashing',
-      body: 'Set aside an in-progress comparison and come back to it later without losing your place, so you can hop between reviews without re-picking the same two versions.',
+      body: 'Set a comparison aside and come back to it later.',
     },
     {
       title: 'A guided first-launch tour',
-      body: "A quick walkthrough of the app on first open, pointing out the repository switcher, Changes, History, and Settings so new users aren't left guessing.",
+      body: 'A quick walkthrough of the app the first time you open it.',
     },
     {
       title: 'Signed installers',
-      body: "Windows and macOS both flag the app as from an unknown developer on first launch, since it isn't code-signed yet. Getting a signing certificate is next, so that warning goes away.",
+      body: 'Windows and macOS still warn about an unknown developer. Signing the installers fixes that.',
     },
   ],
   cta: { label: 'Request a feature on GitHub', href: links.issues },
@@ -315,14 +294,6 @@ export const faq = [
     a: 'It keeps every version of your painting as you save, like a save file for each stage of your art. You can look back at any earlier version, compare two side by side, or go back to one if you change your mind, all without leaving a mess of duplicate files on your computer.',
   },
   {
-    q: 'What does KVC stand for?',
-    a: 'KVC is just short for Krita VCS. You might also see it written as Krita VC, KritaVC, Krita-VC, or spelled out as Krita Version Control: different ways of writing the name of the same free, local-only app for Krita painters.',
-  },
-  {
-    q: 'Is Krita VC the same as Krita VCS?',
-    a: "Yes, they're the same app. Krita VC is also what Krita's own Python Plugin Manager calls the optional in-Krita panel, but it runs on the exact same engine and history as Krita VCS, not a separate product.",
-  },
-  {
     q: 'Do I need to know Git, or use a command line?',
     a: 'No. There\'s no terminal and no git jargon anywhere in the app. Artist Mode (on by default) shows plain labels like "Version 12" instead of hashes and codes, so if you\'re comfortable saving a file in Krita, you already know most of what you need.',
   },
@@ -332,51 +303,27 @@ export const faq = [
   },
   {
     q: 'Is my art uploaded anywhere?',
-    a: "No. Krita VCS is local-only by design: there's no server, no account, and no sync. Every version lives in a folder on your own machine.",
-  },
-  {
-    q: 'Do I need an internet connection to use it?',
-    a: 'No. Everything runs and is stored entirely on your machine, so it works exactly the same with wifi on or off.',
+    a: "No. Krita VCS is local-only by design: there's no server, no account, and no sync. Every version lives in a folder on your own machine, so it works the same with wifi on or off.",
   },
   {
     q: 'Can I lose work by using this?',
     a: "It's built to make that harder, not easier. History is never deleted behind your back, actions that would discard something (like Discard) always ask you to confirm first, and version control runs as an extra safety net alongside your normal saving, not a replacement for it. Removing a project moves it to your Recycle Bin rather than deleting it outright, and you can back up any project to a zip file for extra safety, kept wherever you like.",
   },
   {
-    q: 'Is it free?',
-    a: 'Yes, Krita VCS is free and open source under the MIT license.',
-  },
-  {
-    q: 'What platforms does it support?',
-    a: "It's a desktop app built with Tauri, available today for Windows, macOS, and Linux, on the same cross-platform base.",
-  },
-  {
-    q: 'Will it slow down Krita or make my computer laggy?',
-    a: "It's tuned for large, layer-heavy .kra files, so saving, comparing, and restoring stay fast even on big, real paintings, not just small test files.",
-  },
-  {
-    q: 'Does it work with any file, or just .kra?',
-    a: "It tracks the file types it understands and leaves the rest of your folder alone: Krita paintings (.kra), with the deep layer-by-layer visual diff, and color palettes (.gpl, .kpl, .aco, .ase), with a color-by-color swatch diff. Other files sitting in the project folder aren't touched, and Krita's own backup and autosave files are skipped too, so history stays a record of your work, not your app's scratch files.",
+    q: 'Is it free, and what does it run on?',
+    a: 'Yes, Krita VCS is free and open source under the GPL-3.0 license. It runs on Windows, macOS, and Linux.',
   },
   {
     q: "Can I start using it on a painting I've already been working on for a while?",
     a: "Yes. Point Krita VCS at the folder your painting already lives in and it picks up from there. You don't need to start a fresh file or lose any of your existing work to begin tracking it.",
   },
   {
-    q: 'Do I have to use branches?',
-    a: 'No. Branches are entirely optional. You can use Krita VCS just to save and compare versions on a single line of work and never touch branching at all.',
-  },
-  {
-    q: 'Can more than one person work on the same painting with this?',
-    a: "Not currently. Krita VCS is built for one artist working locally, with no accounts and no shared or remote history. Branches let you explore multiple directions yourself, but there's no built-in way to share history between different people or machines.",
-  },
-  {
     q: 'Will my history get huge over time?',
     a: 'It only stores what changed between saves, not a full copy each time, so history stays compact. And if you ever want the space back from old, unreachable versions, the built-in "Clean up storage" tool does it, with your confirmation.',
   },
   {
-    q: 'What happens to my history if I uninstall Krita VCS?',
-    a: 'Nothing. Your painting and its saved history live in a folder inside your own project, not inside the app. Uninstalling only removes the program; your files and their history stay exactly where they are.',
+    q: 'Is KVC or Krita VC the same thing as Krita VCS?',
+    a: "Yes. KVC, Krita VC, KritaVC, and Krita Version Control are all names for the same app. Krita VC is also what Krita's Python Plugin Manager calls the optional in-Krita panel, which runs on the same history.",
   },
 ] as const;
 
@@ -1452,7 +1399,7 @@ export const footer = {
     },
   ],
   signature: 'Made for painters by Zeru Sakamoto.',
-  license: 'Free and open source · MIT license',
+  license: 'Free and open source · GPL-3.0 license',
   aliasNote: 'Also called KVC, Krita VC, or Krita Version Control.',
   legal: { label: 'Privacy', href: '/privacy' },
 } as const;
