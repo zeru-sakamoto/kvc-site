@@ -3,7 +3,13 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { preload } from 'react-dom';
-import { HERO_ASSETS, HERO_STAGE, revealHero } from './hero-loader';
+import {
+  armIntro,
+  HERO_ASSETS,
+  HERO_STAGE,
+  heroReady,
+  revealHero,
+} from './hero-loader';
 
 // ssr: false only works from inside a Client Component, and a Server Component
 // importing a Client Component dynamically doesn't code-split at all (Next 16
@@ -60,6 +66,9 @@ export default function HeroScene({ anchorId }: { anchorId: string }) {
   const enabled = useSyncExternalStore(subscribe, canRender3d, () => false);
   const [armed, setArmed] = useState(false);
   const [ready, setReady] = useState(false);
+  // Playing the intro: the canvas must be fully there the instant the loader
+  // drops, so it skips its fade-in.
+  const [intro, setIntro] = useState(false);
   // Bumping this throws away the <canvas> element and mounts a new one, which
   // is the only way to get a fresh WebGL context after the old one is lost.
   // ponytail: capped at 2 retries — if a machine can't hold a context, stop
@@ -74,11 +83,12 @@ export default function HeroScene({ anchorId }: { anchorId: string }) {
     preload(HERO_ASSETS.tablet, { as: 'fetch', crossOrigin: 'anonymous' });
     preload(HERO_ASSETS.stylus, { as: 'fetch', crossOrigin: 'anonymous' });
     preload(HERO_ASSETS.screen, { as: 'image', crossOrigin: 'anonymous' });
+    preload(HERO_ASSETS.logo, { as: 'image', crossOrigin: 'anonymous' });
   }
 
   const onReady = useCallback(() => {
     setReady(true);
-    revealHero();
+    heroReady();
   }, []);
   const onContextLost = useCallback(() => {
     setReady(false);
@@ -108,6 +118,9 @@ export default function HeroScene({ anchorId }: { anchorId: string }) {
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          // Decided before the canvas exists, so its first frame is already
+          // the intro pose.
+          if (canRender3d()) setIntro(armIntro());
           setArmed(true);
           io.disconnect();
         }
@@ -126,9 +139,9 @@ export default function HeroScene({ anchorId }: { anchorId: string }) {
         // Hidden until the models and screenshot have loaded, then faded in,
         // so the tablet never appears half-built.
         <div
-          className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ${
-            ready ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`pointer-events-none absolute inset-0 ${
+            intro ? '' : 'transition-opacity duration-700'
+          } ${ready ? 'opacity-100' : 'opacity-0'}`}
         >
           <HeroCanvas
             key={generation}

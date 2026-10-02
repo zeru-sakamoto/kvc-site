@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import gsap from 'gsap';
 import { hero } from '@/lib/content';
 
@@ -8,7 +8,7 @@ import { hero } from '@/lib/content';
 // (which listens). A module store rather than context: the loader can't sit
 // inside HeroScene, whose ancestors are aria-hidden and transformed (a
 // transform turns position:fixed into position:absolute).
-let state = { revealed: false, progress: 0 };
+let state = { revealed: false, progress: 0, intro: false };
 const listeners = new Set<() => void>();
 function set(next: Partial<typeof state>) {
   state = { ...state, ...next };
@@ -18,7 +18,7 @@ function subscribe(l: () => void) {
   listeners.add(l);
   return () => listeners.delete(l);
 }
-const SERVER_STATE = { revealed: false, progress: 0 };
+const SERVER_STATE = { revealed: false, progress: 0, intro: false };
 
 // What the 3D hero waits on. Kept here, not in hero-canvas.tsx, so
 // hero-scene.tsx can start fetching them without pulling three into the main
@@ -29,7 +29,66 @@ export const HERO_ASSETS = {
   // A lossless WebP of public/hero-screenshot.png, made by
   // scripts/build-webp.mjs. Swap the PNG for a new capture and rerun it.
   screen: '/hero-screenshot.webp',
+  // The loader's own logo, which the intro puts on the tablet's screen.
+  logo: '/logo.svg',
 };
+
+// The post-load intro: the loader's logo grows 3x, then the camera pulls back
+// to show it was on the tablet's screen all along, the screen switches to the
+// app, and the pen lifts out of the logo's own grey pen. GSAP tweens these (below)
+// and hero-canvas.tsx reads them every frame. All 1 = settled, which is also
+// what every path without the intro renders. x, y and size are the grown
+// logo's centre (client px) and height, which the canvas's first frame
+// matches exactly so the overlay can vanish without a visible cut.
+export const heroIntro = {
+  cam: 1,
+  launch: 1,
+  pen: 1,
+  done: true,
+  x: 0,
+  y: 0,
+  size: 96,
+};
+const INTRO_KEY = 'kvc-hero-intro';
+const TEXT = '[data-hero-in]:not(.hero-backdrop)';
+
+// Decides, before the canvas paints anything, whether this load gets the
+// intro: once per tab session, only from the top of the page, never under
+// reduced motion or once the loader has already given up.
+export function armIntro() {
+  if (
+    state.revealed ||
+    window.scrollY > 4 ||
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+    return false;
+  try {
+    if (sessionStorage.getItem(INTRO_KEY)) return false;
+  } catch {}
+  const logo = document.querySelector('[data-hero-logo]');
+  if (!logo) return false;
+  const r = logo.getBoundingClientRect();
+  Object.assign(heroIntro, {
+    cam: 0,
+    launch: 0,
+    pen: 0,
+    done: false,
+    x: r.left + r.width / 2,
+    y: r.top + r.height / 2,
+    size: r.height * 3,
+  });
+  return true;
+}
+
+// The canvas has every asset in and is drawing. With the intro armed, give it
+// two frames to paint the intro pose under the overlay, then play.
+export function heroReady() {
+  if (heroIntro.done) return revealHero();
+  if (state.intro) return;
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => set({ intro: true, progress: 1 })),
+  );
+}
 
 // The hero's two layout queries, mirrored by the hero-wide / hero-stage
 // variants in globals.css (CSS can't import these, so keep the pairs equal).
@@ -43,7 +102,11 @@ export const HERO_WIDE = '(min-width: 1024px) and (min-aspect-ratio: 1/1)';
 export const HERO_STAGE = `${HERO_WIDE} and (min-height: 500px), (min-width: 768px) and (min-height: 780px)`;
 
 export function revealHero() {
-  if (!state.revealed) set({ revealed: true, progress: 1 });
+  if (state.revealed) return;
+  // Lifted without the intro (give-up, lost context): render settled.
+  if (!state.intro)
+    Object.assign(heroIntro, { cam: 1, launch: 1, pen: 1, done: true });
+  set({ revealed: true, progress: 1 });
 }
 
 export function setHeroProgress(loaded: number, total: number) {
@@ -59,7 +122,7 @@ const GIVE_UP_MS = 8000;
 // Covers the whole homepage, header included, until the 3D hero has every
 // asset in. SSR renders it visible so the page can't flash in first.
 export default function HeroLoader() {
-  const { revealed, progress } = useSyncExternalStore(
+  const { revealed, progress, intro } = useSyncExternalStore(
     subscribe,
     () => state,
     () => SERVER_STATE,
@@ -67,7 +130,8 @@ export default function HeroLoader() {
   const [gone, setGone] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(revealHero, GIVE_UP_MS);
+    // A playing intro lifts the loader itself.
+    const timer = setTimeout(() => state.intro || revealHero(), GIVE_UP_MS);
     return () => clearTimeout(timer);
   }, []);
 
@@ -81,7 +145,8 @@ export default function HeroLoader() {
         html.style.overflow = '';
       };
     }
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (intro || window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+      return;
     const tl = gsap.timeline().from('[data-hero-in]', {
       opacity: 0,
       y: 20,
@@ -92,12 +157,76 @@ export default function HeroLoader() {
     return () => {
       tl.kill();
     };
-  }, [revealed]);
+  }, [revealed, intro]);
+
+  // The intro, ~3.3s. The overlay drops on one frame at 0.5s: underneath, the
+  // canvas is already showing the same logo at the same size on the tablet's
+  // screen, which fills the view. Any wheel, touch, key or click jumps to the
+  // end.
+  const overlay = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!intro) return;
+    const events = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+    const skip = () => tl.progress(1);
+    const off = () =>
+      events.forEach((e) => window.removeEventListener(e, skip));
+    const finish = () => {
+      off();
+      try {
+        sessionStorage.setItem(INTRO_KEY, '1');
+      } catch {}
+      // Two frames late, so the click that skipped isn't also taken as a tap.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          heroIntro.done = true;
+        }),
+      );
+      gsap.set(['body>header', TEXT], { clearProps: 'opacity,transform' });
+      revealHero();
+      setGone(true);
+    };
+    gsap.set(TEXT, { opacity: 0, y: 20 });
+    // Show the canvas's masked top and bottom edges while the screen fills
+    // the view, then let the mask back in as it pulls away (globals.css).
+    gsap.set('.hero-backdrop', { '--hero-edge': 1 });
+    const tl = gsap
+      .timeline({ onComplete: finish })
+      .to('[data-hero-bar]', { opacity: 0, duration: 0.35 }, 0)
+      .to(
+        '[data-hero-logo]',
+        { scale: 3, duration: 0.5, ease: 'power2.inOut' },
+        0,
+      )
+      // No CSS fade: the class's opacity transition would make this a dissolve.
+      .set(overlay.current, { autoAlpha: 0, transition: 'none' }, 0.5)
+      .to(heroIntro, { cam: 1, duration: 1.2, ease: 'power3.inOut' }, 0.5)
+      .to(
+        '.hero-backdrop',
+        { '--hero-edge': 0, duration: 1.2, ease: 'power3.inOut' },
+        0.5,
+      )
+      .to('body>header', { opacity: 1, duration: 0.5 }, 1.2)
+      .to(
+        TEXT,
+        { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.15 },
+        1.2,
+      )
+      .to(heroIntro, { launch: 1, duration: 0.4, ease: 'power2.out' }, 1.7)
+      // From the launch's first frame: the pen has to be under the logo
+      // before it starts to fade. The canvas eases it.
+      .to(heroIntro, { pen: 1, duration: 1.6, ease: 'none' }, 1.7);
+    events.forEach((e) => window.addEventListener(e, skip, { passive: true }));
+    return () => {
+      off();
+      tl.kill();
+    };
+  }, [intro]);
 
   if (gone) return null;
 
   return (
     <div
+      ref={overlay}
       data-hero-loader
       // Lenis listens on window; this keeps wheel and touch from scrolling the
       // page behind the overlay.
@@ -125,8 +254,17 @@ export default function HeroLoader() {
         <style>{'[data-hero-loader]{display:none}'}</style>
       </noscript>
       {/* eslint-disable-next-line @next/next/no-img-element -- tiny SVG, no optimisation to gain */}
-      <img src="/logo.svg" alt="" width={48} height={48} />
-      <div className="h-0.5 w-40 overflow-hidden rounded-full bg-white/10">
+      <img
+        data-hero-logo
+        src={HERO_ASSETS.logo}
+        alt=""
+        width={48}
+        height={48}
+      />
+      <div
+        data-hero-bar
+        className="h-0.5 w-40 overflow-hidden rounded-full bg-white/10"
+      >
         <div
           className="h-full origin-left rounded-full bg-brand-blue transition-transform duration-300"
           // A sliver before the 3D chunk arrives, so it reads as started.

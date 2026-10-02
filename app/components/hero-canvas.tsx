@@ -8,7 +8,13 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { HERO_ASSETS, HERO_WIDE, setHeroProgress } from './hero-loader';
+import { hero } from '@/lib/content';
+import {
+  HERO_ASSETS,
+  HERO_WIDE,
+  heroIntro,
+  setHeroProgress,
+} from './hero-loader';
 
 // The screen's RectAreaLight needs its LTC lookup tables registered once.
 RectAreaLightUniformsLib.init();
@@ -17,6 +23,7 @@ const {
   screen: SCREEN_SRC,
   tablet: TABLET_SRC,
   stylus: STYLUS_SRC,
+  logo: LOGO_SRC,
 } = HERO_ASSETS;
 // The Kamvas panel is exactly 16:9 (see the model's README).
 const PANEL_ASPECT = 16 / 9;
@@ -125,7 +132,9 @@ const BUTTON_PAD = 0.003;
 const POWER_FADE = 0.3;
 // Screen power: `on` is the switch, `level` its eased 0..1 brightness. Shared
 // with LightPool, whose light is the screen's.
-const power = { on: true, level: 1 };
+// `glow` is what the light actually gives off: `level`, dimmed further while
+// the intro's logo is on screen (a near-black display lights next to nothing).
+const power = { on: true, level: 1, glow: 1 };
 
 type Palette = ReturnType<typeof readPalette>;
 
@@ -198,6 +207,25 @@ function averageTint(source: HTMLCanvasElement) {
   return tint.multiplyScalar(1 / max);
 }
 
+// The intro's opening shot (see heroIntro in hero-loader.tsx): square-on to
+// the propped screen, down its normal, with the screen's top edge up. The
+// panel's world size, its centre on the glass, and its normal and up axes
+// (local +Y and -Z, tilted by PROP about X).
+const PANEL_W = SCREEN.w * MODEL_SCALE;
+const PANEL_H = SCREEN.h * MODEL_SCALE;
+const INTRO = {
+  center: null as THREE.Vector3 | null,
+  normal: new THREE.Vector3(0, Math.cos(PROP), Math.sin(PROP)),
+  up: new THREE.Vector3(0, Math.sin(PROP), -Math.cos(PROP)),
+  cam: new THREE.OrthographicCamera(),
+};
+// How far past the viewport's edges the screen reaches in the opening shot,
+// so its bezel stays out of sight until the pull-back starts.
+const INTRO_OVERFILL = 1.05;
+// The opening shot's zoom, written by CameraRig, read by Stage to size the
+// logo on the screen.
+const introZoom = { value: 1 };
+
 // Tablet frame: the group pivots on the front edge, so rotating it by PROP
 // lifts the back edge off the desk. A point in model metres, mapped to world.
 const tabletPivot = new THREE.Vector3(0, 0, HALF_DEPTH * MODEL_SCALE);
@@ -226,7 +254,24 @@ type Frame = {
   w: number;
   h: number;
   alignRight: boolean;
+  // The intro: where the logo sits, in px from the canvas centre, and the
+  // zoom that makes the screen overfill the viewport around it.
+  ix: number;
+  iy: number;
+  iz: number;
 };
+
+// The zoom at which the panel covers the whole viewport around client point
+// (x, y), with INTRO_OVERFILL to spare.
+function introFill(x: number, y: number, vw: number, vh: number) {
+  return (
+    INTRO_OVERFILL *
+    Math.max(
+      (2 * Math.max(x, vw - x)) / PANEL_W,
+      (2 * Math.max(y, vh - y)) / PANEL_H,
+    )
+  );
+}
 
 // Where an element's first line of capitals starts, in px from the top of its
 // section. Offsets, not rects, so the headline's entrance transform doesn't
@@ -290,6 +335,14 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
         w: a.width,
         h: a.height,
         alignRight: window.matchMedia(HERO_WIDE).matches,
+        ix: heroIntro.x - (c.left + c.width / 2),
+        iy: heroIntro.y - (c.top + c.height / 2),
+        iz: introFill(
+          heroIntro.x,
+          heroIntro.y,
+          window.innerWidth,
+          window.innerHeight,
+        ),
       };
     };
     measure();
@@ -311,6 +364,9 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
       w: size.width,
       h: size.height,
       alignRight: false,
+      ix: 0,
+      iy: 0,
+      iz: introFill(size.width / 2, size.height / 2, size.width, size.height),
     };
     // Side by side, VIEW_H/VIEW_W keep headroom for the desk around the
     // tablet. Stacked, the box is only as tall as the text leaves room for,
@@ -323,10 +379,6 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
           f.w / (silhouette.right - silhouette.left),
         )
       : Math.min(f.h / VIEW_H, f.w / VIEW_W);
-    if (cam.zoom !== zoom) {
-      cam.zoom = zoom;
-      cam.updateProjectionMatrix();
-    }
     // While the pen follows the mouse, the pointer orbit holds where it was
     // on entry, so the tablet stays still while it's being "used". Held, not
     // faded to zero: easing it back would slide the glass under the cursor
@@ -386,6 +438,32 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
     camera.position
       .addScaledVector(right, -dx / zoom)
       .addScaledVector(up, dy / zoom);
+
+    // The intro blends from its opening shot into the rest pose above, which
+    // is recomputed live every frame, so a resize mid-flight can't strand it.
+    // Zoom blends in log space, so the pull-back reads as an even speed.
+    let z = zoom;
+    const k = heroIntro.cam;
+    introZoom.value = f.iz;
+    if (k < 1) {
+      const c = INTRO.cam;
+      INTRO.center ??= tabletToWorld(SCREEN.x, GLASS_TOP, 0);
+      c.position.copy(INTRO.center).addScaledVector(INTRO.normal, CAM_DIST);
+      c.up.copy(INTRO.up);
+      c.lookAt(INTRO.center);
+      right.set(1, 0, 0).applyQuaternion(c.quaternion);
+      up.set(0, 1, 0).applyQuaternion(c.quaternion);
+      c.position
+        .addScaledVector(right, -f.ix / f.iz)
+        .addScaledVector(up, f.iy / f.iz);
+      camera.position.lerp(c.position, 1 - k);
+      camera.quaternion.slerp(c.quaternion, 1 - k);
+      z = Math.exp(THREE.MathUtils.lerp(Math.log(f.iz), Math.log(zoom), k));
+    }
+    if (cam.zoom !== z) {
+      cam.zoom = z;
+      cam.updateProjectionMatrix();
+    }
   });
 
   return null;
@@ -497,7 +575,7 @@ function LightPool({ tint }: { tint: THREE.Color }) {
   const matRef = useRef<THREE.ShaderMaterial>(null);
   useFrame(() => {
     if (matRef.current)
-      matRef.current.uniforms.uStrength.value = 0.3 * power.level;
+      matRef.current.uniforms.uStrength.value = 0.3 * power.glow;
   });
   return (
     <mesh
@@ -635,6 +713,60 @@ void main() {
 // ~9mm across on the glass.
 const CURSOR_SIZE = 0.009 * MODEL_SCALE;
 
+// The intro's logo screen: the loader's own background (--color-canvas-deep)
+// edge to edge with the logo in the middle, over the real screen until the
+// "launch". colorspace_fragment is what makes the fill land on exactly the
+// loader's hex (the canvas is flat, no tone mapping), so the handoff is a
+// cut nobody sees. uBox is the logo's size as a share of the panel.
+const LOGO_FRAG = `
+varying vec2 vUv;
+uniform vec3 uDeep;
+uniform sampler2D uLogo;
+uniform vec2 uBox;
+uniform float uOpacity;
+void main() {
+  vec2 p = (vUv - 0.5) / uBox + 0.5;
+  vec2 inside = step(0.0, p) * step(p, vec2(1.0));
+  vec4 logo = texture2D(uLogo, clamp(p, 0.0, 1.0)) * inside.x * inside.y;
+  gl_FragColor = vec4(mix(uDeep, logo.rgb, logo.a), uOpacity);
+  #include <colorspace_fragment>
+}`;
+
+// The launch: the screenshot settles from this zoom to 1 as it comes up, and
+// the logo shrinks by the same share as it goes, like an app opening.
+const LAUNCH_ZOOM = 1.04;
+const LOGO_EXIT = 0.85;
+// The pen's way in: it comes out of the logo. The logo (public/logo.svg) has
+// a grey pen through its middle; the 3D pen starts lying flat on the glass
+// exactly over it, at its size and angle, shows through as the logo screen
+// fades in the launch, then lifts, grows to full size and turns into its
+// hover pose. These are that grey pen's nib tip and tail in the SVG's viewBox
+// units (y down), read off its path. Re-measure if the logo changes.
+const LOGO_VIEW = { w: 258.47, h: 276.05 };
+const LOGO_PEN = { nib: [131.9, 199.8], tail: [84.6, 3.3] };
+const LOGO_PEN_LEN = Math.hypot(
+  LOGO_PEN.tail[0] - LOGO_PEN.nib[0],
+  LOGO_PEN.tail[1] - LOGO_PEN.nib[1],
+);
+const PEN_RADIUS = 0.00729; // model metres, from the GLB's bounds
+// Flat on the glass: the pen's +X (nib to tail) along the logo pen, in the
+// tablet frame, where SVG x is +X and SVG y is +Z (down the screen).
+const PEN_FLAT = (() => {
+  const x = new THREE.Vector3(
+    LOGO_PEN.tail[0] - LOGO_PEN.nib[0],
+    0,
+    LOGO_PEN.tail[1] - LOGO_PEN.nib[1],
+  ).normalize();
+  const y = new THREE.Vector3(0, 1, 0);
+  return new THREE.Quaternion().setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(x, y, new THREE.Vector3().crossVectors(x, y)),
+  );
+})();
+// How high the nib arcs off the glass mid-flight, in model metres.
+const PEN_ARC = 0.03;
+const penHome = new THREE.Vector3();
+const penTurn = new THREE.Quaternion();
+
 // Scratch for the per-frame hit test: the mouse ray, taken into the tablet
 // frame and met with the glass as a plain plane (y = screen surface), which is
 // all the "is it over the screen" question needs. No mesh raycast.
@@ -650,6 +782,28 @@ const hit = new THREE.Vector3();
 const penBase = new THREE.Quaternion();
 const penLean = new THREE.Quaternion();
 const euler = new THREE.Euler();
+
+// Whether some installed font has a glyph for every character of `text`, in
+// ctx's current font. A missing glyph draws as the "tofu" box, the same one a
+// noncharacter (U+FFFF) gets, so each character is drawn and compared with
+// that, pixel for pixel.
+// ponytail: a platform that draws nothing at all for missing glyphs would
+// still differ from its own tofu only by chance; none of the big engines do.
+function canDraw(ctx: CanvasRenderingContext2D, text: string) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 48;
+  const probe = c.getContext('2d', { willReadFrequently: true });
+  if (!probe) return false;
+  probe.font = ctx.font.replace(/\d+px/, '32px');
+  probe.textBaseline = 'top';
+  const draw = (ch: string) => {
+    probe.clearRect(0, 0, 48, 48);
+    probe.fillText(ch, 4, 4);
+    return probe.getImageData(0, 0, 48, 48).data.join();
+  };
+  const tofu = draw('￿');
+  return [...text].every((ch) => draw(ch) !== tofu);
+}
 
 // The GLBs are meshopt-compressed and quantized (gltf-transform meshopt). To
 // swap in a new model, run it through the same step:
@@ -670,10 +824,11 @@ function Stage({
   const tabletGltf = useLoader(GLTFLoader, TABLET_SRC, withMeshopt);
   const stylusGltf = useLoader(GLTFLoader, STYLUS_SRC, withMeshopt);
   const shot = useLoader(THREE.TextureLoader, SCREEN_SRC);
+  const logo = useLoader(THREE.TextureLoader, LOGO_SRC);
 
   // useLoader hands back cache-shared objects, so the screenshot goes onto a
   // cloned scene with a cloned Screen material and a cloned texture.
-  const { tablet, tint, bezel, screenMat } = useMemo(() => {
+  const { tablet, tint, bezel, screenMat, shotTex } = useMemo(() => {
     const scene = tabletGltf.scene.clone();
     const screen = scene.getObjectByName('Screen') as THREE.Mesh;
     const panel = fitToPanel(shot.image);
@@ -681,6 +836,8 @@ function Stage({
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.flipY = false; // glTF UV convention
     tex.anisotropy = 16;
+    // The launch zooms it about the panel centre.
+    tex.center.set(0.5, 0.5);
 
     const mat = (screen.material as THREE.MeshStandardMaterial).clone();
     // Lit by emissive alone, so the scene's lights never tint the UI itself.
@@ -708,8 +865,66 @@ function Stage({
     }
     const bezel = byName('BezelPlastic')?.material as
       THREE.Material | undefined;
-    return { tablet: scene, tint: averageTint(panel), bezel, screenMat: mat };
+    return {
+      tablet: scene,
+      tint: averageTint(panel),
+      bezel,
+      screenMat: mat,
+      shotTex: tex,
+    };
   }, [tabletGltf, shot]);
+
+  // The logo screen's material. The loader draws the logo into a square box,
+  // fitted (an <img> of a taller-than-wide SVG), and so does this.
+  const logoRef = useRef<THREE.Mesh>(null);
+  const logoMatRef = useRef<THREE.ShaderMaterial>(null);
+  const { logoUniforms, logoAspect } = useMemo(() => {
+    // Redrawn from the vector at 512px tall: the browser rasterises a
+    // viewBox-only SVG at ~150px, soft at the logo's 96px on a dense screen.
+    const img = logo.image as HTMLImageElement;
+    const c = document.createElement('canvas');
+    c.height = 512;
+    c.width = Math.round((512 * img.width) / img.height) || 512;
+    c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return {
+      logoUniforms: {
+        uDeep: { value: palette.deep },
+        uLogo: { value: tex },
+        uBox: { value: new THREE.Vector2() },
+        uOpacity: { value: 1 },
+      },
+      logoAspect: c.width / c.height,
+    };
+  }, [logo, palette]);
+
+  // The switched-off screen's message (easter egg), drawn once into a
+  // panel-shaped texture in the page's own font and text colour.
+  const offMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const offTex = useMemo(() => {
+    const c = document.createElement('canvas');
+    c.width = 1024;
+    c.height = Math.round((1024 * SCREEN.h) / SCREEN.w);
+    const ctx = c.getContext('2d')!;
+    const family = getComputedStyle(document.body).fontFamily;
+    ctx.fillStyle = `#${palette.paper.getHexString()}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `500 56px ${family}`;
+    ctx.fillText(hero.screenOff.line, c.width / 2, c.height / 2 - 48);
+    ctx.font = `500 72px ${family}`;
+    const { face, faceFallback } = hero.screenOff;
+    ctx.fillText(
+      canDraw(ctx, face) ? face : faceFallback,
+      c.width / 2,
+      c.height / 2 + 48,
+    );
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 16;
+    return tex;
+  }, [palette]);
 
   // The pen body is near-black (albedo 0.02); lift it a touch so the screen's
   // spill actually registers on its underside instead of vanishing.
@@ -747,6 +962,13 @@ function Stage({
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    // Measured in the pen's base pose, wherever the frame loop has put it
+    // (small and flat on the logo, if the intro is playing).
+    penRef.current?.position
+      .set(NIB_AT.x, GLASS_TOP + HOVER, NIB_AT.z)
+      .multiplyScalar(MODEL_SCALE);
+    penRef.current?.scale.setScalar(1);
+    penRef.current?.rotation.set(0, -0.55, 1.12);
     root.updateWorldMatrix(true, true);
     const axis = new THREE.Vector3(Math.cos(YAW), 0, -Math.sin(YAW));
     // The rest-pose camera's up vector (world up, square to the view).
@@ -908,7 +1130,9 @@ function Stage({
     }
     // Reduced motion: the pen stays home and the glass takes no taps. The
     // power button still works; it's a switch, not a movement.
-    if (still) on = false;
+    // Nor does anything during the intro.
+    if (still || !heroIntro.done) on = false;
+    if (!heroIntro.done) onButton = false;
     n.on = on;
 
     // A hand over the power button is the only hint it does anything.
@@ -940,10 +1164,36 @@ function Stage({
           1,
         );
     const lit = THREE.MathUtils.smoothstep(power.level, 0, 1);
+    // The intro's launch: the logo screen fades and shrinks away over the
+    // screenshot, which settles from LAUNCH_ZOOM, and the screen's light comes
+    // up with it.
+    const launch = heroIntro.launch;
+    power.glow = lit * THREE.MathUtils.lerp(0.12, 1, launch);
+    shotTex.repeat.setScalar(1 / THREE.MathUtils.lerp(LAUNCH_ZOOM, 1, launch));
+    if (logoRef.current) logoRef.current.visible = launch < 1;
+    const logoMat = logoMatRef.current;
+    if (logoMat && launch < 1) {
+      // The logo's height on screen, in px, over the opening shot's zoom.
+      const box = heroIntro.size / introZoom.value;
+      const h = box * Math.min(1, 1 / logoAspect);
+      const shrink = THREE.MathUtils.lerp(1, LOGO_EXIT, launch);
+      logoMat.uniforms.uBox.value.set(
+        ((h * logoAspect) / PANEL_W) * shrink,
+        (h / PANEL_H) * shrink,
+      );
+      logoMat.uniforms.uOpacity.value = 1 - launch;
+    }
     if (screenMatRef.current) screenMatRef.current.emissiveIntensity = lit;
-    if (lightRef.current) lightRef.current.intensity = 7 * lit;
-    // The display draws the hover cursor, so it goes dark with it.
-    if (cursorMatRef.current) cursorMatRef.current.uniforms.uAlpha.value = lit;
+    // The off-screen message comes up as the picture goes.
+    if (offMatRef.current) {
+      offMatRef.current.opacity = 1 - lit;
+      offMatRef.current.visible = lit < 1;
+    }
+    if (lightRef.current) lightRef.current.intensity = 7 * power.glow;
+    // The display draws the hover cursor, so it goes dark with it, and it
+    // only appears as the flying pen arrives over the glass.
+    if (cursorMatRef.current)
+      cursorMatRef.current.uniforms.uAlpha.value = lit * heroIntro.pen ** 4;
     // LED: green while on, with a soft brightening every ~6s as a hint; a
     // steady, dimmer red when off. Cross-fades with the screen.
     const led = ledMatRef.current;
@@ -1024,6 +1274,39 @@ function Stage({
     penLean.setFromEuler(euler.set(n.leanX, 0, n.leanZ));
     pen.quaternion.multiplyQuaternions(penLean, penBase);
 
+    // The intro's pen: lifts, grows and turns
+    // out of the logo's grey pen to the hover pose it would have now (see
+    // LOGO_PEN).
+    const fly = heroIntro.pen;
+    pen.visible = fly > 0;
+    pen.scale.setScalar(1);
+    if (fly < 1) {
+      penHome.copy(pen.position);
+      // One SVG unit on the glass, in world units: the logo's drawn height
+      // (as the logo screen sizes it, shrink included) over its viewBox.
+      const unit =
+        ((heroIntro.size / introZoom.value) *
+          Math.min(1, 1 / logoAspect) *
+          THREE.MathUtils.lerp(1, LOGO_EXIT, launch)) /
+        LOGO_VIEW.h;
+      const small = (LOGO_PEN_LEN * unit) / (2 * NIB_TIP * MODEL_SCALE);
+      // Slow off the mark, so it sits on the logo while that fades.
+      const k = THREE.MathUtils.smootherstep(fly, 0, 1);
+      const size = THREE.MathUtils.lerp(small, 1, k);
+      pen.position
+        .set(
+          SCREEN.x * MODEL_SCALE + (LOGO_PEN.nib[0] - LOGO_VIEW.w / 2) * unit,
+          // Resting on the glass: its axis one (scaled) radius above it.
+          (GLASS_TOP + PEN_RADIUS * small) * MODEL_SCALE,
+          (LOGO_PEN.nib[1] - LOGO_VIEW.h / 2) * unit,
+        )
+        .lerp(penHome, k);
+      pen.position.y += Math.sin(k * Math.PI) * PEN_ARC * MODEL_SCALE;
+      penTurn.copy(PEN_FLAT).slerp(pen.quaternion, k);
+      pen.quaternion.copy(penTurn);
+      pen.scale.setScalar(size);
+    }
+
     // The cursor tracks the nib straight down the panel normal, like the real
     // thing; the distance between the two is what shows the hover height.
     cursorRef.current?.position.set(
@@ -1081,6 +1364,57 @@ function Stage({
             color={tint}
             intensity={7}
           />
+
+          {/* The intro's logo screen, a hair above the glass, exactly over
+              the panel. Drawn last and over everything: the additive glows
+              behind the glass (the desk's light pool) otherwise bleed
+              through it and give the handoff away. It's gone before the pen
+              reaches the glass. */}
+          <mesh
+            ref={logoRef}
+            position={[
+              SCREEN.x * MODEL_SCALE,
+              (GLASS_TOP + 0.0001) * MODEL_SCALE,
+              0,
+            ]}
+            rotation-x={-Math.PI / 2}
+            renderOrder={10}
+            visible={false}
+          >
+            <planeGeometry args={[PANEL_W, PANEL_H]} />
+            <shaderMaterial
+              ref={logoMatRef}
+              vertexShader={CURSOR_VERT}
+              fragmentShader={LOGO_FRAG}
+              uniforms={logoUniforms}
+              transparent
+              depthTest={false}
+              depthWrite={false}
+            />
+          </mesh>
+
+          {/* Easter egg: what the screen says while it's switched off. */}
+          <mesh
+            position={[
+              SCREEN.x * MODEL_SCALE,
+              (GLASS_TOP + 0.0002) * MODEL_SCALE,
+              0,
+            ]}
+            rotation-x={-Math.PI / 2}
+            renderOrder={2}
+          >
+            <planeGeometry args={[PANEL_W, PANEL_H]} />
+            <meshBasicMaterial
+              ref={offMatRef}
+              map={offTex}
+              transparent
+              opacity={0}
+              visible={false}
+              depthWrite={false}
+              toneMapped={false}
+              fog={false}
+            />
+          </mesh>
 
           <mesh ref={cursorRef} rotation-x={-Math.PI / 2} renderOrder={2}>
             <planeGeometry args={[CURSOR_SIZE, CURSOR_SIZE]} />
@@ -1226,11 +1560,15 @@ function Dust({ palette, tint }: { palette: Palette; tint: THREE.Color }) {
     return [pos, col];
   }, [palette, tint]);
 
+  const matRef = useRef<THREE.PointsMaterial>(null);
   useFrame(({ clock }) => {
     // A slow sway, not a spin: the field is off-centre, and a full rotation
     // would carry it away from the frame.
     if (ref.current && !reducedMotion.matches)
       ref.current.rotation.y = Math.sin(clock.elapsedTime * 0.05) * 0.15;
+    // Held back while the intro's screen fills the view: specks over the
+    // logo would give the handoff away.
+    if (matRef.current) matRef.current.opacity = 0.8 * heroIntro.cam;
   });
 
   return (
@@ -1241,6 +1579,7 @@ function Dust({ palette, tint }: { palette: Palette; tint: THREE.Color }) {
       </bufferGeometry>
       {/* Orthographic: no size attenuation, so size is in pixels. */}
       <pointsMaterial
+        ref={matRef}
         size={2.6}
         sizeAttenuation={false}
         vertexColors
@@ -1299,7 +1638,7 @@ function Clouds({ palette }: { palette: Palette }) {
     () =>
       CLOUDS.map((c) => ({
         uColor: { value: palette[c.hue] },
-        uOpacity: { value: c.opacity },
+        uOpacity: { value: c.opacity as number },
       })),
     [palette],
   );
@@ -1311,6 +1650,8 @@ function Clouds({ palette }: { palette: Palette }) {
       if (!m) return;
       // Billboard: always face the camera.
       m.quaternion.copy(camera.quaternion);
+      // Faded in with the intro's pull-back, like the dust.
+      uniforms[i].uOpacity.value = c.opacity * heroIntro.cam;
       m.position.set(
         c.at[0] + Math.sin(t * c.speed + i * 2) * 0.5,
         c.at[1] + Math.sin(t * c.speed * 0.7 + i) * 0.3,

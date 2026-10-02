@@ -393,7 +393,10 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
     on `body`, the only hint besides the LED. Clicking it fades the screen off over 0.3s:
     the Screen's emissive, the `RectAreaLight` and the desk light pool all go to zero, so the
     scene falls back to its ambient and rim light. The hover crosshair and tap ripple go
-    too (a dark display draws nothing), but the pen still follows and taps. Clicking again
+    too (a dark display draws only its message), but the pen still follows and taps. As the
+    picture fades, the dark screen shows "Why'd you turn it off?" over a staring `(ಠ_ಠ)` (or `(•_•)` where no installed font has those glyphs, checked by drawing them against the missing-glyph box) in
+    Paper (`--color-primary`) and the page font, drawn once to a canvas texture on a plane just
+    above the glass; the copy is `hero.screenOff` in `lib/content.ts`. Clicking again
     fades it back. Not persisted: every load starts on. The LED is a thin additive outline
     traced around the pill (a stadium SDF, not in the model): Status Green with a soft
     brightening every ~6s while on, a steady dimmer Status Red while off, cross-fading with
@@ -426,6 +429,27 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
     context retries run out (the stage is then left empty). While up it locks scroll and hides the fixed header (the hero sits
     in a `z-10` stacking context, so it can't out-stack it); the `[data-hero-in]` intro stagger
     plays as it lifts. A `<noscript>` style hides it for JS-off visitors.
+  - **Intro (first 3D load per tab session).** Instead of fading, the loader hands off to the
+    tablet in one ~2.5s GSAP timeline (`hero-loader.tsx`) driving the `heroIntro` values the
+    canvas reads each frame. 0-0.5s: the bar fades and the logo grows 3x. 0.5s: the overlay
+    drops on a single frame. Underneath, the canvas is already showing an opening shot, square-on
+    down the propped screen's normal, zoomed so the screen overfills the viewport (1.05x), with a
+    logo screen drawn on the glass: `--color-canvas-deep` fill plus the logo at the grown logo's
+    exact client position and 144px size. The canvas is `flat` (no tone mapping) and the shader
+    ends in `colorspace_fragment`, so the fill is the loader's hex and the cut can't be seen. The
+    logo screen draws last with no depth test, because additive glows behind the glass would
+    otherwise bleed through. 0.5-1.7s: the camera blends (slerp, log-space zoom) into the live
+    rest pose, the dust and haze fade in, and `--hero-edge` brings the backdrop's edge mask back.
+    From 1.2s the header and text stagger in. 1.7-2.1s, the launch: the logo screen fades and
+    shrinks to 0.85 while the screenshot settles from 1.04x, and the screen light rises from 12%.
+    1.7-3.3s (experimental): the pen comes out of the logo. It starts lying flat on the glass
+    exactly over the logo's grey pen, at that pen's size and angle (`LOGO_PEN`, measured off
+    `logo.svg`'s path), shows through as the logo screen fades, then lifts in a low arc, grows to
+    full size and turns into its hover pose (smootherstep, so it lingers on the logo first). Pen follow, taps and the power button stay off until
+    the intro ends. Any wheel, touch, key or click jumps to the end. It plays only from the top
+    of the page, without reduced motion, and once per session (`sessionStorage`
+    `kvc-hero-intro`); every other path uses the plain fade onto the settled scene, and so do the
+    8s give-up and a lost context.
   - **Never in the shared bundle.** `next/dynamic(..., { ssr: false })` from inside a Client
     Component, the same shape as `flourishes.tsx`, keeps `three` off every other route. The
     canvas also waits for an IntersectionObserver before mounting, so it never competes with

@@ -20,13 +20,17 @@
 /* The live scene covers the whole hero; only its top (under the header) and
    bottom (into the next section) need fading. Left and right are the
    viewport edges, and the desk's own radial falloff handles those. */
+/* --hero-edge lifts the faded edges: the hero intro (hero-loader.tsx) starts
+   at 1, with the tablet's screen filling the view edge to edge, and tweens it
+   back to 0 as the camera pulls away. */
 .hero-backdrop {
+  --hero-edge: 0;
   mask-image: linear-gradient(
     to bottom,
-    transparent,
+    rgb(0 0 0 / var(--hero-edge)),
     black 12%,
     black 94%,
-    transparent
+    rgb(0 0 0 / var(--hero-edge))
   );
 }
 
@@ -81,6 +85,9 @@
 
 :root {
   color-scheme: dark;
+  /* The hero loader sets overflow:hidden on <html>, which drops the scrollbar;
+     reserving its gutter keeps the layout from jumping sideways when it returns. */
+  scrollbar-gutter: stable;
 }
 
 /* Mobile safety — clip, never hidden (Hallmark gate 34). */
