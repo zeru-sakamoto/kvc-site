@@ -5,11 +5,12 @@ import HeroLoader from './hero-loader';
 import HeroMeta from './hero-meta';
 import HeroScene from './hero-scene';
 
-// Words at the top-left, a big tablet (~3/4 of the hero's width on a landscape
-// lg screen) right and low. The 3D scene covers the whole section behind the
-// words (desk, grid, haze); its camera centres the tablet on the anchor box.
-// The tablet's raised left end may sit behind the text, which always stays on
-// top.
+// A big tablet top-left, the words bottom-right. The 3D scene covers the whole
+// section behind the words (desk, grid, haze); its camera fits the tablet to
+// the anchor box and pins it to the box's top-left corner. Words and gutters
+// follow the header's (max-w-6xl less its px-6, i.e. 69rem), so the headline
+// ends under GitHub and the tablet starts under the logo. The words may cover
+// the tablet's outer bezel, and always stay on top.
 const ANCHOR_ID = 'hero-scene-anchor';
 export default function Hero() {
   return (
@@ -23,9 +24,9 @@ export default function Hero() {
       <HeroLoader />
 
       {/* The screen's spill, translated to CSS for the page around the canvas:
-          one soft pool behind the scene column. */}
+          one soft pool on the tablet's side. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute right-[-10%] top-1/2 h-[40rem] w-[48rem] -translate-y-1/2 rounded-full bg-brand-blue/10 blur-3xl" />
+        <div className="absolute left-[-10%] top-[35%] h-[40rem] w-[48rem] -translate-y-1/2 rounded-full bg-brand-blue/10 blur-3xl" />
       </div>
 
       <div
@@ -36,10 +37,47 @@ export default function Hero() {
         <HeroScene anchorId={ANCHOR_ID} />
       </div>
 
-      <div className="relative mx-auto grid w-full max-w-7xl flex-1 content-center items-center gap-y-8 hero-wide:static hero-wide:content-start">
+      {/* The tablet's box. The live canvas frames the tablet on it. Stacked
+          (md up, and portrait lg) it leads, above the words, and takes what
+          the viewport has left after the ~32rem of header, text and bottom
+          row, so the hero stays one screen. Phones, phones on their side and
+          short windows never get the scene (the hero-stage variant), so there
+          it takes no space. Reduced motion does get it, held still. Side by
+          side (hero-wide: landscape lg) the wrapper dissolves (display:
+          contents) and the box positions against the section itself:
+          top-left on the header's gutters, reaching down into the headline so
+          the words may cover the outer bezel (never the screen). */}
+      <div
+        aria-hidden
+        className="relative hidden h-[min(36rem,calc(100svh-32rem))] hero-stage:block hero-wide:contents"
+      >
+        <div
+          id={ANCHOR_ID}
+          className="absolute inset-0 hero-wide:inset-auto hero-wide:left-[max(1.5rem,calc((100%-69rem)/2))] hero-wide:top-20 hero-wide:h-[calc(100%-15rem)] hero-wide:w-[86%]"
+        />
+      </div>
+
+      {/* One bottom row on the header's gutters: the words in the bottom-right
+          corner, the scroll cue and the live GitHub badge bottom-left under
+          the tablet. Stacked, the words sit above them. */}
+      <div className="relative z-10 mx-auto mt-auto flex w-full max-w-[69rem] flex-col-reverse gap-6 pt-8 hero-wide:flex-row hero-wide:items-end hero-wide:justify-between hero-wide:gap-10">
+        <div data-hero-in className="flex shrink-0 items-end gap-6">
+          <a
+            href={`#${why.id}`}
+            aria-label={hero.scrollLabel}
+            // The line is 1px wide; the padding gives it a real hit area.
+            className="-m-3 rounded-full p-3 focus-visible:outline-2 focus-visible:outline-brand-blue"
+          >
+            <span className="relative block h-10 w-px overflow-hidden bg-muted/25">
+              <span className="hero-scroll-tick absolute inset-x-0 top-0 h-3 bg-primary" />
+            </span>
+          </a>
+          <HeroMeta />
+        </div>
+
         <div
           data-hero-in
-          className="@container relative z-10 min-w-0 hero-wide:w-[66%]"
+          className="@container min-w-0 text-right hero-wide:w-[58%]"
         >
           {/* One <h1>, two set lines. Each line is its own block so the pair
               breaks where the copy says, not where the column width does.
@@ -55,7 +93,7 @@ export default function Hero() {
             ))}
           </h1>
 
-          <p className="mt-6 max-w-[34rem] hero-wide:mt-5 text-lg leading-relaxed text-muted text-pretty">
+          <p className="ml-auto mt-6 max-w-[34rem] hero-wide:mt-5 text-lg leading-relaxed text-muted text-pretty">
             {emphasize(hero.sub, 'No cloud, no accounts', 'cool')}
           </p>
 
@@ -66,49 +104,6 @@ export default function Hero() {
             className="mt-9 inline-flex h-12 hero-wide:mt-7 items-center justify-center whitespace-nowrap rounded-full bg-brand-blue px-7 text-sm font-semibold text-canvas-deep transition-[background-color,transform] hover:bg-accent-cool active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           />
         </div>
-
-        {/* The tablet's box. The live canvas frames the tablet on it. Stacked
-            (md up, and portrait lg) it leads, above the headline, and takes
-            what the viewport has left after the ~32rem of header, text and
-            bottom bar, so the hero stays one screen. Phones, phones on their
-            side and short windows never get the scene (the hero-stage
-            variant), so there it takes no space. Reduced motion does get it,
-            held still. Side by side (hero-wide: landscape lg) the wrapper
-            dissolves (display: contents) and, with the grid static, the box
-            positions against the section itself. Its right edge is the page gutter (the same
-            max() that places the text's left edge), and the camera
-            right-aligns the tablet's outline to it. 95% of the hero's width,
-            anchored right. That frames a tablet about 3/4 of the hero wide,
-            with the text above its raised left end. */}
-        <div
-          aria-hidden
-          className="relative order-first hidden h-[min(36rem,calc(100svh-32rem))] hero-stage:block hero-wide:contents"
-        >
-          <div
-            id={ANCHOR_ID}
-            className="absolute inset-0 hero-wide:inset-auto hero-wide:right-[max(1.5rem,calc((100%-80rem)/2))] hero-wide:top-[54%] hero-wide:h-[120%] hero-wide:w-[95%] hero-wide:-translate-y-1/2"
-          />
-        </div>
-      </div>
-
-      {/* Bottom bar, in flow so it can't collide with the CTA on short
-          screens: a scroll cue on the left, the live GitHub badge on the
-          right, both on the same gutters as the text. */}
-      <div
-        data-hero-in
-        className="relative z-10 mx-auto mt-6 flex w-full max-w-7xl items-end justify-between gap-6 hero-wide:mt-10"
-      >
-        <a
-          href={`#${why.id}`}
-          aria-label={hero.scrollLabel}
-          // The line is 1px wide; the padding gives it a real hit area.
-          className="-m-3 rounded-full p-3 focus-visible:outline-2 focus-visible:outline-brand-blue"
-        >
-          <span className="relative block h-10 w-px overflow-hidden bg-muted/25">
-            <span className="hero-scroll-tick absolute inset-x-0 top-0 h-3 bg-primary" />
-          </span>
-        </a>
-        <HeroMeta />
       </div>
     </section>
   );

@@ -13,6 +13,7 @@ import {
   HERO_ASSETS,
   HERO_WIDE,
   heroIntro,
+  penTip,
   setHeroProgress,
 } from './hero-loader';
 
@@ -50,9 +51,8 @@ const PITCH = THREE.MathUtils.degToRad(35);
 const CAM_DIST = 30;
 // Roughly the panel's centre once propped, nudged right to make room for the pen.
 const TARGET = new THREE.Vector3(0.2, 0.45, -0.15);
-// World units the anchor box (the scene column) must always show. The height
-// term makes the tablet scale with the hero's height; the width term stops it
-// spilling sideways on narrow-but-tall windows.
+// World units the anchor box must show until the models land and the outline
+// can be measured (a first-frame fallback only).
 const VIEW_H = 5.2;
 const VIEW_W = 6.5;
 
@@ -240,20 +240,19 @@ function tabletToWorld(x: number, y: number, z: number) {
 // Camera: orthographic, with a few degrees of pointer orbit and a slow tilt
 // toward top-down as the hero scrolls away. The canvas covers the whole hero,
 // but zoom and framing come from the anchor box: the camera slides sideways
-// in its own plane to place the tablet. Side by side (HERO_WIDE) the tablet's
-// outline is right-aligned to the anchor's right edge (the page gutter,
-// mirroring the text's left margin) and bottom-aligned so it clears the hero's
-// bottom by the same gap the headline keeps below the header; stacked, the
-// outline itself is fitted to the anchor (STACK_FILL) and centred in it.
+// in its own plane to place the tablet. The tablet + pen outline is fitted to
+// the anchor (FILL). Side by side (HERO_WIDE) it's pinned to the anchor's
+// top-left corner, which sits on the header's gutters; stacked it's centred.
 type Frame = {
+  // The anchor's centre, and its left and top edges, in px from the canvas
+  // centre.
   dx: number;
   dy: number;
-  rx: number;
-  // The outline's bottom edge, in px below the canvas centre.
-  by: number;
+  lx: number;
+  ty: number;
   w: number;
   h: number;
-  alignRight: boolean;
+  pinned: boolean;
   // The intro: where the logo sits, in px from the canvas centre, and the
   // zoom that makes the screen overfill the viewport around it.
   ix: number;
@@ -273,40 +272,16 @@ function introFill(x: number, y: number, vw: number, vh: number) {
   );
 }
 
-// Where an element's first line of capitals starts, in px from the top of its
-// section. Offsets, not rects, so the headline's entrance transform doesn't
-// skew it; then the line box's leading and the font's ascender space above the
-// caps, which is where the eye reads the gap.
-let metrics: CanvasRenderingContext2D | null = null;
-function capTop(el: HTMLElement) {
-  const section = el.closest('section');
-  let top = 0;
-  for (
-    let n: HTMLElement | null = el;
-    n && n !== section;
-    n = n.offsetParent as HTMLElement | null
-  ) {
-    top += n.offsetTop;
-  }
-  const cs = getComputedStyle(el);
-  metrics ??= document.createElement('canvas').getContext('2d');
-  if (!metrics) return top;
-  metrics.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-  const m = metrics.measureText('V');
-  const content = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
-  const leading = (parseFloat(cs.lineHeight) - content) / 2;
-  return top + leading + m.fontBoundingBoxAscent - m.actualBoundingBoxAscent;
-}
-
 // The tablet + pen outline along the camera's horizontal and vertical axes, in
 // world units relative to TARGET. Measured once from the real vertices when
 // the models land (Stage), read every frame by CameraRig.
 const silhouette = { left: 0, right: 0, top: 0, bottom: 0, ready: false };
-// Stacked, the share of the anchor box the outline fills, leaving room for the
-// pointer orbit, the idle sway and the pen's bob to move it without clipping.
-const STACK_FILL = 0.92;
+// The share of the anchor box the outline fills, leaving room for the pointer
+// orbit, the idle sway and the pen's bob to move it without clipping.
+const FILL = 0.92;
 const right = new THREE.Vector3();
 const up = new THREE.Vector3();
+const off = new THREE.Vector3();
 
 function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
   const gl = useThree((state) => state.gl);
@@ -322,19 +297,14 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
     const measure = () => {
       const a = anchor.getBoundingClientRect();
       const c = canvas.getBoundingClientRect();
-      // The gap between the fixed header and the headline, mirrored at the
-      // bottom of the canvas (which covers the hero).
-      const header = document.querySelector('header');
-      const h1 = anchor.closest('section')?.querySelector('h1');
-      const gap = header && h1 ? capTop(h1) - header.offsetHeight : 0;
       frame.current = {
         dx: a.left + a.width / 2 - (c.left + c.width / 2),
         dy: a.top + a.height / 2 - (c.top + c.height / 2),
-        rx: a.right - (c.left + c.width / 2),
-        by: c.height / 2 - gap,
+        lx: a.left - (c.left + c.width / 2),
+        ty: a.top - (c.top + c.height / 2),
         w: a.width,
         h: a.height,
-        alignRight: window.matchMedia(HERO_WIDE).matches,
+        pinned: window.matchMedia(HERO_WIDE).matches,
         ix: heroIntro.x - (c.left + c.width / 2),
         iy: heroIntro.y - (c.top + c.height / 2),
         iz: introFill(
@@ -346,8 +316,6 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
       };
     };
     measure();
-    // The cap metrics need the display face, which may land after mount.
-    document.fonts.ready.then(measure);
     const ro = new ResizeObserver(measure);
     ro.observe(anchor);
     ro.observe(canvas);
@@ -359,21 +327,17 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
     const f = frame.current ?? {
       dx: 0,
       dy: 0,
-      rx: size.width / 2,
-      by: size.height / 2,
+      lx: -size.width / 2,
+      ty: -size.height / 2,
       w: size.width,
       h: size.height,
-      alignRight: false,
+      pinned: false,
       ix: 0,
       iy: 0,
       iz: introFill(size.width / 2, size.height / 2, size.width, size.height),
     };
-    // Side by side, VIEW_H/VIEW_W keep headroom for the desk around the
-    // tablet. Stacked, the box is only as tall as the text leaves room for,
-    // so the outline fills it instead of floating small in the middle.
-    const stacked = silhouette.ready && !f.alignRight;
-    const zoom = stacked
-      ? STACK_FILL *
+    const zoom = silhouette.ready
+      ? FILL *
         Math.min(
           f.h / (silhouette.top - silhouette.bottom),
           f.w / (silhouette.right - silhouette.left),
@@ -428,11 +392,11 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
     let dx = f.dx;
     let dy = f.dy;
     if (silhouette.ready) {
-      dx = f.alignRight
-        ? f.rx - silhouette.right * zoom
+      dx = f.pinned
+        ? f.lx - silhouette.left * zoom
         : f.dx - ((silhouette.left + silhouette.right) / 2) * zoom;
-      dy = f.alignRight
-        ? f.by + silhouette.bottom * zoom
+      dy = f.pinned
+        ? f.ty + silhouette.top * zoom
         : f.dy + ((silhouette.top + silhouette.bottom) / 2) * zoom;
     }
     camera.position
@@ -448,17 +412,31 @@ function CameraRig({ motion, anchorId }: { motion: Motion; anchorId: string }) {
     if (k < 1) {
       const c = INTRO.cam;
       INTRO.center ??= tabletToWorld(SCREEN.x, GLASS_TOP, 0);
+      // Where the rest pose puts the screen's centre, in px from the canvas
+      // centre (right and up still hold the rest pose's axes here).
+      off.copy(INTRO.center).sub(camera.position);
+      const restX = off.dot(right) * zoom;
+      const restY = -off.dot(up) * zoom;
+      // The opening shot's angle: square-on down the screen's normal.
       c.position.copy(INTRO.center).addScaledVector(INTRO.normal, CAM_DIST);
       c.up.copy(INTRO.up);
       c.lookAt(INTRO.center);
-      right.set(1, 0, 0).applyQuaternion(c.quaternion);
-      up.set(0, 1, 0).applyQuaternion(c.quaternion);
-      c.position
-        .addScaledVector(right, -f.ix / f.iz)
-        .addScaledVector(up, f.iy / f.iz);
-      camera.position.lerp(c.position, 1 - k);
-      camera.quaternion.slerp(c.quaternion, 1 - k);
       z = Math.exp(THREE.MathUtils.lerp(Math.log(f.iz), Math.log(zoom), k));
+      camera.quaternion.slerp(c.quaternion, 1 - k);
+      // Blending camera positions in world space against a log zoom swings
+      // the tablet far past its rest spot and back (screen offset = world x
+      // zoom). Instead the screen's centre travels a straight line in px from
+      // the logo to its rest spot, and the camera is placed around it.
+      const px = THREE.MathUtils.lerp(f.ix, restX, k);
+      const py = THREE.MathUtils.lerp(f.iy, restY, k);
+      right.set(1, 0, 0).applyQuaternion(camera.quaternion);
+      up.set(0, 1, 0).applyQuaternion(camera.quaternion);
+      off.set(0, 0, 1).applyQuaternion(camera.quaternion);
+      camera.position
+        .copy(INTRO.center)
+        .addScaledVector(off, CAM_DIST)
+        .addScaledVector(right, -px / z)
+        .addScaledVector(up, py / z);
     }
     if (cam.zoom !== z) {
       cam.zoom = z;
@@ -779,6 +757,7 @@ const glassPlane = new THREE.Plane(
   -SCREEN.y * MODEL_SCALE,
 );
 const hit = new THREE.Vector3();
+const tipAt = new THREE.Vector3();
 const penBase = new THREE.Quaternion();
 const penLean = new THREE.Quaternion();
 const euler = new THREE.Euler();
@@ -1050,10 +1029,12 @@ function Stage({
   const overButton = useRef(false);
 
   // The hover hand over the power button is set on <body>; don't leave it
-  // behind if the canvas goes away while the pointer is there.
+  // behind if the canvas goes away while the pointer is there. The brush
+  // stroke goes back to its own start, too.
   useEffect(
     () => () => {
       document.body.style.cursor = '';
+      penTip.move?.();
     },
     [],
   );
@@ -1305,6 +1286,19 @@ function Stage({
       penTurn.copy(PEN_FLAT).slerp(pen.quaternion, k);
       pen.quaternion.copy(penTurn);
       pen.scale.setScalar(size);
+    }
+
+    // The page's brush stroke starts at the nib, which is this group's
+    // origin, wherever the bob, the follow, a tap or the intro has put it.
+    if (penTip.move) {
+      camera.updateMatrixWorld();
+      pen.updateWorldMatrix(true, false);
+      tipAt.setFromMatrixPosition(pen.matrixWorld).project(camera);
+      const r = gl.domElement.getBoundingClientRect();
+      penTip.move(
+        r.left + ((tipAt.x + 1) / 2) * r.width,
+        r.top + ((1 - tipAt.y) / 2) * r.height,
+      );
     }
 
     // The cursor tracks the nib straight down the panel normal, like the real

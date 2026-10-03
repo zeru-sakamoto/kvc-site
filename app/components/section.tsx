@@ -23,7 +23,7 @@ export function SectionGlow({
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      className="pointer-events-none absolute inset-0 -z-10 overflow-x-clip"
     >
       <div
         className={`absolute top-1/2 h-[30rem] w-[36rem] -translate-y-1/2 rounded-full blur-3xl ${

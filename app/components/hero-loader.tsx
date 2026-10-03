@@ -33,13 +33,14 @@ export const HERO_ASSETS = {
   logo: '/logo.svg',
 };
 
-// The post-load intro: the loader's logo grows 3x, then the camera pulls back
-// to show it was on the tablet's screen all along, the screen switches to the
-// app, and the pen lifts out of the logo's own grey pen. GSAP tweens these (below)
-// and hero-canvas.tsx reads them every frame. All 1 = settled, which is also
-// what every path without the intro renders. x, y and size are the grown
-// logo's centre (client px) and height, which the canvas's first frame
-// matches exactly so the overlay can vanish without a visible cut.
+// The post-load intro: the loader's logo (already at 3x, 144px) holds while
+// the bar fades, then the camera pulls back to show it was on the tablet's
+// screen all along, the screen switches to the app, and the pen lifts out of
+// the logo's own grey pen. GSAP tweens these (below) and hero-canvas.tsx reads
+// them every frame. All 1 = settled, which is also what every path without the
+// intro renders. x, y and size are the logo's centre (client px) and height,
+// which the canvas's first frame matches exactly so the overlay can vanish
+// without a visible cut.
 export const heroIntro = {
   cam: 1,
   launch: 1,
@@ -48,6 +49,12 @@ export const heroIntro = {
   x: 0,
   y: 0,
   size: 96,
+};
+// The 3D pen's nib, for the page's brush stroke, which starts from it.
+// brush-stroke.tsx installs `move`; hero-canvas.tsx calls it every frame with
+// the nib's client px, and with nothing when the scene goes away.
+export const penTip = {
+  move: null as ((x?: number, y?: number) => void) | null,
 };
 const INTRO_KEY = 'kvc-hero-intro';
 const TEXT = '[data-hero-in]:not(.hero-backdrop)';
@@ -75,7 +82,7 @@ export function armIntro() {
     done: false,
     x: r.left + r.width / 2,
     y: r.top + r.height / 2,
-    size: r.height * 3,
+    size: r.height,
   });
   return true;
 }
@@ -159,10 +166,11 @@ export default function HeroLoader() {
     };
   }, [revealed, intro]);
 
-  // The intro, ~3.3s. The overlay drops on one frame at 0.5s: underneath, the
-  // canvas is already showing the same logo at the same size on the tablet's
-  // screen, which fills the view. Any wheel, touch, key or click jumps to the
-  // end.
+  // The intro, ~3.9s. The overlay drops on one frame at 0.5s, once the bar has
+  // faded: underneath, the canvas is already showing the same logo at the same
+  // size on the tablet's screen, which fills the view. The pen comes out of the
+  // logo before the hero's words appear. Any wheel, touch, key or click jumps
+  // to the end.
   const overlay = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!intro) return;
@@ -192,11 +200,6 @@ export default function HeroLoader() {
     const tl = gsap
       .timeline({ onComplete: finish })
       .to('[data-hero-bar]', { opacity: 0, duration: 0.35 }, 0)
-      .to(
-        '[data-hero-logo]',
-        { scale: 3, duration: 0.5, ease: 'power2.inOut' },
-        0,
-      )
       // No CSS fade: the class's opacity transition would make this a dissolve.
       .set(overlay.current, { autoAlpha: 0, transition: 'none' }, 0.5)
       .to(heroIntro, { cam: 1, duration: 1.2, ease: 'power3.inOut' }, 0.5)
@@ -206,15 +209,16 @@ export default function HeroLoader() {
         0.5,
       )
       .to('body>header', { opacity: 1, duration: 0.5 }, 1.2)
-      .to(
-        TEXT,
-        { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.15 },
-        1.2,
-      )
       .to(heroIntro, { launch: 1, duration: 0.4, ease: 'power2.out' }, 1.7)
       // From the launch's first frame: the pen has to be under the logo
       // before it starts to fade. The canvas eases it.
-      .to(heroIntro, { pen: 1, duration: 1.6, ease: 'none' }, 1.7);
+      .to(heroIntro, { pen: 1, duration: 1.2, ease: 'none' }, 1.7)
+      // Then the words, once the pen has settled into its hover.
+      .to(
+        TEXT,
+        { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.15 },
+        2.9,
+      );
     events.forEach((e) => window.addEventListener(e, skip, { passive: true }));
     return () => {
       off();
@@ -258,8 +262,8 @@ export default function HeroLoader() {
         data-hero-logo
         src={HERO_ASSETS.logo}
         alt=""
-        width={48}
-        height={48}
+        width={144}
+        height={144}
       />
       <div
         data-hero-bar

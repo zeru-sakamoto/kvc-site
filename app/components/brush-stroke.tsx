@@ -3,16 +3,20 @@
 import { useEffect, useId, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { penTip } from './hero-loader';
 
 // Full-page stroke whose reveal tracks scroll via a clip-path rect (plain
 // viewBox Y-units, not stroke-dasharray/dashoffset).
 const VIEWBOX_H = 3000;
-// Starts in the right-hand column, under the hero's desk scene, so the stroke
-// reads as continuing out of the 3D scene rather than beginning on its own
-// once the flat sections start.
-const PATH_D =
-  'M 700 60 C 760 440 720 640 600 1000 C 480 1380 220 1520 360 1920 ' +
-  'C 500 2320 740 2560 600 2960';
+const VIEWBOX_W = 960;
+// Starts at the hero's 3D pen nib (hero-canvas.tsx reports it every frame),
+// leaving it straight down, so the pen reads as drawing the stroke. Without
+// the scene (phones, no WebGL) it starts in the right-hand column instead.
+const pathFrom = (x: number, y: number) =>
+  `M ${x.toFixed(1)} ${y.toFixed(1)} ` +
+  `C ${x.toFixed(1)} ${(y + (1000 - y) * 0.3).toFixed(1)} 720 640 600 1000 ` +
+  'C 480 1380 220 1520 360 1920 C 500 2320 740 2560 600 2960';
+const PATH_D = pathFrom(700, 60);
 
 // Fraction down the viewport the tip rides once past the initial ramp-in.
 const ANCHOR = 0.3;
@@ -28,9 +32,37 @@ export default function BrushStroke() {
     const clipRect = clipRectRef.current;
     if (!svg || !clipRect) return;
 
+    // Client px in, viewBox units out. Both the guide and the reveal move.
+    // ponytail: rewrites the whole path each frame the hero is on screen;
+    // split off the first curve as its own <path> if the repaint ever shows
+    // up in a profile.
+    const paths = svg.querySelectorAll('path');
+    penTip.move = (x, y) => {
+      let d = PATH_D;
+      if (x !== undefined && y !== undefined) {
+        const r = svg.getBoundingClientRect();
+        d = pathFrom(
+          ((x - r.left) / r.width) * VIEWBOX_W,
+          ((y - r.top) / r.height) * VIEWBOX_H,
+        );
+      }
+      paths.forEach((p) => p.setAttribute('d', d));
+    };
+    // Hidden at the top of the page (loader, untouched hero); the whole
+    // stroke, guide included, fades in once the page has been scrolled.
+    const show = () => {
+      svg.style.opacity = window.scrollY > 0 ? '1' : '0';
+    };
+    window.addEventListener('scroll', show, { passive: true });
+    show();
+    const release = () => {
+      penTip.move = null;
+      window.removeEventListener('scroll', show);
+    };
+
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       clipRect.setAttribute('height', String(VIEWBOX_H));
-      return;
+      return release;
     }
 
     gsap.registerPlugin(ScrollTrigger);
@@ -79,6 +111,7 @@ export default function BrushStroke() {
     draw(st);
 
     return () => {
+      release();
       ro.disconnect();
       st.kill();
       marker?.remove();
@@ -89,14 +122,16 @@ export default function BrushStroke() {
     <svg
       ref={svgRef}
       aria-hidden
-      className="pointer-events-none absolute inset-0 z-0 h-full w-full"
-      viewBox={`0 0 960 ${VIEWBOX_H}`}
+      // z-1: over the hero's canvas (so it shows at the nib), under the hero's
+      // text and every section below (z-10 in page.tsx).
+      className="pointer-events-none absolute inset-0 z-1 h-full w-full opacity-0 transition-opacity duration-500 motion-reduce:transition-none"
+      viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}
       preserveAspectRatio="none"
       fill="none"
     >
       <defs>
         <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
-          <rect ref={clipRectRef} x={0} y={0} width={960} height={0} />
+          <rect ref={clipRectRef} x={0} y={0} width={VIEWBOX_W} height={0} />
         </clipPath>
       </defs>
       {/* Faint guide, always fully visible. */}
