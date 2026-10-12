@@ -758,6 +758,17 @@ const glassPlane = new THREE.Plane(
 );
 const hit = new THREE.Vector3();
 const tipAt = new THREE.Vector3();
+// The pen's meshes and every light live on this layer too: the drawing pen's
+// canvas renders it alone. See the drawing pen in Stage.
+const PEN_LAYER = 1;
+// While drawing, the pen leans into its travel down the stroke like a hand
+// dragging it: radians per px/s of the drawn end's page speed, capped, and
+// eased (per second) so it swings into the curves and settles upright when
+// the scroll stops. Speeds are sampled no closer than DRAW_SAMPLE apart.
+const DRAW_LEAN_GAIN = 0.00018;
+const DRAW_LEAN_MAX = 0.38;
+const DRAW_LEAN_RATE = 5;
+const DRAW_SAMPLE = 0.012;
 const penBase = new THREE.Quaternion();
 const penLean = new THREE.Quaternion();
 const euler = new THREE.Euler();
@@ -1046,6 +1057,181 @@ function Stage({
     onReady();
   }, [onReady]);
 
+  // The drawing pen. Once the brush stroke has been drawn past its start (the
+  // nib), the pen leaves the tablet and rides the stroke's drawn end down the
+  // page. This canvas ends with the hero, so the pen moves to a second one,
+  // pinned to the viewport (brush-stroke.tsx's layer), which renders this
+  // same scene with only the pen and the lights (PEN_LAYER), through a copy
+  // of the hero camera panned until the nib sits on the stroke's end. Same
+  // angle, scale, light and fog as on the tablet, so the handoff doesn't
+  // show; the pen keeps its wobble and the screen's light (or the lack of
+  // it, switched off) wherever it goes.
+  const scene = useThree((state) => state.scene);
+  const heroCam = useThree((state) => state.camera) as THREE.OrthographicCamera;
+  const away = useRef(false);
+  const drawLayer = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    const host = penTip.layer;
+    const pen = penRef.current;
+    if (!host || !pen) return;
+    pen.traverse((o) => o.layers.set(PEN_LAYER));
+    scene.traverse((o) => {
+      if ((o as THREE.Light).isLight) o.layers.enable(PEN_LAYER);
+    });
+    heroCam.layers.enable(PEN_LAYER);
+
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
+    host.appendChild(canvas);
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    const cam = new THREE.OrthographicCamera();
+    cam.layers.set(PEN_LAYER);
+    const size = new THREE.Vector2();
+    const at = new THREE.Vector3();
+    const side = new THREE.Vector3();
+    const rise = new THREE.Vector3();
+    const travel = new THREE.Vector3();
+    const axis = new THREE.Vector3();
+    const rest = new THREE.Quaternion();
+    const turn = new THREE.Quaternion();
+    const tilt = new THREE.Quaternion();
+    const frameQ = new THREE.Quaternion();
+    // The drawn end's last page position and speed (px, px/s), and the eased
+    // lean (radians, screen axes) with its last update time (s, -1 = none).
+    const trail = { x: 0, y: 0, t: -1, vx: 0, vy: 0 };
+    const lean = { x: 0, y: 0, t: -1 };
+    let settle = 0;
+    let shown = false;
+
+    const draw = () => {
+      // Never mid-intro: the pen is still on its way out of the logo.
+      const end = heroIntro.done && pen.visible ? penTip.end?.() : null;
+      away.current = Boolean(end);
+      if (end) heroCam.layers.disable(PEN_LAYER);
+      else heroCam.layers.enable(PEN_LAYER);
+      if (!end) {
+        if (shown) renderer.clear();
+        shown = false;
+        // Leaves upright next time.
+        lean.x = lean.y = 0;
+        lean.t = trail.t = -1;
+        return;
+      }
+
+      // The drawn end's speed on the page (not the viewport, where it barely
+      // moves), and the lean eased toward it. In screen axes: y runs down.
+      const now = performance.now() / 1000;
+      const px = end.x + window.scrollX;
+      const py = end.y + window.scrollY;
+      const since = trail.t < 0 ? Infinity : now - trail.t;
+      if (since > 0.25) {
+        trail.vx = trail.vy = 0;
+        Object.assign(trail, { x: px, y: py, t: now });
+      } else if (since >= DRAW_SAMPLE) {
+        trail.vx = (px - trail.x) / since;
+        trail.vy = (py - trail.y) / since;
+        Object.assign(trail, { x: px, y: py, t: now });
+      }
+      const step = lean.t < 0 ? 0 : Math.min(now - lean.t, 0.1);
+      lean.t = now;
+      let tx = trail.vx * DRAW_LEAN_GAIN;
+      let ty = trail.vy * DRAW_LEAN_GAIN;
+      const reach = Math.hypot(tx, ty);
+      if (reach > DRAW_LEAN_MAX) {
+        tx *= DRAW_LEAN_MAX / reach;
+        ty *= DRAW_LEAN_MAX / reach;
+      }
+      lean.x = THREE.MathUtils.damp(lean.x, tx, DRAW_LEAN_RATE, step);
+      lean.y = THREE.MathUtils.damp(lean.y, ty, DRAW_LEAN_RATE, step);
+      const w = host.clientWidth;
+      const h = host.clientHeight;
+      renderer.getSize(size);
+      if (size.x !== w || size.y !== h) renderer.setSize(w, h, false);
+      cam.position.copy(heroCam.position);
+      cam.quaternion.copy(heroCam.quaternion);
+      cam.zoom = heroCam.zoom;
+      cam.near = heroCam.near;
+      cam.far = heroCam.far;
+      cam.left = -w / 2;
+      cam.right = w / 2;
+      cam.top = h / 2;
+      cam.bottom = -h / 2;
+      cam.updateProjectionMatrix();
+      cam.updateMatrixWorld();
+      side.set(1, 0, 0).applyQuaternion(cam.quaternion);
+      rise.set(0, 1, 0).applyQuaternion(cam.quaternion);
+
+      // The lean: the pen's top tips toward the travel, turning about the
+      // nib (the group's origin), on top of the pose the hero gave it. Only
+      // for this render; the pose goes back after.
+      rest.copy(pen.quaternion);
+      const angle = Math.hypot(lean.x, lean.y);
+      if (angle > 1e-4) {
+        pen.updateWorldMatrix(true, false);
+        pen.getWorldQuaternion(turn);
+        travel.copy(side).multiplyScalar(lean.x).addScaledVector(rise, -lean.y);
+        axis.set(1, 0, 0).applyQuaternion(turn).cross(travel);
+        if (axis.lengthSq() > 1e-10) {
+          // World turn, carried into the tablet frame the pen lives in.
+          tilt.setFromAxisAngle(axis.normalize(), angle);
+          pen.parent!.getWorldQuaternion(frameQ);
+          pen.quaternion
+            .premultiply(frameQ)
+            .premultiply(tilt)
+            .premultiply(frameQ.invert());
+        }
+      }
+
+      // Where the nib lands in this view, then a pan (orthographic, so the
+      // angle holds) by what's left to the stroke's end, both in px from the
+      // layer's centre. Screen y runs down, world up runs up.
+      pen.updateWorldMatrix(true, false);
+      at.setFromMatrixPosition(pen.matrixWorld).project(cam);
+      const box = host.getBoundingClientRect();
+      cam.position
+        .addScaledVector(
+          side,
+          ((at.x * w) / 2 - (end.x - box.left - w / 2)) / cam.zoom,
+        )
+        .addScaledVector(
+          rise,
+          ((at.y * h) / 2 - (h / 2 - (end.y - box.top))) / cam.zoom,
+        );
+      cam.updateMatrixWorld();
+      renderer.render(scene, cam);
+      shown = true;
+      pen.quaternion.copy(rest);
+      pen.updateWorldMatrix(false, false);
+
+      // Once the scroll stops and the hero's loop is paused, nothing else
+      // calls this, so keep painting until the pen has settled upright.
+      if (angle > 0.002 || trail.vx || trail.vy) {
+        settle ||= requestAnimationFrame(() => {
+          settle = 0;
+          draw();
+        });
+      }
+    };
+    drawLayer.current = draw;
+    penTip.redraw = draw;
+
+    return () => {
+      drawLayer.current = null;
+      penTip.redraw = null;
+      cancelAnimationFrame(settle);
+      away.current = false;
+      heroCam.layers.enable(PEN_LAYER);
+      renderer.dispose();
+      renderer.forceContextLoss();
+      canvas.remove();
+    };
+  }, [scene, heroCam]);
+
   // The tablet frame (tilted, origin at the panel centre), and the nib's eased
   // state in it: position, dip (0 hover..1 dipped) and lean, in model metres.
   const tabletRef = useRef<THREE.Group>(null);
@@ -1111,8 +1297,8 @@ function Stage({
     }
     // Reduced motion: the pen stays home and the glass takes no taps. The
     // power button still works; it's a switch, not a movement.
-    // Nor does anything during the intro.
-    if (still || !heroIntro.done) on = false;
+    // Nor does anything during the intro, or while the pen is away drawing.
+    if (still || !heroIntro.done || away.current) on = false;
     if (!heroIntro.done) onButton = false;
     n.on = on;
 
@@ -1172,9 +1358,12 @@ function Stage({
     }
     if (lightRef.current) lightRef.current.intensity = 7 * power.glow;
     // The display draws the hover cursor, so it goes dark with it, and it
-    // only appears as the flying pen arrives over the glass.
+    // only appears as the flying pen arrives over the glass, and goes with
+    // the pen when it leaves to draw.
     if (cursorMatRef.current)
-      cursorMatRef.current.uniforms.uAlpha.value = lit * heroIntro.pen ** 4;
+      cursorMatRef.current.uniforms.uAlpha.value = away.current
+        ? 0
+        : lit * heroIntro.pen ** 4;
     // LED: green while on, with a soft brightening every ~6s as a hint; a
     // steady, dimmer red when off. Cross-fades with the screen.
     const led = ledMatRef.current;
@@ -1290,7 +1479,8 @@ function Stage({
 
     // The page's brush stroke starts at the nib, which is this group's
     // origin, wherever the bob, the follow, a tap or the intro has put it.
-    if (penTip.move) {
+    // While the pen is away drawing, the start holds where it left from.
+    if (penTip.move && !away.current) {
       camera.updateMatrixWorld();
       pen.updateWorldMatrix(true, false);
       tipAt.setFromMatrixPosition(pen.matrixWorld).project(camera);
@@ -1331,6 +1521,10 @@ function Stage({
         rippleMat.uniforms.uCenter.value.set(tp.x, tp.z);
       }
     }
+
+    // Decides whether the pen is home or away, and repaints the drawing
+    // pen's layer with this frame's wobble if it's away.
+    drawLayer.current?.();
   });
 
   return (

@@ -105,8 +105,14 @@ export default function HeroScene({ anchorId }: { anchorId: string }) {
     if (!canRender3d()) revealHero();
   }, []);
 
-  // Mount the canvas only once the hero is on screen, and never during the
-  // first commit. Two reasons, both load-bearing:
+  // Mount the canvas on the observer's first report, wherever the hero is,
+  // and never during the first commit. Not only once the hero is on screen:
+  // a reload part-way down the page restores the scroll there, and the loader
+  // covering it waits on this canvas (and the drawing pen rides on it), so
+  // holding off until the hero came back would stall the loader to its
+  // give-up and leave the page without its pen. The first report always
+  // arrives asynchronously after observe(), which is what the late mount
+  // needs. Two reasons, both load-bearing:
   //   1. It keeps three off the critical path, so the page's HTML and CSS
   //      paint first.
   //   2. React StrictMode double-invokes effects in dev, and R3F's unmount
@@ -115,18 +121,13 @@ export default function HeroScene({ anchorId }: { anchorId: string }) {
   //      means the Canvas mounts exactly once.
   const observe = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          // Decided before the canvas exists, so its first frame is already
-          // the intro pose.
-          if (canRender3d()) setIntro(armIntro());
-          setArmed(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: '200px' },
-    );
+    const io = new IntersectionObserver(() => {
+      // Decided before the canvas exists, so its first frame is already the
+      // intro pose. (armIntro() itself turns it down away from the top.)
+      if (canRender3d()) setIntro(armIntro());
+      setArmed(true);
+      io.disconnect();
+    });
     io.observe(node);
     return () => io.disconnect();
   }, []);

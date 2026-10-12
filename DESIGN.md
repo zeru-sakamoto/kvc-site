@@ -93,8 +93,10 @@ or `translateZ` parallax in the feature sections. Continuity with the hero is ca
 CSS instead: a soft radial glow per section sitting where the hero's key light would fall
 (`SectionGlow` in `section.tsx`, following the existing left/right alternation rather than
 introducing a second rhythm), panel materials with a lit top edge falling to shadow, and a
-heading scale set at half the hero's display size so the step down reads as deliberate. One
-WebGL context exists on the whole page, and it belongs to the hero.
+heading scale set at half the hero's display size so the step down reads as deliberate. The one
+exception is the hero's own pen, which leaves the tablet to draw the brush stroke down the page
+(see Brush stroke below): it rides on a second, viewport-pinned WebGL canvas that renders the
+pen alone, owned by the hero scene. Nothing else below the hero is 3D.
 
 1. **Hero: a big lit tablet top-left, the words bottom-right.** Side by side (`hero-wide`,
    landscape `lg`) the tablet sits top-left and the text block (a two-line headline, one short
@@ -450,8 +452,10 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
     8s give-up and a lost context.
   - **Never in the shared bundle.** `next/dynamic(..., { ssr: false })` from inside a Client
     Component, the same shape as `flourishes.tsx`, keeps `three` off every other route. The
-    canvas also waits for an IntersectionObserver before mounting, so it never competes with
-    first paint.
+    canvas also waits for an IntersectionObserver's first (always asynchronous) report before
+    mounting, so it never competes with first paint. It mounts on that report wherever the hero
+    is: a reload part-way down restores the scroll there, and waiting for the hero to come back on
+    screen would hold the loader to its 8s give-up and leave the drawing pen without its scene.
   - **Lost contexts are recovered.** GPU resets and long backgrounding kill WebGL contexts in the
     wild, and a lost context can only be replaced by a fresh canvas element, so `webglcontextlost`
     bumps a key that remounts the canvas (capped at two retries). This also absorbs React
@@ -465,12 +469,46 @@ own column. Exists mainly as the privacy-policy URL required for a Microsoft Sto
   timers. It starts at the 3D pen's nib: `hero-canvas.tsx` projects the nib to client px every
   frame and hands it over through `penTip` (`hero-loader.tsx`), and the stroke rewrites its first
   curve to leave that point straight down, so the pen reads as drawing it wherever the bob, the
-  mouse follow, a tap or the intro has put it. The SVG stacks over the hero canvas, under the
+  mouse follow, a tap or the intro has put it. On the way down it leans toward the section
+  headings: the original hand-drawn route stays the base, and at each `section h2`'s first-line
+  height the stroke is pulled about a third of the way (`PULL`) toward just before the heading's
+  first word, then one smooth curve (Catmull-Rom as cubic Béziers, control points held between
+  their stops' heights so it only ever heads down) runs through those points. Its swings tend
+  toward the titles and guide the eye without detouring to them. The feature headings
+  (`data-stroke-pass` on `section.tsx`'s `h2`) are passed outright instead: with the text on the
+  right the stroke runs behind the heading, a quarter of the way into its narrowest line
+  (`PASS_BEHIND`); with the text on the left it runs past the heading's right end, 64px clear of
+  its longest line (`PASS_BY`), both at the heading's vertical middle. Which side is measured,
+  not read from `reverse`, so a stacked narrow layout gets "past the end" throughout. The stops
+  are re-measured on layout changes and once fonts load. The SVG stacks over the hero canvas, under the
   hero text and under every section below. Without the scene (phones, no WebGL) it starts in the
   right-hand column (x 700 of 960). The whole SVG is hidden at scroll 0 (loader and untouched
-  hero) and fades in on the first scroll. From then on a faint
-  guide reads ahead of the tip. Under `prefers-reduced-motion: reduce`, the stroke shows fully
-  drawn and scroll wiring is skipped.
+  hero) and fades in on the first scroll. Nothing reads ahead of the drawn end: no guide, so the
+  line exists only where the pen has been. The drawn end doesn't jump to where scroll puts it: it
+  follows on a critically damped spring (`SPRING`, 7 rad/s, stepped in ≤1/60s sub-steps on GSAP's
+  ticker only until settled), so the line and the pen gather speed as a scroll starts and ease
+  into a stop without overshooting. However far a fast scroll runs ahead, the drawn end is held
+  between 22% and 85% of the viewport height (`KEEP_TOP` / `KEEP_BOTTOM`; the top leaves room for
+  the header and the pen rising off the nib): at an edge it's carried along with the page instead
+  of lagging off screen, and it's never pushed past its target. Load and resize refreshes snap
+  instead of animating.
+  - **The pen draws it.** Once the clip edge passes the stroke's start, the 3D pen leaves the
+    tablet and its nib rides the drawn end (where the clip edge crosses the path, solved per
+    curve by bisection) down the page; scrolling back above the start sends it home. The stroke's
+    start holds where the pen left from. The pen moves to a `fixed inset-0 z-2` layer that
+    `brush-stroke.tsx` provides (over the stroke, under the hero text and every section), where
+    `hero-canvas.tsx` renders the same scene through a second `WebGLRenderer` with only the pen and
+    the lights (three.js layer 1), via a copy of the hero camera panned until the nib sits on the
+    drawn end. Same angle, scale, light (including a switched-off screen) and fog, so the handoff
+    doesn't show. On the way it leans into its travel like a dragging hand: its top tips toward
+    the drawn end's page velocity (about the nib, eased, capped near 22°), so it swings with the
+    curves, tips the other way on the way back up, and settles upright when the scroll stops
+    (a short rAF loop keeps painting until it has, since nothing else would). While the pen is away the hero camera drops layer 1, the screen's hover cursor
+    hides and the glass takes no taps. The layer repaints every hero frame and on every scroll
+    (`penTip.redraw`), since the hero's loop pauses once it's off screen. Never during the intro,
+    never under reduced motion (the stroke is drawn in full and the pen stays home), and only
+    when the hero scene itself runs. Under `prefers-reduced-motion: reduce`, the stroke shows fully
+    drawn and scroll wiring is skipped.
 - **Cursor brush** (`app/components/cursor-brush.tsx`): faint Krita-blue smudge trailing the
   pointer, fine-pointer + non-reduced-motion only. Secondary flourish, not the signature.
 - **Media reveals** (`app/components/media.tsx`): each motif animates its own elements in as it
@@ -511,7 +549,7 @@ if (!preferReduced) {
   is gone; the 3D hero replaced the motif it existed for.) The shared `Panel` carries the flat
   translation of the hero's material: a lit top edge falling to shadow over `canvas-deep`.
 - **Hero scene (`hero-scene.tsx` / `hero-canvas.tsx`):** capability gate + lazy canvas, and the
-  scene itself. The only WebGL on the site.
+  scene itself, plus the drawing pen's page-pinned layer. The only WebGL on the site.
 - **Download button (`download-button.tsx`):** renders a neutral "Download for free" on the
   server and swaps to "Download for <OS>" once the platform resolves after hydration. It carries
   its own `min-w` floor sized to the widest label, so that swap can't shove the CTA beside it

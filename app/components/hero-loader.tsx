@@ -50,11 +50,22 @@ export const heroIntro = {
   y: 0,
   size: 96,
 };
-// The 3D pen's nib, for the page's brush stroke, which starts from it.
-// brush-stroke.tsx installs `move`; hero-canvas.tsx calls it every frame with
-// the nib's client px, and with nothing when the scene goes away.
+// The 3D pen and the page's brush stroke, which starts from its nib. Once
+// scrolling has drawn the stroke past that start, the pen leaves the tablet
+// and rides the stroke's drawn end down the page, on a layer of its own.
+// - move (brush-stroke.tsx): hero-canvas.tsx calls it every frame the pen is
+//   home with the nib's client px, and with nothing when the scene goes away.
+// - end (brush-stroke.tsx): the drawn end in client px, or null while the
+//   stroke hasn't left the nib yet.
+// - layer (brush-stroke.tsx): the page-fixed element the drawing pen's canvas
+//   goes in.
+// - redraw (hero-canvas.tsx): repaints that canvas, for scrolls while the
+//   hero's own frame loop is paused.
 export const penTip = {
   move: null as ((x?: number, y?: number) => void) | null,
+  end: null as (() => { x: number; y: number } | null) | null,
+  layer: null as HTMLElement | null,
+  redraw: null as (() => void) | null,
 };
 const INTRO_KEY = 'kvc-hero-intro';
 const TEXT = '[data-hero-in]:not(.hero-backdrop)';
