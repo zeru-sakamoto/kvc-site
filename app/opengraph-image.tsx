@@ -11,7 +11,7 @@ export const alt = ogImage.alt;
 export const size = { width: ogImage.width, height: ogImage.height };
 export const contentType = 'image/png';
 
-const FOOTER = 'Free · local-only · MIT';
+const FOOTER = 'Free · local-only · GPL-3.0';
 
 // Fetch a subset of a Google font as TTF (no modern UA, so Google returns
 // truetype that Satori can parse). Returns null on any failure so the build

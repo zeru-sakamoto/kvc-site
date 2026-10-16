@@ -2,7 +2,7 @@
 
 **Krita VCS** (also called **KVC**, **Krita VC**, **KritaVC**, or spelled out as **Krita Version Control**) is a free, local-only version control app built for Krita painters, not programmers. Every save becomes a version of your `.kra` file you can compare, explore, or go back to, with no accounts, no cloud, and none of the git jargon.
 
-This repository (`kvc-site`) is the marketing site, deployed at [krita-vc.zeru-sakamoto.codes](https://krita-vc.zeru-sakamoto.codes). The desktop app itself lives in a separate repository, [zeru-sakamoto/krita-vc](https://github.com/zeru-sakamoto/krita-vc), which also holds the MIT-licensed source, releases, and issue tracker.
+This repository (`kvc-site`) is the marketing site, deployed at [krita-vc.zeru-sakamoto.codes](https://krita-vc.zeru-sakamoto.codes). The desktop app itself lives in a separate repository, [zeru-sakamoto/krita-vc](https://github.com/zeru-sakamoto/krita-vc), which also holds the GPL-3.0-licensed source, releases, and issue tracker.
 
 ## Getting started (this site)
 

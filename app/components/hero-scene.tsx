@@ -1,8 +1,15 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
-import { useCallback, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { preload } from 'react-dom';
+import {
+  armIntro,
+  HERO_ASSETS,
+  HERO_STAGE,
+  heroReady,
+  revealHero,
+} from './hero-loader';
 
 // ssr: false only works from inside a Client Component, and a Server Component
 // importing a Client Component dynamically doesn't code-split at all (Next 16
@@ -10,15 +17,10 @@ import { useCallback, useState, useSyncExternalStore } from 'react';
 // out of every other route's bundle — same reason flourishes.tsx exists.
 const HeroCanvas = dynamic(() => import('./hero-canvas'), { ssr: false });
 
-// Matches the placeholder SVG's tilt in the 3D scene (TILT_Y 0.24rad, TILT_X
-// -0.06rad) so the cross-fade from flat image to mesh doesn't jump.
-const FLAT_TILT =
-  'perspective(1200px) rotateY(13.7deg) rotateX(-3.4deg) rotateZ(0.9deg)';
-
-const REDUCED = '(prefers-reduced-motion: reduce)';
-// Phones get the flat image. The scene is decorative and not worth the battery
-// or the bundle on a small screen.
-const WIDE = '(min-width: 768px)';
+// The scene is decorative and not worth the battery or the bundle on a small
+// screen, so phones (upright or on their side) get the text-only hero; see
+// HERO_STAGE. Reduced motion still gets the scene, held still by
+// hero-canvas.tsx.
 
 // Probed once and remembered: getSnapshot runs on every render, and building a
 // throwaway canvas each time would be silly.
@@ -27,9 +29,12 @@ function hasWebgl() {
   if (webgl === undefined) {
     try {
       const probe = document.createElement('canvas');
-      webgl = Boolean(
-        probe.getContext('webgl2') ?? probe.getContext('experimental-webgl'),
-      );
+      const gl = (probe.getContext('webgl2') ??
+        probe.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+      webgl = Boolean(gl);
+      // Hand the probe's context straight back: browsers cap live contexts
+      // per page, and the real canvas needs one.
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
     } catch {
       webgl = false;
     }
@@ -37,91 +42,111 @@ function hasWebgl() {
   return webgl;
 }
 
-// A "no" here is not a degraded page: the flat image below is the finished
-// state, and every word and control in the hero lives in the DOM either way.
-// useSyncExternalStore (rather than an effect) keeps the server snapshot honest
-// and re-decides for free if the viewport or the motion preference changes.
+// Every word and control in the hero lives in the DOM either way; a "no" only
+// leaves the scene out. useSyncExternalStore (rather than an effect) keeps the
+// server snapshot honest and re-decides for free if the viewport changes.
 function subscribe(onChange: () => void) {
-  const queries = [window.matchMedia(REDUCED), window.matchMedia(WIDE)];
-  queries.forEach((q) => q.addEventListener('change', onChange));
-  return () =>
-    queries.forEach((q) => q.removeEventListener('change', onChange));
+  const query = window.matchMedia(HERO_STAGE);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
 }
 
 function canRender3d() {
   return (
-    !window.matchMedia(REDUCED).matches &&
-    window.matchMedia(WIDE).matches &&
+    window.matchMedia(HERO_STAGE).matches &&
     (navigator.hardwareConcurrency ?? 8) >= 4 &&
     hasWebgl()
   );
 }
 
-export default function HeroScene() {
+// The live scene. Fills the whole hero section behind the text; the camera
+// frames the tablet on the element named by `anchorId`, so the tablet sits in
+// the scene column while the desk, grid and haze run under the whole hero.
+export default function HeroScene({ anchorId }: { anchorId: string }) {
   const enabled = useSyncExternalStore(subscribe, canRender3d, () => false);
   const [armed, setArmed] = useState(false);
   const [ready, setReady] = useState(false);
+  // Playing the intro: the canvas must be fully there the instant the loader
+  // drops, so it skips its fade-in.
+  const [intro, setIntro] = useState(false);
   // Bumping this throws away the <canvas> element and mounts a new one, which
   // is the only way to get a fresh WebGL context after the old one is lost.
   // ponytail: capped at 2 retries — if a machine can't hold a context, stop
-  // fighting it and leave the flat image up.
+  // fighting it, lift the loader and leave the stage empty.
   const [generation, setGeneration] = useState(0);
 
-  const onReady = useCallback(() => setReady(true), []);
+  // Start the models and screenshot downloading alongside the 3D chunk rather
+  // than after it has loaded and mounted. The crossOrigin values match what
+  // three's FileLoader (fetch) and ImageLoader (<img>) request with, so
+  // useLoader picks these up from the preload cache instead of refetching.
+  if (enabled) {
+    preload(HERO_ASSETS.tablet, { as: 'fetch', crossOrigin: 'anonymous' });
+    preload(HERO_ASSETS.stylus, { as: 'fetch', crossOrigin: 'anonymous' });
+    preload(HERO_ASSETS.screen, { as: 'image', crossOrigin: 'anonymous' });
+    preload(HERO_ASSETS.logo, { as: 'image', crossOrigin: 'anonymous' });
+  }
+
+  const onReady = useCallback(() => {
+    setReady(true);
+    heroReady();
+  }, []);
   const onContextLost = useCallback(() => {
     setReady(false);
-    setGeneration((g) => (g < 2 ? g + 1 : g));
+    setGeneration((g) => {
+      if (g >= 2) revealHero();
+      return g < 2 ? g + 1 : g;
+    });
   }, []);
 
-  // Mount the canvas only once the hero is on screen, and never during the
-  // first commit. Two reasons, both load-bearing:
-  //   1. It keeps three off the critical path, so the headline and the flat
-  //      image paint first.
+  // Nothing to wait for on phones, short screens or no WebGL. Asks
+  // canRender3d() directly: `enabled` is still the server snapshot (false)
+  // during this first effect, even on a desktop.
+  useEffect(() => {
+    if (!canRender3d()) revealHero();
+  }, []);
+
+  // Mount the canvas on the observer's first report, wherever the hero is,
+  // and never during the first commit. Not only once the hero is on screen:
+  // a reload part-way down the page restores the scroll there, and the loader
+  // covering it waits on this canvas (and the drawing pen rides on it), so
+  // holding off until the hero came back would stall the loader to its
+  // give-up and leave the page without its pen. The first report always
+  // arrives asynchronously after observe(), which is what the late mount
+  // needs. Two reasons, both load-bearing:
+  //   1. It keeps three off the critical path, so the page's HTML and CSS
+  //      paint first.
   //   2. React StrictMode double-invokes effects in dev, and R3F's unmount
   //      calls forceContextLoss() on a 500ms timer — which lands on the
   //      remounted renderer's context and kills it. Arriving after that cycle
   //      means the Canvas mounts exactly once.
   const observe = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setArmed(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: '200px' },
-    );
+    const io = new IntersectionObserver(() => {
+      // Decided before the canvas exists, so its first frame is already the
+      // intro pose. (armIntro() itself turns it down away from the top.)
+      if (canRender3d()) setIntro(armIntro());
+      setArmed(true);
+      io.disconnect();
+    });
     io.observe(node);
     return () => io.disconnect();
   }, []);
 
   return (
-    // Fills whatever box the hero reserves for it. The parent owns the height
-    // in CSS, so mounting the canvas over the flat image can't shift the page.
+    // The section owns the size in CSS, so mounting the canvas can't shift
+    // the page.
     <div ref={observe} className="relative h-full w-full">
-      <Image
-        src="/hero-screenshot.webp"
-        // Matches TextureLoader's fetch, so the 3D layer reuses this preload
-        // instead of requesting the file a second time.
-        crossOrigin="anonymous"
-        // Decorative: it stands in for the headline, which already says what
-        // the app does.
-        alt=""
-        aria-hidden
-        width={1440}
-        height={900}
-        priority
-        unoptimized
-        style={{ transform: FLAT_TILT }}
-        className={`absolute left-1/2 top-1/2 w-[92%] sm:w-[68%] wide:w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-2xl transition-opacity duration-700 ${
-          ready ? 'opacity-0' : 'opacity-100'
-        }`}
-      />
       {enabled && armed ? (
-        <div className="pointer-events-none absolute inset-0">
+        // Hidden until the models and screenshot have loaded, then faded in,
+        // so the tablet never appears half-built.
+        <div
+          className={`pointer-events-none absolute inset-0 ${
+            intro ? '' : 'transition-opacity duration-700'
+          } ${ready ? 'opacity-100' : 'opacity-0'}`}
+        >
           <HeroCanvas
             key={generation}
+            anchorId={anchorId}
             onReady={onReady}
             onContextLost={onContextLost}
           />

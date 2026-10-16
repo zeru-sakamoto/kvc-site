@@ -23,7 +23,7 @@ export function SectionGlow({
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      className="pointer-events-none absolute inset-0 -z-10 overflow-x-clip"
     >
       <div
         className={`absolute top-1/2 h-[30rem] w-[36rem] -translate-y-1/2 rounded-full blur-3xl ${
@@ -70,7 +70,13 @@ export default function Section({
           ) : null}
           {/* Half the hero's display size at lg, so the step down from the 3D
               headline reads as deliberate. */}
-          <h2 className="mb-6 font-display text-3xl font-bold leading-tight tracking-tight text-balance text-primary wrap-anywhere sm:text-4xl lg:text-5xl">
+          {/* data-stroke-pass: brush-stroke.tsx runs the stroke behind this
+              heading when the text is on the right, and past its end when
+              it's on the left. */}
+          <h2
+            data-stroke-pass
+            className="mb-6 font-display text-3xl font-bold leading-tight tracking-tight text-balance text-primary wrap-anywhere sm:text-4xl lg:text-5xl"
+          >
             {title}
           </h2>
           <div className="space-y-4 text-base leading-relaxed text-muted sm:text-lg">
